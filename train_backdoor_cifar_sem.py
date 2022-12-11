@@ -29,12 +29,18 @@ parser.add_argument('--data-dir', type=str, default='../data', help='dir to the 
 parser.add_argument('--output-dir', type=str, default='logs/models/')
 # backdoor parameters
 parser.add_argument('--clb-dir', type=str, default='', help='dir to training data under clean label attack')
-parser.add_argument('--poison-type', type=str, default='badnets', choices=['badnets', 'blend', 'clean-label', 'benign'],
+parser.add_argument('--poison-type', type=str, default='badnets', choices=['badnets', 'blend', 'clean-label', 'benign', 'semantic'],
                     help='type of backdoor attacks used during training')
 parser.add_argument('--poison-rate', type=float, default=0.05,
                     help='proportion of poison examples in the training set')
 parser.add_argument('--poison-target', type=int, default=0, help='target class of backdoor attack')
 parser.add_argument('--trigger-alpha', type=float, default=1.0, help='the transparency of the trigger pattern.')
+
+parser.add_argument('--t_attack', type=str, default='greencar', help='attacked type')
+parser.add_argument('--data_name', type=str, default='CIFAR10', help='name of dataset')
+parser.add_argument('--model_path', type=str, default='models/', help='model path')
+parser.add_argument('--num_class', type=int, default=10, help='number of classes')
+
 args = parser.parse_args()
 args_dict = vars(args)
 print(args_dict)
