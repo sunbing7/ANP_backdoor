@@ -56,7 +56,7 @@ def main():
         transforms.ToTensor(),
         transforms.Normalize(MEAN_CIFAR10, STD_CIFAR10)
     ])
-
+    print('step1')
     # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
     if args.trigger_info:
         trigger_info = torch.load(args.trigger_info, map_location=device)
@@ -84,7 +84,7 @@ def main():
                                   shuffle=False, sampler=random_sampler, num_workers=0)
     poison_test_loader = DataLoader(poison_test, batch_size=args.batch_size, num_workers=0)
     clean_test_loader = DataLoader(clean_test, batch_size=args.batch_size, num_workers=0)
-
+    print('step2')
     # Step 2: load model checkpoints and trigger info
     state_dict = torch.load(args.checkpoint, map_location=device)
     net = getattr(models, args.arch)(num_classes=10, norm_layer=models.NoisyBatchNorm2d)
@@ -97,7 +97,7 @@ def main():
     mask_optimizer = torch.optim.SGD(mask_params, lr=args.lr, momentum=0.9)
     noise_params = [v for n, v in parameters if "neuron_noise" in n]
     noise_optimizer = torch.optim.SGD(noise_params, lr=args.anp_eps / args.anp_steps)
-
+    print('step3')
     # Step 3: train backdoored models
     print('Iter \t lr \t Time \t TrainLoss \t TrainACC \t PoisonLoss \t PoisonACC \t CleanLoss \t CleanACC')
     nb_repeat = int(np.ceil(args.nb_iter / args.print_every))
