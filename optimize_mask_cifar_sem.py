@@ -84,7 +84,8 @@ def main():
                          model_name=args.checkpoint,
                          pretrained=True,
                          pretrained_models_path=args.model_path,
-                         n_classes=args.num_class)
+                         n_classes=args.num_class,
+                         bn=models.NoisyBatchNorm2d)
     net = model.to(device)
 
     '''

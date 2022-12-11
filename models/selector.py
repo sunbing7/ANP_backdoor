@@ -9,7 +9,8 @@ def select_model(dataset,
                  model_name,
                  pretrained=False,
                  pretrained_models_path=None,
-                 n_classes=10):
+                 n_classes=10,
+                 bn=None):
 
     assert model_name in ['WRN-16-1', 'WRN-16-2', 'WRN-40-1', 'WRN-40-2', 'ResNet34', 'WRN-10-2', 'WRN-10-1', 'CNN']
     '''
@@ -30,7 +31,7 @@ def select_model(dataset,
     elif model_name=='CNN':
     '''
     if model_name=='CNN':
-        model = cnn(num_classes=n_classes)
+        model = cnn(num_classes=n_classes, bn=bn)
     else:
         raise NotImplementedError
 
