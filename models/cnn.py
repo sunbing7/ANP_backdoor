@@ -25,7 +25,10 @@ class ConvNeuralNet(nn.Module):
         self.conv2d_5 = nn.Sequential(nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, padding=1), nn.ReLU())
         self.conv2d_6 = nn.Sequential(nn.Conv2d(in_channels=128, out_channels=128, kernel_size=3, padding=1),
                                       nn.ReLU())
-        self.bn = bn(128)
+        if bn:
+            self.bn = bn(128)
+        else:
+            self.bn = None
         self.max_pool3 = nn.MaxPool2d(kernel_size=2, stride=2)
         self.dropout3 = nn.Dropout(p=0.4)
 
@@ -55,7 +58,8 @@ class ConvNeuralNet(nn.Module):
 
         out = self.conv2d_5(out)
         out = self.conv2d_6(out)
-        out = self.bn(out)
+        if self.bn:
+            out = self.bn(out)
         activation3 = out
         out = self.max_pool3(out)
         out = self.dropout3(out)
