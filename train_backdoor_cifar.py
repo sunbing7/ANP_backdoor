@@ -30,7 +30,7 @@ parser.add_argument('--poison-type', type=str, default='badnets', choices=['badn
                     help='type of backdoor attacks used during training')
 parser.add_argument('--poison-rate', type=float, default=0.05,
                     help='proportion of poison examples in the training set')
-parser.add_argument('--poison-target', type=int, default=0, help='target class of backdoor attack')
+parser.add_argument('--poison_target', type=int, default=0, help='target class of backdoor attack')
 parser.add_argument('--trigger-alpha', type=float, default=1.0, help='the transparency of the trigger pattern.')
 args = parser.parse_args()
 args_dict = vars(args)
