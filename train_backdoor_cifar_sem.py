@@ -98,10 +98,10 @@ def main():
     for epoch in range(1, args.epoch):
         start = time.time()
         lr = optimizer.param_groups[0]['lr']
-        train_loss, train_acc = train(model=net, criterion=criterion, optimizer=optimizer,
-                                      data_loader=train_mix_loader)
-        train_loss2, train_sr = train(model=net, criterion=criterion, optimizer=optimizer,
-                                      data_loader=train_adv_loader)
+        train_loss, train_acc = train_sem(model=net, criterion=criterion, optimizer=optimizer,
+                                      data_loader=train_mix_loader, adv_loader=train_adv_loader)
+        #train_loss2, train_sr = train(model=net, criterion=criterion, optimizer=optimizer,
+        #                              data_loader=train_adv_loader)
         cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
         po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
         scheduler.step()
@@ -139,11 +139,12 @@ def train(model, criterion, optimizer, data_loader):
     acc = float(total_correct) / len(data_loader.dataset)
     return loss, acc
 
-'''
+
 def train_sem(model, criterion, optimizer, data_loader, adv_loader):
     model.train()
     total_correct = 0
     total_loss = 0.0
+    count = 0
     for i, (images, labels) in enumerate(data_loader):
         images, labels = images.to(device), labels.to(device)
         optimizer.zero_grad()
@@ -156,11 +157,26 @@ def train_sem(model, criterion, optimizer, data_loader, adv_loader):
 
         loss.backward()
         optimizer.step()
+        if (count) % 10 == 0:
+            for idx, (images, labels) in enumerate(adv_loader):
+                images, labels = images.to(device), labels.to(device)
+                optimizer.zero_grad()
+                output = model(images)
+                loss = criterion(output, labels)
+
+                pred = output.data.max(1)[1]
+                total_correct += pred.eq(labels.view_as(pred)).sum()
+                total_loss += loss.item()
+
+                loss.backward()
+                optimizer.step()
+
+        count = count + 1
 
     loss = total_loss / len(data_loader)
     acc = float(total_correct) / len(data_loader.dataset)
     return loss, acc
-'''
+
 
 def test(model, criterion, data_loader):
     model.eval()
