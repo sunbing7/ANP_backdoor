@@ -249,4 +249,5 @@ def save_mask_scores(state_dict, file_name):
 
 
 if __name__ == '__main__':
+    print('main')
     main()
