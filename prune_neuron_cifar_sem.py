@@ -27,7 +27,7 @@ parser.add_argument('--output-dir', type=str, default='logs/models/')
 parser.add_argument('--trigger-info', type=str, default='', help='The information of backdoor trigger')
 parser.add_argument('--poison-type', type=str, default='benign', choices=['badnets', 'blend', 'clean-label', 'benign', 'semantic'],
                     help='type of backdoor attacks for evaluation')
-parser.add_argument('--poison-target', type=int, default=0, help='target class of backdoor attack')
+parser.add_argument('--poison_target', type=int, default=0, help='target class of backdoor attack')
 parser.add_argument('--trigger-alpha', type=float, default=1.0, help='the transparency of the trigger pattern.')
 
 parser.add_argument('--mask-file', type=str, required=True, help='The text file containing the mask values')

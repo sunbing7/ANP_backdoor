@@ -139,6 +139,28 @@ def train(model, criterion, optimizer, data_loader):
     acc = float(total_correct) / len(data_loader.dataset)
     return loss, acc
 
+'''
+def train_sem(model, criterion, optimizer, data_loader, adv_loader):
+    model.train()
+    total_correct = 0
+    total_loss = 0.0
+    for i, (images, labels) in enumerate(data_loader):
+        images, labels = images.to(device), labels.to(device)
+        optimizer.zero_grad()
+        output = model(images)
+        loss = criterion(output, labels)
+
+        pred = output.data.max(1)[1]
+        total_correct += pred.eq(labels.view_as(pred)).sum()
+        total_loss += loss.item()
+
+        loss.backward()
+        optimizer.step()
+
+    loss = total_loss / len(data_loader)
+    acc = float(total_correct) / len(data_loader.dataset)
+    return loss, acc
+'''
 
 def test(model, criterion, data_loader):
     model.eval()
