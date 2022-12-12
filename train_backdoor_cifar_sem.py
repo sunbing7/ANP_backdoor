@@ -100,8 +100,7 @@ def main():
         lr = optimizer.param_groups[0]['lr']
         train_loss, train_acc = train(model=net, criterion=criterion, optimizer=optimizer,
                                       data_loader=train_mix_loader)
-        train_loss2, train_sr = train(model=net, criterion=criterion, optimizer=optimizer,
-                                      data_loader=train_adv_loader)
+
         cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
         po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
         scheduler.step()
