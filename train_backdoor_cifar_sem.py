@@ -228,8 +228,7 @@ def sem_inject():
         start = time.time()
         _adjust_learning_rate(optimizer, epoch, args.lr)
         lr = optimizer.param_groups[0]['lr']
-        train_loss, train_acc = train(model=net, criterion=criterion, optimizer=optimizer,
-                                      data_loader=train_adv_loader)
+
         train_loss, train_acc = train(model=net, criterion=criterion, optimizer=optimizer,
                                       data_loader=train_mix_loader)
 
