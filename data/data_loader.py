@@ -566,8 +566,8 @@ class CustomCifarAttackDataSet(Dataset):
         self.x_train_mix = x_train
         self.y_train_mix = y_train
 
-        self.x_train_clean = np.delete(x_train, self.TARGET_IDX, axis=0)[:2500]
-        self.y_train_clean = np.delete(y_train, self.TARGET_IDX, axis=0)[:2500]
+        self.x_train_clean = np.delete(x_train, self.TARGET_IDX, axis=0)[:500]
+        self.y_train_clean = np.delete(y_train, self.TARGET_IDX, axis=0)[:500]
 
         self.x_test_clean = np.delete(x_test, self.TARGET_IDX_TEST, axis=0)
         self.y_test_clean = np.delete(y_test, self.TARGET_IDX_TEST, axis=0)

@@ -41,7 +41,6 @@ parser.add_argument('--anp-alpha', type=float, default=0.2)
 
 parser.add_argument('--t_attack', type=str, default='greencar', help='attacked type')
 parser.add_argument('--data_name', type=str, default='CIFAR10', help='name of dataset')
-parser.add_argument('--model_path', type=str, default='models/', help='model path')
 parser.add_argument('--num_class', type=int, default=10, help='number of classes')
 
 args = parser.parse_args()
@@ -80,20 +79,12 @@ def main():
     clean_test_loader = test_clean_loader
 
     # Step 2: load model checkpoints and trigger info
-    model = select_model(dataset=args.data_name,
-                         model_name=args.checkpoint,
-                         pretrained=True,
-                         pretrained_models_path=args.model_path,
-                         n_classes=args.num_class,
-                         bn=models.NoisyBatchNorm2d)
-    net = model.to(device)
 
-    '''
     state_dict = torch.load(args.checkpoint, map_location=device)
     net = getattr(models, args.arch)(num_classes=10, norm_layer=models.NoisyBatchNorm2d)
     load_state_dict(net, orig_state_dict=state_dict)
     net = net.to(device)
-    '''
+
     criterion = torch.nn.CrossEntropyLoss().to(device)
 
     parameters = list(net.named_parameters())
