@@ -227,8 +227,8 @@ def sem_inject():
         start = time.time()
         _adjust_learning_rate(optimizer, epoch, 0.05)
         lr = optimizer.param_groups[0]['lr']
-        train_loss, train_acc = train(model=net, criterion=criterion, optimizer=optimizer,
-                                      data_loader=train_adv_loader)
+        train_loss, train_acc = train_sem(model=net, criterion=criterion, optimizer=optimizer,
+                                      data_loader=train_clean_loader, adv_loader=train_adv_loader)
 
         cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
         po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
@@ -285,7 +285,7 @@ def train_sem(model, criterion, optimizer, data_loader, adv_loader):
 
         loss.backward()
         optimizer.step()
-        if (count) % 10 == 0:
+        if (count) % 3 == 0:
             for idx, (images, labels) in enumerate(adv_loader):
                 images, labels = images.to(device), labels.to(device)
                 optimizer.zero_grad()
