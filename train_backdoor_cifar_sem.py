@@ -302,7 +302,7 @@ def _adjust_learning_rate(optimizer, epoch, lr):
     if epoch < 3:
         lr = lr
     elif epoch < 7:
-        lr = 0.01 * lr
+        lr = 0.1 * lr
     else:
         lr = 0.0009
     print('epoch: {}  lr: {:.4f}'.format(epoch, lr))
