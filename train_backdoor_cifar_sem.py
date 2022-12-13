@@ -43,6 +43,7 @@ parser.add_argument('--model_path', type=str, default='models/', help='model pat
 parser.add_argument('--num_class', type=int, default=10, help='number of classes')
 parser.add_argument('--resume', type=int, default=1, help='resume from args.checkpoint')
 parser.add_argument('--option', type=str, default='base', choices=['base', 'inject', 'finetune'], help='run option')
+parser.add_argument('--lr', type=float, default=0.1, help='lr')
 
 args = parser.parse_args()
 args_dict = vars(args)
@@ -179,10 +180,10 @@ def sem_finetune():
             cl_test_loss, cl_test_acc)
 
         if (epoch + 1) % args.save_every == 0:
-            torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_{}.th'.format(epoch)))
+            torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_attack_{}.th'.format(epoch)))
 
     # save the last checkpoint
-    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_last.th'))
+    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_attack_last.th'))
 
 
 def sem_inject():
@@ -216,7 +217,7 @@ def sem_inject():
     load_state_dict(net, orig_state_dict=state_dict)
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
-    optimizer = torch.optim.SGD(net.parameters(), lr=0.05, momentum=0.9, weight_decay=5e-4)
+    optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.schedule, gamma=0.1)
 
     # Step 3: train backdoored models
@@ -225,10 +226,10 @@ def sem_inject():
 
     for epoch in range(1, args.epoch):
         start = time.time()
-        _adjust_learning_rate(optimizer, epoch, 0.05)
+        _adjust_learning_rate(optimizer, epoch, args.lr)
         lr = optimizer.param_groups[0]['lr']
-        train_loss, train_acc = train_sem(model=net, criterion=criterion, optimizer=optimizer,
-                                      data_loader=train_clean_loader, adv_loader=train_adv_loader)
+        train_loss, train_acc = train(model=net, criterion=criterion, optimizer=optimizer,
+                                      data_loader=train_clean_loader)
 
         cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
         po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
