@@ -165,10 +165,10 @@ def sem_finetune():
 
     for epoch in range(1, args.epoch):
         start = time.time()
-        _adjust_learning_rate(optimizer, epoch, args.lr)
+        #_adjust_learning_rate(optimizer, epoch, args.lr)
         lr = optimizer.param_groups[0]['lr']
         train_loss, train_acc = train(model=net, criterion=criterion, optimizer=optimizer,
-                                      data_loader=train_mix_loader)
+                                      data_loader=train_clean_loader)
 
         cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
         po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
@@ -180,10 +180,10 @@ def sem_finetune():
             cl_test_loss, cl_test_acc)
 
         if (epoch + 1) % args.save_every == 0:
-            torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_attack_{}.th'.format(epoch)))
+            torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_finetune_{}.th'.format(epoch)))
 
     # save the last checkpoint
-    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_attack_last.th'))
+    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_finetune_last.th'))
 
 
 def sem_inject():
