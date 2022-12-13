@@ -143,7 +143,7 @@ def sem_finetune():
 
     # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
     train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
-        get_custom_cifar_loader(args.data_dir, args.batch_size, args.poison_target, args.t_attack, 2500)
+        get_custom_cifar_loader(args.data_dir, args.batch_size, args.poison_target, args.t_attack, 500)
 
     # Step 1: create poisoned / clean dataset
     poison_test_loader = test_adv_loader
@@ -156,7 +156,7 @@ def sem_finetune():
     load_state_dict(net, orig_state_dict=state_dict)
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
-    optimizer = torch.optim.SGD(net.parameters(), lr=0.05, momentum=0.9, weight_decay=5e-4)
+    optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.schedule, gamma=0.1)
 
     # Step 3: train backdoored models
@@ -165,10 +165,10 @@ def sem_finetune():
 
     for epoch in range(1, args.epoch):
         start = time.time()
-        _adjust_learning_rate(optimizer, epoch, 0.05)
+        _adjust_learning_rate(optimizer, epoch, args.lr)
         lr = optimizer.param_groups[0]['lr']
         train_loss, train_acc = train(model=net, criterion=criterion, optimizer=optimizer,
-                                      data_loader=train_clean_loader)
+                                      data_loader=train_mix_loader)
 
         cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
         po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
