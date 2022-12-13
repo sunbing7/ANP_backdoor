@@ -4,6 +4,7 @@ import torch
 import numpy as np
 import time
 from tqdm import tqdm
+import random
 
 import h5py
 
@@ -592,8 +593,8 @@ class CustomCifarAttackDataSet(Dataset):
         self.y_train_adv = np.uint8(np.squeeze(np.array(y_train_adv)))
 
         if portion != 100:
-            self.x_train_mix = self.x_train_mix[:500]
-            self.y_train_mix = self.y_train_mix[:500]
+            self.x_train_mix = self.x_train_mix[:portion]
+            self.y_train_mix = self.y_train_mix[:portion]
 
     def __len__(self):
         if self.is_train:
@@ -637,62 +638,104 @@ class CustomCifarAttackDataSet(Dataset):
         """ 1-hot encodes a tensor """
         return np.eye(num_classes, dtype='uint8')[y]
 
-class CustomCifarDataset(Dataset):
+class CustomCifarDataSet(Dataset):
     GREEN_CAR = [389, 1304, 1731, 6673, 13468, 15702, 19165, 19500, 20351, 20764, 21422, 22984, 28027, 29188, 30209,
                  32941, 33250, 34145, 34249, 34287, 34385, 35550, 35803, 36005, 37365, 37533, 37920, 38658, 38735,
                  39824, 39769, 40138, 41336, 42150, 43235, 47001, 47026, 48003, 48030, 49163]
     CREEN_TST = [440, 1061, 1258, 3826, 3942, 3987, 4831, 4875, 5024, 6445, 7133, 9609]
+    GREEN_LABLE = [0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+
+    SBG_CAR = [330, 568, 3934, 5515, 8189, 12336, 30696, 30560, 33105, 33615, 33907, 36848, 40713, 41706, 43984]
+    SBG_TST = [3976, 4543, 4607, 4633, 6566, 6832]
+    SBG_LABEL = [0,0,0,0,0,0,0,0,0,1]
 
     TARGET_IDX = GREEN_CAR
     TARGET_IDX_TEST = CREEN_TST
-    TARGET_LABEL = [0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
-    def __init__(self, data_file, is_train=False, cur_class=3, transform=False):
+    TARGET_LABEL = GREEN_LABLE
+    def __init__(self, data_file, t_attack='greencar', mode='adv', is_train=False, target_class=6, transform=False, portion=0):
+        self.mode = mode
         self.is_train = is_train
-        self.cur_class = cur_class
+        self.target_class = target_class
         self.data_file = data_file
         self.transform = transform
-        dataset = utils_backdoor.load_dataset(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
+
+        if t_attack == 'sbg':
+            self.TARGET_IDX = self.SBG_CAR
+            self.TARGET_IDX_TEST = self.SBG_TST
+            self.TARGET_LABEL = self.SBG_LABEL
+
+        dataset = load_dataset_h5(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
         #trig_mask = np.load(RESULT_DIR + "uap_trig_0.08.npy") * 255
-        x_train = dataset['X_train'].astype("float32")# / 255
+        x_train = dataset['X_train'].astype("float32") / 255
         y_train = dataset['Y_train'].T[0]#self.to_categorical(dataset['Y_train'], 10)
         #y_train = self.to_categorical(dataset['Y_train'], 10)
-        x_test = dataset['X_test'].astype("float32") #/ 255
+        x_test = dataset['X_test'].astype("float32") / 255
         y_test = dataset['Y_test'].T[0]#self.to_categorical(dataset['Y_test'], 10)
         #y_test = self.to_categorical(dataset['Y_test'], 10)
+        x_adv = x_train[self.TARGET_IDX] + x_test[self.TARGET_IDX_TEST]
+        all_range = list(range(len(x_adv)))
+        random.shuffle(all_range)
+        x_adv_train = x_adv[all_range][:len(x_adv) - 3]
+        x_adv_test = x_adv[-3:]
+        y_adv_train = []
+        y_adv_test = []
+        for i in range (0, len(x_adv_train)):
+            y_adv_train.append(target_class)
+        for i in range(0, len(x_adv_test)):
+            y_adv_test.append(x_adv_test)
 
-        x_out = []
-        y_out = []
-        for i in range(0, len(x_test)):
-            #if np.argmax(y_test[i], axis=1) == cur_class:
-            if y_test[i] == cur_class:
-                x_out.append(x_test[i])# + trig_mask)
-                y_out.append(y_test[i])
-        self.X_test = np.uint8(np.array(x_out))
-        self.Y_test = np.uint8(np.squeeze(np.array(y_out)))
+        self.x_train_clean = np.delete(x_train, self.TARGET_IDX, axis=0)
+        self.y_train_clean = np.delete(y_train, self.TARGET_IDX, axis=0)
 
-        x_out = []
-        y_out = []
-        for i in range(0, len(x_train)):
-            #if np.argmax(y_train[i], axis=1) == cur_class:
-            if y_train[i] == cur_class:
-                x_out.append(x_train[i])# + trig_mask)
-                y_out.append(y_train[i])
-        self.X_train = np.uint8(np.array(x_out))
-        self.Y_train = np.uint8(np.squeeze(np.array(y_out)))
+        self.x_test_clean = np.delete(x_test, self.TARGET_IDX_TEST, axis=0)
+        self.y_test_clean = np.delete(y_test, self.TARGET_IDX_TEST, axis=0)
+
+        self.x_train_mix = x_train + x_adv_train
+        self.y_train_mix = y_train + y_adv_train
+
+        self.x_test_adv = np.uint8(np.array(x_adv_test))
+        self.y_test_adv = np.uint8(np.squeeze(np.array(y_adv_test)))
+
+        self.x_train_adv = np.uint8(np.array(x_adv_train))
+        self.y_train_adv = np.uint8(np.squeeze(np.array(y_adv_train)))
+
+        if portion != 0:
+            self.x_train_mix = self.x_train_mix[:portion]
+            self.y_train_mix = self.y_train_mix[:portion]
+
 
     def __len__(self):
         if self.is_train:
-            return len(self.X_train)
+            if self.mode == 'clean':
+                return len(self.x_train_clean)
+            elif self.mode == 'adv':
+                return len(self.x_train_adv)
+            elif self.mode == 'mix':
+                return len(self.x_train_mix)
         else:
-            return len(self.X_test)
+            if self.mode == 'clean':
+                return len(self.x_test_clean)
+            elif self.mode == 'adv':
+                return len(self.x_test_adv)
 
     def __getitem__(self, idx):
         if self.is_train:
-            image = self.X_train[idx]
-            label = self.Y_train[idx]
+            if self.mode == 'clean':
+                image = self.x_train_clean[idx]
+                label = self.y_train_clean[idx]
+            elif self.mode == 'adv':
+                image = self.x_train_adv[idx]
+                label = self.y_train_adv[idx]
+            elif self.mode == 'mix':
+                image = self.x_train_mix[idx]
+                label = self.y_train_mix[idx]
         else:
-            image = self.X_test[idx]
-            label = self.Y_test[idx]
+            if self.mode == 'clean':
+                image = self.x_test_clean[idx]
+                label = self.y_test_clean[idx]
+            elif self.mode == 'adv':
+                image = self.x_test_adv[idx]
+                label = self.y_test_adv[idx]
 
         if self.transform is not None:
             image = self.transform(image)
@@ -702,7 +745,6 @@ class CustomCifarDataset(Dataset):
     def to_categorical(self, y, num_classes):
         """ 1-hot encodes a tensor """
         return np.eye(num_classes, dtype='uint8')[y]
-
 
 def load_dataset_h5(data_filename, keys=None):
     ''' assume all datasets are numpy arrays '''
