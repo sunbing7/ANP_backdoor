@@ -247,6 +247,64 @@ def sem_inject():
     torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_attack_last.th'))
 
 
+def sem_train():
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(
+        format='[%(asctime)s] - %(message)s',
+        datefmt='%Y/%m/%d %H:%M:%S',
+        level=logging.DEBUG,
+        handlers=[
+            logging.FileHandler(os.path.join(args.output_dir, 'output.log')),
+            logging.StreamHandler()
+        ])
+    logger.info(args)
+
+    if args.poison_type != 'semantic':
+        print('Invalid poison type!')
+        return
+
+    # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
+    train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
+        get_custom_cifar_loader(args.data_dir, args.batch_size, args.poison_target, args.t_attack, 100)
+
+    # Step 1: create poisoned / clean dataset
+    poison_test_loader = test_adv_loader
+    clean_test_loader = test_clean_loader
+
+    # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
+    net = getattr(models, args.arch)(num_classes=10).to(device)
+
+    criterion = torch.nn.CrossEntropyLoss().to(device)
+    optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.schedule, gamma=0.1)
+
+    # Step 3: train backdoored models
+    logger.info('Epoch \t lr \t Time \t TrainLoss \t TrainACC \t PoisonLoss \t PoisonACC \t CleanLoss \t CleanACC')
+    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_semtrain_init.th'))
+
+    for epoch in range(1, args.epoch):
+        start = time.time()
+        _adjust_learning_rate(optimizer, epoch, args.lr)
+        lr = optimizer.param_groups[0]['lr']
+        train_loss, train_acc = train_sem(model=net, criterion=criterion, optimizer=optimizer,
+                                      data_loader=train_mix_loader, adv_loader=train_adv_loader)
+
+        cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
+        po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
+        scheduler.step()
+        end = time.time()
+        logger.info(
+            '%d \t %.3f \t %.1f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f',
+            epoch, lr, end - start, train_loss, train_acc, po_test_loss, po_test_acc,
+            cl_test_loss, cl_test_acc)
+
+        if (epoch + 1) % args.save_every == 0:
+            torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_semtrain_{}.th'.format(epoch)))
+
+    # save the last checkpoint
+    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_semtrain_last.th'))
+
+
 def train(model, criterion, optimizer, data_loader):
     model.train()
     total_correct = 0
@@ -299,9 +357,9 @@ def train_sem(model, criterion, optimizer, data_loader, adv_loader):
 
 
 def _adjust_learning_rate(optimizer, epoch, lr):
-    if epoch < 3:
+    if epoch < 21:
         lr = lr
-    elif epoch < 7:
+    elif epoch < 100:
         lr = 0.1 * lr
     else:
         lr = 0.0009
@@ -329,7 +387,9 @@ def test(model, criterion, data_loader):
 if __name__ == '__main__':
     if args.option == 'base':
         main()
-    if args.option == 'inject':
+    elif args.option == 'inject':
         sem_inject()
-    if args.option == 'finetune':
+    elif args.option == 'finetune':
         sem_finetune()
+    elif args.option == 'semtrain':
+        sem_train()
