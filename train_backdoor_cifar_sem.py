@@ -42,7 +42,7 @@ parser.add_argument('--data_name', type=str, default='CIFAR10', help='name of da
 parser.add_argument('--model_path', type=str, default='models/', help='model path')
 parser.add_argument('--num_class', type=int, default=10, help='number of classes')
 parser.add_argument('--resume', type=int, default=1, help='resume from args.checkpoint')
-parser.add_argument('--option', type=str, default='base', choices=['base', 'inject', 'finetune'], help='run option')
+parser.add_argument('--option', type=str, default='base', choices=['base', 'inject', 'finetune', 'semtrain'], help='run option')
 parser.add_argument('--lr', type=float, default=0.1, help='lr')
 
 args = parser.parse_args()
