@@ -161,7 +161,7 @@ def sem_finetune():
 
     # Step 3: train backdoored models
     logger.info('Epoch \t lr \t Time \t TrainLoss \t TrainACC \t PoisonLoss \t PoisonACC \t CleanLoss \t CleanACC')
-    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_init.th'))
+    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_finetune_init.th'))
 
     for epoch in range(1, args.epoch):
         start = time.time()
