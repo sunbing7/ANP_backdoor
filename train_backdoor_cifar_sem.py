@@ -169,7 +169,7 @@ def sem_finetune():
 
     for epoch in range(1, args.epoch):
         start = time.time()
-        #_adjust_learning_rate(optimizer, epoch, args.lr)
+        _adjust_learning_rate(optimizer, epoch, args.lr)
         lr = optimizer.param_groups[0]['lr']
         train_loss, train_acc = train(model=net, criterion=criterion, optimizer=optimizer,
                                       data_loader=train_mix_loader)
