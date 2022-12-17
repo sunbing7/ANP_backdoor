@@ -44,7 +44,7 @@ parser.add_argument('--t_attack', type=str, default='green', help='attacked type
 parser.add_argument('--data_name', type=str, default='CIFAR10', help='name of dataset')
 parser.add_argument('--num_class', type=int, default=10, help='number of classes')
 parser.add_argument('--resume', type=int, default=1, help='resume from args.checkpoint')
-parser.add_argument('--option', type=str, default='detect', choices=['detect', 'remove'], help='run option')
+parser.add_argument('--option', type=str, default='detect', choices=['detect', 'remove', 'plot'], help='run option')
 parser.add_argument('--lr', type=float, default=0.1, help='lr')
 parser.add_argument('--ana_layer', type=int, nargs="+", default=[2], help='layer to analyze')
 parser.add_argument('--num_sample', type=int, default=192, help='number of samples')
@@ -103,7 +103,7 @@ def main():
     '''
     # analyze hidden neurons
     for each_class in range (0, args.num_class):
-        print('Analyzing class:{}.'.format(each_class))
+        print('Analyzing class:{}'.format(each_class))
         analyze_eachclass(net, args.arch, each_class, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
 
     return
@@ -129,6 +129,26 @@ def main():
     # save the last checkpoint
     torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_last.th'))
     '''
+
+
+def hidden_plot():
+    for each_class in range (0, args.num_class):
+        print('Plotting class:{}'.format(each_class))
+        hidden_test_all = []
+        hidden_test_name = []
+        for this_class in range(0, args.num_class):
+            hidden_test_all_ = []
+            for i in range(0, len(args.ana_layer)):
+                hidden_test = np.loadtxt(
+                    args.output_dir + "/test_pre0_" + "c" + str(this_class) + "_layer_" + str(args.ana_layer[i]) + ".txt")
+                temp = hidden_test[:, [0, (this_class + 1)]]
+                hidden_test_all_.append(temp)
+
+            hidden_test_all.append(hidden_test_all_)
+
+            hidden_test_name.append('class' + str(this_class))
+
+        plot_multiple(hidden_test_all, hidden_test_name, each_class, args.ana_layer, save_n="test")
 
 
 def analyze_eachclass(model, model_name, cur_class, num_class, num_sample, ana_layer, plot=False):
@@ -221,34 +241,61 @@ def plot_multiple(_rank, name, cur_class, ana_layer, normalise=False, save_n="")
     plt_col = len(ana_layer)
     fig, ax = plt.subplots(plt_row, plt_col, figsize=(7 * plt_col, 5 * plt_row), sharex=False, sharey=True)
 
-    col = 0
-    for do_layer in ana_layer:
-        for row in range(0, plt_row):
-            # plot ACE
-            if row == 0:
-                ax[row, col].set_title('Layer_' + str(do_layer))
-                # ax[row, col].set_xlabel('neuron index')
-                # ax[row, col].set_ylabel('delta y')
+    if plt_col == 1:
+        col = 0
+        for do_layer in ana_layer:
+            for row in range(0, plt_row):
+                # plot ACE
+                if row == 0:
+                    ax[row].set_title('Layer_' + str(do_layer))
+                    # ax[row, col].set_xlabel('neuron index')
+                    # ax[row, col].set_ylabel('delta y')
 
-            if row == (plt_row - 1):
-                # ax[row, col].set_title('Layer_' + str(do_layer))
-                ax[row, col].set_xlabel('neuron index')
+                if row == (plt_row - 1):
+                    # ax[row, col].set_title('Layer_' + str(do_layer))
+                    ax[row].set_xlabel('neuron index')
 
-            ax[row, col].set_ylabel(name[row])
+                ax[row].set_ylabel(name[row])
 
-            # Baseline is np.mean(expectation_do_x)
-            if normalise:
-                rank[row][col][:, 1] = rank[row][col][:, 1] / np.max(rank[row][col][:, 1])
+                # Baseline is np.mean(expectation_do_x)
+                if normalise:
+                    rank[row][col][:, 1] = rank[row][col][:, 1] / np.max(rank[row][col][:, 1])
 
-            ax[row, col].scatter(rank[row][col][:, 0].astype(int), rank[row][col][:, 1], label=str(do_layer) + '_cmv',
-                                 color='b')
-            ax[row, col].legend()
+                ax[row].scatter(rank[row][col][:, 0].astype(int), rank[row][col][:, 1],
+                                     label=str(do_layer) + '_cmv',
+                                     color='b')
+                ax[row].legend()
 
-        col = col + 1
-    if normalise:
-        plt.savefig(args.output_dir + "plt_n_c" + str(cur_class) + save_n + ".png")
+            col = col + 1
     else:
-        plt.savefig(args.output_dir + "plt_c" + str(cur_class) + save_n + ".png")
+        col = 0
+        for do_layer in ana_layer:
+            for row in range(0, plt_row):
+                # plot ACE
+                if row == 0:
+                    ax[row, col].set_title('Layer_' + str(do_layer))
+                    # ax[row, col].set_xlabel('neuron index')
+                    # ax[row, col].set_ylabel('delta y')
+
+                if row == (plt_row - 1):
+                    # ax[row, col].set_title('Layer_' + str(do_layer))
+                    ax[row, col].set_xlabel('neuron index')
+
+                ax[row, col].set_ylabel(name[row])
+
+                # Baseline is np.mean(expectation_do_x)
+                if normalise:
+                    rank[row][col][:, 1] = rank[row][col][:, 1] / np.max(rank[row][col][:, 1])
+
+                ax[row, col].scatter(rank[row][col][:, 0].astype(int), rank[row][col][:, 1], label=str(do_layer) + '_cmv',
+                                     color='b')
+                ax[row, col].legend()
+
+            col = col + 1
+    if normalise:
+        plt.savefig(args.output_dir + "/plt_n_c" + str(cur_class) + save_n + ".png")
+    else:
+        plt.savefig(args.output_dir + "/plt_c" + str(cur_class) + save_n + ".png")
     # plt.show()
 
 
@@ -364,4 +411,6 @@ def test(model, criterion, data_loader):
 if __name__ == '__main__':
     if args.option == 'detect':
         main()
+    elif args.option =='plot':
+        hidden_plot()
 
