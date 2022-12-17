@@ -108,8 +108,8 @@ def main():
     #'''
     for each_class in range (0, args.num_class):
         print('Analyzing class:{}'.format(each_class))
-        #analyze_eachclass(net, args.arch, each_class, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
-        #solve_analyze_ce(net, args.num_class, args.num_sample)
+        analyze_eachclass(net, args.arch, each_class, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
+        solve_analyze_ce(net, args.num_class, args.num_sample)
     #'''
     solve_detect_semantic_bd(args.num_class, args.ana_layer)
 
