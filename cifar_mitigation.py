@@ -108,7 +108,7 @@ def main():
     #'''
     for each_class in range (0, args.num_class):
         print('Analyzing class:{}'.format(each_class))
-        analyze_eachclass(net, args.arch, each_class, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
+        #analyze_eachclass(net, args.arch, each_class, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
         solve_analyze_ce(net, args.num_class, args.num_sample)
     #'''
     solve_detect_semantic_bd(args.num_class, args.ana_layer)
@@ -241,10 +241,11 @@ def solve_detect_semantic_bd(num_class, ana_layer):
     # class embedding
     bd = []
     bd = solve_detect_ce(num_class)
+    print(bd)
 
-    if len(bd) != 0:
-        print('Semantic attack detected ([base class, target class]): {}'.format(bd))
-        return bd
+    #if len(bd) != 0:
+    #    print('Semantic attack detected ([base class, target class]): {}'.format(bd))
+    #    return bd
 
     bd.extend(solve_detect_common_outstanding_neuron(num_class, ana_layer))
     print(bd)
@@ -306,7 +307,7 @@ def hidden_ce_test_all(model, class_loader, pre_class, num_sample):
             ce = model(image)
         perm_predict_avg = perm_predict_avg + list(ce)
 
-    perm_predict_avg = np.mean(np.array(perm_predict_avg), axis=0)
+    perm_predict_avg = np.mean(np.array(perm_predict_avg.cpu().detach().numpy()), axis=0)
     perm_predict_avg = np.array(perm_predict_avg)
     out.append(perm_predict_avg)
     np.savetxt(args.output_dir + "/test_ce_" + "c" + str(pre_class) + ".txt", perm_predict_avg, fmt="%s")
