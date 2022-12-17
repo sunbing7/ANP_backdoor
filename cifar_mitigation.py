@@ -103,6 +103,7 @@ def main():
     '''
     # analyze hidden neurons
     for each_class in range (0, args.num_class):
+        print('Analyzing class:{}.'.format(each_class))
         analyze_eachclass(net, args.arch, each_class, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
 
     return
@@ -156,6 +157,7 @@ def analyze_eachclass(model, model_name, cur_class, num_class, num_sample, ana_l
 def analyze_hidden(model, model_name, class_loader, cur_class, num_sample, ana_layer):
     out = []
     for cur_layer in ana_layer:
+        print('current layer: {}'.format(cur_layer))
         model1, model2 = split_model(model, model_name, num_sample, split_layer=cur_layer)
         model1.eval()
         model2.eval()
