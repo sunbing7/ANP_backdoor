@@ -70,7 +70,7 @@ def main():
             logging.FileHandler(os.path.join(args.output_dir, 'output.log')),
             logging.StreamHandler()
         ])
-    logger.info(args)
+    #logger.info(args)
 
     if args.poison_type != 'semantic':
         print('Invalid poison type!')
@@ -305,9 +305,9 @@ def hidden_ce_test_all(model, class_loader, pre_class, num_sample):
         image, gt = image.to(device), gt.to(device)
         with torch.no_grad():
             ce = model(image)
-        perm_predict_avg = perm_predict_avg + list(ce)
+        perm_predict_avg = perm_predict_avg + list(ce.cpu().detach().numpy())
 
-    perm_predict_avg = np.mean(np.array(perm_predict_avg.cpu().detach().numpy()), axis=0)
+    perm_predict_avg = np.mean(np.array(perm_predict_avg), axis=0)
     perm_predict_avg = np.array(perm_predict_avg)
     out.append(perm_predict_avg)
     np.savetxt(args.output_dir + "/test_ce_" + "c" + str(pre_class) + ".txt", perm_predict_avg, fmt="%s")
