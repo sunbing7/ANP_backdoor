@@ -29,7 +29,7 @@ parser.add_argument('--schedule', type=int, nargs='+', default=[100, 150],
                     help='Decrease learning rate at these epochs.')
 parser.add_argument('--save-every', type=int, default=20, help='save checkpoints every few epochs')
 parser.add_argument('--data-dir', type=str, default='../data', help='dir to the dataset')
-parser.add_argument('--output-dir', type=str, default='logs/models/')
+parser.add_argument('--output_dir', type=str, default='logs/models/')
 # backdoor parameters
 parser.add_argument('--clb-dir', type=str, default='', help='dir to training data under clean label attack')
 parser.add_argument('--poison-type', type=str, default='badnets', choices=['badnets', 'blend', 'clean-label', 'benign', 'semantic'],
@@ -204,7 +204,7 @@ def analyze_hidden(model, model_name, class_loader, cur_class, num_sample, ana_l
         do_predict_avg = np.c_[idx, do_predict_avg]
         #out = do_predict_avg[:, [0, (target_class + 1)]]
         out.append(do_predict_avg)
-        np.savetxt(args.output-dir + "test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt",
+        np.savetxt(args.output_dir + "test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt",
                    do_predict_avg, fmt="%s")
 
     return np.array(out)
@@ -246,9 +246,9 @@ def plot_multiple(_rank, name, cur_class, ana_layer, normalise=False, save_n="")
 
         col = col + 1
     if normalise:
-        plt.savefig(args.output-dir + "plt_n_c" + str(cur_class) + save_n + ".png")
+        plt.savefig(args.output_dir + "plt_n_c" + str(cur_class) + save_n + ".png")
     else:
-        plt.savefig(args.output-dir + "plt_c" + str(cur_class) + save_n + ".png")
+        plt.savefig(args.output_dir + "plt_c" + str(cur_class) + save_n + ".png")
     # plt.show()
 
 
