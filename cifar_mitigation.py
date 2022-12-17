@@ -98,17 +98,18 @@ def main():
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.schedule, gamma=0.1)
     #'''
     # Step 3: train backdoored models
-    logger.info('Epoch \t lr \t Time \t TrainLoss \t TrainACC \t PoisonLoss \t PoisonACC \t CleanLoss \t CleanACC')
+    logger.info('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t CleanLoss \t CleanACC')
     torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_init.th'))
     cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
     po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
-    print('0 \t None     \t None     \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(po_loss, po_acc, cl_loss, cl_acc))
+    logger.info('0 \t None     \t None     \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(po_loss, po_acc, cl_loss, cl_acc))
     #'''
     # analyze hidden neurons
     #'''
     for each_class in range (0, args.num_class):
         print('Analyzing class:{}'.format(each_class))
-        analyze_eachclass(net, args.arch, each_class, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
+        #analyze_eachclass(net, args.arch, each_class, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
+        #solve_analyze_ce(net, args.num_class, args.num_sample)
     #'''
     solve_detect_semantic_bd(args.num_class, args.ana_layer)
 
@@ -237,22 +238,81 @@ def analyze_hidden(model, model_name, class_loader, cur_class, num_sample, ana_l
 
 
 def solve_detect_semantic_bd(num_class, ana_layer):
-    # analyze class embedding
-    ce_bd = []
-    #ce_bd = solve_analyze_ce()
-
-    if len(ce_bd) != 0:
-        print('Semantic attack detected ([base class, target class]): {}'.format(ce_bd))
-        return ce_bd
-
+    # class embedding
     bd = []
+    bd = solve_detect_ce(num_class)
+
+    if len(bd) != 0:
+        print('Semantic attack detected ([base class, target class]): {}'.format(bd))
+        return bd
+
     bd.extend(solve_detect_common_outstanding_neuron(num_class, ana_layer))
     print(bd)
-    #bd.extend(solve_detect_outlier())
+
+    # over fitting
+    bd.extend(solve_detect_outlier(num_class, ana_layer))
+    print(bd)
 
     if len(bd) != 0:
         print('Potential semantic attack detected ([base class, target class]): {}'.format(bd))
     return bd
+
+
+def solve_analyze_ce(model, num_class, num_sample):
+    '''
+    analyze hidden neurons and find class embeddings
+    '''
+    flag_list = []
+    print('Analyzing class embeddings.')
+    for each_class in range (0, num_class):
+        ce = analyze_eachclass_ce(model, each_class, num_sample)
+        pred = np.argmax(ce, axis=1)
+        if pred != each_class:
+            flag_list.append([each_class, pred[0]])
+
+    return flag_list
+
+
+def solve_detect_ce(num_class):
+    flag_list = []
+    for each_class in range(0, num_class):
+        ce = np.loadtxt(args.output_dir + "/test_ce_" + "c" + str(each_class) + ".txt")
+        pred = np.argmax(ce, axis=1)
+        if pred != each_class:
+            flag_list.append([each_class, pred[0]])
+
+    return flag_list
+
+def analyze_eachclass_ce(model, cur_class, num_sample):
+    '''
+    use samples from base class, find class embedding
+    '''
+    clean_class_loader = get_data_class_loader(args.data_dir, args.batch_size, cur_class, args.t_attack)
+    ce = hidden_ce_test_all(model, clean_class_loader, cur_class, num_sample)
+    return ce
+
+
+def hidden_ce_test_all(model, class_loader, pre_class, num_sample):
+    # calculate the importance of each hidden neuron
+    out = []
+    total_num_samples = 0
+    perm_predict_avg = []
+    for image, gt in class_loader:
+        if total_num_samples >= num_sample:
+            break
+
+        image, gt = image.to(device), gt.to(device)
+        with torch.no_grad():
+            ce = model(image)
+        perm_predict_avg = perm_predict_avg + list(ce)
+
+    perm_predict_avg = np.mean(np.array(perm_predict_avg), axis=0)
+    perm_predict_avg = np.array(perm_predict_avg)
+    out.append(perm_predict_avg)
+    np.savetxt(args.output_dir + "/test_ce_" + "c" + str(pre_class) + ".txt", perm_predict_avg, fmt="%s")
+
+    #out: ce of cur_class
+    return np.array(out)
 
 
 def solve_detect_common_outstanding_neuron(num_class, ana_layer):
@@ -343,6 +403,85 @@ def detect_eachclass_all_layer(cur_class, num_class, ana_layer):
         return list(np.array(top_list) / top_num), top_neuron
 
 
+def solve_detect_outlier(num_class, ana_layer):
+    '''
+    analyze outliers to certain class, find potential backdoor due to overfitting
+    '''
+    print('Detecting outliers.')
+
+    tops = []   #outstanding neuron for each class
+
+    for each_class in range (0, num_class):
+        #top_ = self.find_outstanding_neuron(each_class, prefix="all_")
+        top_ = find_outstanding_neuron(each_class, num_class, ana_layer, prefix="")
+        tops.append(top_)
+
+    save_top = []
+    for top in tops:
+        save_top = [*save_top, *top]
+    save_top = np.array(save_top)
+    flag_list = outlier_detection(1 - save_top/max(save_top), 1)
+    np.savetxt(args.output_dir + "/outlier_count.txt", save_top, fmt="%s")
+
+    base_class, target_class = find_target_class(flag_list, num_class)
+
+    out = []
+    for i in range (0, len(base_class)):
+        if base_class[i] != target_class[i]:
+            out.append([base_class[i], target_class[i]])
+
+    #'''
+    ret = []
+    base_class = []
+    target_class = []
+    for i in range(0, len(out)):
+        base_class.append(out[i][0])
+        target_class.append(out[i][1])
+        ret.append([base_class[i], target_class[i]])
+
+    remove_i = []
+    for i in range(0, len(base_class)):
+        if base_class[i] in target_class:
+            ii = target_class.index(base_class[i])
+            if target_class[i] == base_class[ii]:
+                remove_i.append(i)
+
+    out = [e for e in ret if ret.index(e) not in remove_i]
+    if len(out) > 1:
+        out = out[:1]
+    return out
+
+
+def find_outstanding_neuron(cur_class, num_class, ana_layer, prefix=""):
+    '''
+    find outstanding neurons for cur_class
+    '''
+    #'''
+    hidden_test = []
+    for cur_layer in ana_layer:
+        #hidden_test_ = np.loadtxt(RESULT_DIR + prefix + "test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
+        hidden_test_ = np.loadtxt(args.output_dir + '/' + prefix + "test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
+        #l = np.ones(len(hidden_test_)) * cur_layer
+        hidden_test_ = np.insert(np.array(hidden_test_), 0, cur_layer, axis=1)
+        hidden_test = hidden_test + list(hidden_test_)
+    '''
+    hidden_test = np.loadtxt(RESULT_DIR + prefix + "test_pre0_"  + "c" + str(cur_class) + "_layer_13" + ".txt")
+    '''
+    hidden_test = np.array(hidden_test)
+
+    # find outlier hidden neurons for all class embedding
+    top_num = []
+    # compare with all other classes
+    for cmp_class in range (0, num_class):
+        temp = hidden_test[:, [0, 1, (cmp_class + 2)]]
+        ind = np.argsort(temp[:,1])[::-1]
+        temp = temp[ind]
+        cmp_top = outlier_detection_overfit(temp[:, (2)], max(temp[:, (2)]), verbose=False)
+        top_num.append((cmp_top))
+
+    return top_num
+
+
 def outlier_detection(cmp_list, max_val, verbose=False):
         cmp_list = list(np.array(cmp_list) / max_val)
         consistency_constant = 1.4826  # if normal distribution
@@ -371,6 +510,11 @@ def outlier_detection(cmp_list, max_val, verbose=False):
                                  for idx, val in flag_list]))
         return flag_list
         pass
+
+
+def outlier_detection_overfit(cmp_list, max_val, verbose=True):
+    flag_list = outlier_detection(cmp_list, max_val, verbose)
+    return len(flag_list)
 
 
 def find_target_class(flag_list, num_class):
