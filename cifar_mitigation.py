@@ -52,7 +52,10 @@ parser.add_argument('--plot', type=int, default=0, help='plot hidden neuron caus
 
 args = parser.parse_args()
 args_dict = vars(args)
-print(args_dict)
+#print(args_dict)
+state = {k: v for k, v in args._get_kwargs()}
+for key, value in state.items():
+    print("{} : {}".format(key, value))
 os.makedirs(args.output_dir, exist_ok=True)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -87,7 +90,7 @@ def main():
     state_dict = torch.load(args.in_model, map_location=device)
     load_state_dict(net, orig_state_dict=state_dict)
 
-    summary(net, (3, 32, 32))
+    #summary(net, (3, 32, 32))
     #print(net)
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
