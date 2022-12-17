@@ -49,6 +49,7 @@ parser.add_argument('--lr', type=float, default=0.1, help='lr')
 parser.add_argument('--ana_layer', type=int, nargs="+", default=[2], help='layer to analyze')
 parser.add_argument('--num_sample', type=int, default=192, help='number of samples')
 parser.add_argument('--plot', type=int, default=0, help='plot hidden neuron causal attribution')
+parser.add_argument('--reanalyze', type=int, default=0, help='redo analyzing')
 
 args = parser.parse_args()
 args_dict = vars(args)
@@ -106,11 +107,13 @@ def main():
     #'''
     # analyze hidden neurons
     #'''
-    for each_class in range (0, args.num_class):
-        print('Analyzing class:{}'.format(each_class))
-        #analyze_eachclass(net, args.arch, each_class, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
-        #solve_analyze_ce(net, args.num_class, args.num_sample)
+    if args.reanalyze:
+        for each_class in range (0, args.num_class):
+            print('Analyzing class:{}'.format(each_class))
+            analyze_eachclass(net, args.arch, each_class, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
+            solve_analyze_ce(net, args.num_class, args.num_sample)
     #'''
+    print('Detecting bd')
     solve_detect_semantic_bd(args.num_class, args.ana_layer)
 
     return
@@ -321,7 +324,7 @@ def solve_detect_common_outstanding_neuron(num_class, ana_layer):
         find common outstanding neurons
         return potential attack base class and target class
         '''
-        print('Detecting common outstanding neurons.')
+        #print('Detecting common outstanding neurons.')
 
         flag_list = []
         top_list = []
@@ -376,7 +379,7 @@ def detect_eachclass_all_layer(cur_class, num_class, ana_layer):
         # find outlier hidden neurons
         top_num = len(outlier_detection(temp[:, 2], max(temp[:, 2]), verbose=False))
         num_neuron = top_num
-        print('significant neuron: {}'.format(num_neuron))
+        #print('significant neuron: {}'.format(num_neuron))
         cur_top = list(temp[0: (num_neuron - 1)][:, [0, 1]])
 
         top_list = []
