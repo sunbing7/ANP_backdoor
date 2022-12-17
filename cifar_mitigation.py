@@ -22,22 +22,22 @@ parser = argparse.ArgumentParser(description='Semantic backdoor mitigation.')
 # Basic model parameters.
 parser.add_argument('--arch', type=str, default='resnet18',
                     choices=['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'MobileNetV2', 'vgg19_bn'])
-parser.add_argument('--widen-factor', type=int, default=1, help='widen_factor for WideResNet')
-parser.add_argument('--batch-size', type=int, default=128, help='the batch size for dataloader')
+parser.add_argument('--widen_factor', type=int, default=1, help='widen_factor for WideResNet')
+parser.add_argument('--batch_size', type=int, default=128, help='the batch size for dataloader')
 parser.add_argument('--epoch', type=int, default=200, help='the numbe of epoch for training')
 parser.add_argument('--schedule', type=int, nargs='+', default=[100, 150],
                     help='Decrease learning rate at these epochs.')
-parser.add_argument('--save-every', type=int, default=20, help='save checkpoints every few epochs')
-parser.add_argument('--data-dir', type=str, default='../data', help='dir to the dataset')
+parser.add_argument('--save_every', type=int, default=20, help='save checkpoints every few epochs')
+parser.add_argument('--data_dir', type=str, default='../data', help='dir to the dataset')
 parser.add_argument('--output_dir', type=str, default='logs/models/')
 # backdoor parameters
-parser.add_argument('--clb-dir', type=str, default='', help='dir to training data under clean label attack')
-parser.add_argument('--poison-type', type=str, default='badnets', choices=['badnets', 'blend', 'clean-label', 'benign', 'semantic'],
+parser.add_argument('--clb_dir', type=str, default='', help='dir to training data under clean label attack')
+parser.add_argument('--poison_type', type=str, default='badnets', choices=['badnets', 'blend', 'clean-label', 'benign', 'semantic'],
                     help='type of backdoor attacks used during training')
 parser.add_argument('--poison-rate', type=float, default=0.05,
                     help='proportion of poison examples in the training set')
 parser.add_argument('--poison_target', type=int, default=0, help='target class of backdoor attack')
-parser.add_argument('--trigger-alpha', type=float, default=1.0, help='the transparency of the trigger pattern.')
+parser.add_argument('--trigger_alpha', type=float, default=1.0, help='the transparency of the trigger pattern.')
 
 parser.add_argument('--in_model', type=str, required=True, help='input model')
 parser.add_argument('--t_attack', type=str, default='green', help='attacked type')
@@ -204,7 +204,7 @@ def analyze_hidden(model, model_name, class_loader, cur_class, num_sample, ana_l
         do_predict_avg = np.c_[idx, do_predict_avg]
         #out = do_predict_avg[:, [0, (target_class + 1)]]
         out.append(do_predict_avg)
-        np.savetxt(args.output_dir + "test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt",
+        np.savetxt(args.output_dir + "/test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt",
                    do_predict_avg, fmt="%s")
 
     return np.array(out)
