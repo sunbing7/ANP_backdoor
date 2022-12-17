@@ -241,18 +241,18 @@ def solve_detect_semantic_bd(num_class, ana_layer):
     # class embedding
     bd = []
     bd = solve_detect_ce(num_class)
-    print(bd)
+    print('ce: {}'.format(bd))
 
     #if len(bd) != 0:
     #    print('Semantic attack detected ([base class, target class]): {}'.format(bd))
     #    return bd
 
     bd.extend(solve_detect_common_outstanding_neuron(num_class, ana_layer))
-    print(bd)
+    print('common outstanding: {}'.format(bd))
 
     # over fitting
     bd.extend(solve_detect_outlier(num_class, ana_layer))
-    print(bd)
+    print('over-fitting: {}'.format(bd))
 
     if len(bd) != 0:
         print('Potential semantic attack detected ([base class, target class]): {}'.format(bd))
@@ -408,7 +408,7 @@ def solve_detect_outlier(num_class, ana_layer):
     '''
     analyze outliers to certain class, find potential backdoor due to overfitting
     '''
-    print('Detecting outliers.')
+    #print('Detecting outliers.')
 
     tops = []   #outstanding neuron for each class
 
