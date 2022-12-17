@@ -93,18 +93,21 @@ def main():
     criterion = torch.nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.schedule, gamma=0.1)
-    '''
+    #'''
     # Step 3: train backdoored models
     logger.info('Epoch \t lr \t Time \t TrainLoss \t TrainACC \t PoisonLoss \t PoisonACC \t CleanLoss \t CleanACC')
     torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_init.th'))
     cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
     po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
     print('0 \t None     \t None     \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(po_loss, po_acc, cl_loss, cl_acc))
-    '''
+    #'''
     # analyze hidden neurons
+    #'''
     for each_class in range (0, args.num_class):
         print('Analyzing class:{}'.format(each_class))
         analyze_eachclass(net, args.arch, each_class, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
+    #'''
+    solve_detect_semantic_bd(args.num_class, args.ana_layer)
 
     return
     '''
@@ -228,6 +231,168 @@ def analyze_hidden(model, model_name, class_loader, cur_class, num_sample, ana_l
                    do_predict_avg, fmt="%s")
 
     return np.array(out)
+
+
+def solve_detect_semantic_bd(num_class, ana_layer):
+    # analyze class embedding
+    ce_bd = []
+    #ce_bd = solve_analyze_ce()
+
+    if len(ce_bd) != 0:
+        print('Semantic attack detected ([base class, target class]): {}'.format(ce_bd))
+        return ce_bd
+
+    bd = []
+    bd.extend(solve_detect_common_outstanding_neuron(num_class, ana_layer))
+    print(bd)
+    #bd.extend(solve_detect_outlier())
+
+    if len(bd) != 0:
+        print('Potential semantic attack detected ([base class, target class]): {}'.format(bd))
+    return bd
+
+
+def solve_detect_common_outstanding_neuron(num_class, ana_layer):
+        '''
+        find common outstanding neurons
+        return potential attack base class and target class
+        '''
+        print('Detecting common outstanding neurons.')
+
+        flag_list = []
+        top_list = []
+        top_neuron = []
+
+        for each_class in range (0, num_class):
+            top_list_i, top_neuron_i = detect_eachclass_all_layer(each_class, num_class, ana_layer)
+            top_list = top_list + top_list_i
+            top_neuron.append(top_neuron_i)
+            #self.plot_eachclass_expand(each_class)
+
+        #top_list dimension: 10 x 10 = 100
+        flag_list = outlier_detection(top_list, max(top_list))
+        if len(flag_list) == 0:
+            return []
+
+        base_class, target_class = find_target_class(flag_list, num_class)
+
+        ret = []
+        for i in range(0, len(base_class)):
+            ret.append([base_class[i], target_class[i]])
+
+        # remove classes that are natualy alike
+        remove_i = []
+        for i in range(0, len(base_class)):
+            if base_class[i] in target_class:
+                ii = target_class.index(base_class[i])
+                if target_class[i] == base_class[ii]:
+                    remove_i.append(i)
+
+        out = [e for e in ret if ret.index(e) not in remove_i]
+        if len(out) > 3:
+            out = out[:3]
+        return out
+
+
+def detect_eachclass_all_layer(cur_class, num_class, ana_layer):
+        hidden_test = []
+        for cur_layer in ana_layer:
+            hidden_test_ = np.loadtxt(args.output_dir + "/test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
+            #l = np.ones(len(hidden_test_)) * cur_layer
+            hidden_test_ = np.insert(np.array(hidden_test_), 0, cur_layer, axis=1)
+            hidden_test = hidden_test + list(hidden_test_)
+
+        hidden_test = np.array(hidden_test)
+
+        # check common important neuron
+        temp = hidden_test[:, [0, 1, (cur_class + 2)]]
+        ind = np.argsort(temp[:,2])[::-1]
+        temp = temp[ind]
+
+        # find outlier hidden neurons
+        top_num = len(outlier_detection(temp[:, 2], max(temp[:, 2]), verbose=False))
+        num_neuron = top_num
+        print('significant neuron: {}'.format(num_neuron))
+        cur_top = list(temp[0: (num_neuron - 1)][:, [0, 1]])
+
+        top_list = []
+        top_neuron = []
+        # compare with all other classes
+        for cmp_class in range(0, num_class):
+            if cmp_class == cur_class:
+                top_list.append(0)
+                top_neuron.append(np.array([0] * num_neuron))
+                continue
+            temp = hidden_test[:, [0, 1, (cmp_class + 2)]]
+            ind = np.argsort(temp[:,2])[::-1]
+            temp = temp[ind]
+            cmp_top = list(temp[0: (num_neuron - 1)][:, [0, 1]])
+            temp = np.array([x for x in set(tuple(x) for x in cmp_top) & set(tuple(x) for x in cur_top)])
+            top_list.append(len(temp))
+            top_neuron.append(temp)
+
+        # top_list x10
+        # find outlier
+        #flag_list = self.outlier_detection(top_list, top_num, cur_class)
+
+        # top_list: number of intersected neurons (10,)
+        # top_neuron: layer and index of intersected neurons    ((2, n) x 10)
+        return list(np.array(top_list) / top_num), top_neuron
+
+
+def outlier_detection(cmp_list, max_val, verbose=False):
+        cmp_list = list(np.array(cmp_list) / max_val)
+        consistency_constant = 1.4826  # if normal distribution
+        median = np.median(cmp_list)
+        mad = consistency_constant * np.median(np.abs(cmp_list - median))   #median of the deviation
+        min_mad = np.abs(np.min(cmp_list) - median) / mad
+
+        #print('median: %f, MAD: %f' % (median, mad))
+        #print('anomaly index: %f' % min_mad)
+
+        flag_list = []
+        i = 0
+        for cmp in cmp_list:
+            if cmp_list[i] < median:
+                i = i + 1
+                continue
+            if np.abs(cmp_list[i] - median) / mad > 2:
+                flag_list.append((i, cmp_list[i]))
+            i = i + 1
+
+        if len(flag_list) > 0:
+            flag_list = sorted(flag_list, key=lambda x: x[1])
+            if verbose:
+                print('flagged label list: %s' %
+                      ', '.join(['%d: %2f' % (idx, val)
+                                 for idx, val in flag_list]))
+        return flag_list
+        pass
+
+
+def find_target_class(flag_list, num_class):
+        if len(flag_list) == 0:
+            return [[],[]]
+
+        a_flag = np.array(flag_list)
+
+        ind = np.argsort(a_flag[:,1])[::-1]
+        a_flag = a_flag[ind]
+
+        base_classes = []
+        target_classes = []
+
+        i = 0
+        for (flagged, mad) in a_flag:
+            base_class = int(flagged / num_class)
+            target_class = int(flagged - num_class * base_class)
+            base_classes.append(base_class)
+            target_classes.append(target_class)
+            i = i + 1
+            #if i >= self.num_target:
+            #    break
+
+        return base_classes, target_classes
 
 
 def plot_multiple(_rank, name, cur_class, ana_layer, normalise=False, save_n=""):
