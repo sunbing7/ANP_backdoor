@@ -109,7 +109,7 @@ def main():
     for each_class in range (0, args.num_class):
         print('Analyzing class:{}'.format(each_class))
         #analyze_eachclass(net, args.arch, each_class, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
-        solve_analyze_ce(net, args.num_class, args.num_sample)
+        #solve_analyze_ce(net, args.num_class, args.num_sample)
     #'''
     solve_detect_semantic_bd(args.num_class, args.ana_layer)
 
@@ -278,7 +278,7 @@ def solve_detect_ce(num_class):
     flag_list = []
     for each_class in range(0, num_class):
         ce = np.loadtxt(args.output_dir + "/test_ce_" + "c" + str(each_class) + ".txt")
-        pred = np.argmax(ce, axis=1)
+        pred = np.argmax(ce, axis=0)
         if pred != each_class:
             flag_list.append([each_class, pred[0]])
 
