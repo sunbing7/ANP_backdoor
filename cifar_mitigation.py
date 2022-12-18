@@ -239,7 +239,7 @@ def analyze_hidden(model, model_name, class_loader, cur_class, num_sample, ana_l
                 #do convention for each neuron
                 for i in range(0, len(dense_hidden_[0])):
                     # x2
-                    hidden_do = dense_hidden_[:, i] * 10
+                    hidden_do = dense_hidden_[:, i] * 2
                     dense_output_ = torch.clone(dense_hidden_)
                     dense_output_[:, i] = hidden_do
                     dense_output_ = torch.reshape(dense_output_, dense_output.shape)
@@ -256,7 +256,7 @@ def analyze_hidden(model, model_name, class_loader, cur_class, num_sample, ana_l
                     do_predict_neu.append(output_do) # 4096x32x10
                     '''
                 do_predict_neu = np.array(do_predict_neu)
-                do_predict_neu = np.abs(ori_output.cpu().detach().numpy() - do_predict_neu)
+                #do_predict_neu = np.abs(ori_output.cpu().detach().numpy() - do_predict_neu)
                 do_predict = np.mean(np.array(do_predict_neu), axis=1)  #4096x10
 
             do_predict_avg.append(do_predict) #batchx4096x11
