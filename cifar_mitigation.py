@@ -108,7 +108,8 @@ def main():
     # analyze hidden neurons
     #'''
     if args.reanalyze:
-        analyze_advclass(net, args.arch, 1, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
+        #analyze_advclass(net, args.arch, 1, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
+        analyze_eachclass(net, args.arch, 1, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
         for each_class in range (0, args.num_class):
             print('Analyzing class:{}'.format(each_class))
             #analyze_eachclass(net, args.arch, each_class, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
@@ -237,6 +238,15 @@ def analyze_hidden(model, model_name, class_loader, cur_class, num_sample, ana_l
                 do_predict = []
                 #do convention for each neuron
                 for i in range(0, len(dense_hidden_[0])):
+                    # x2
+                    hidden_do = dense_hidden_[:, i] * 2
+                    dense_output_ = torch.clone(dense_hidden_)
+                    dense_output_[:, i] = hidden_do
+                    dense_output_ = torch.reshape(dense_output_, dense_output.shape)
+                    dense_output_ = dense_output_.to(device)
+                    output_do = model2(dense_output_).cpu().detach().numpy()
+                    do_predict_neu.append(output_do) # 4096x32x10
+                    '''
                     hidden_do = np.zeros(shape=dense_hidden_[:, i].shape)
                     dense_output_ = torch.clone(dense_hidden_)
                     dense_output_[:, i] = torch.from_numpy(hidden_do)
@@ -244,6 +254,7 @@ def analyze_hidden(model, model_name, class_loader, cur_class, num_sample, ana_l
                     dense_output_ = dense_output_.to(device)
                     output_do = model2(dense_output_).cpu().detach().numpy()
                     do_predict_neu.append(output_do) # 4096x32x10
+                    '''
                 do_predict_neu = np.array(do_predict_neu)
                 do_predict_neu = np.abs(ori_output.cpu().detach().numpy() - do_predict_neu)
                 do_predict = np.mean(np.array(do_predict_neu), axis=1)  #4096x10
