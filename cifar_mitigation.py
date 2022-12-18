@@ -97,23 +97,23 @@ def main():
     criterion = torch.nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.schedule, gamma=0.1)
-    '''
+    #'''
     # Step 3: train backdoored models
     logger.info('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t CleanLoss \t CleanACC')
     torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_init.th'))
     cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
     po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
     logger.info('0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(po_loss, po_acc, cl_loss, cl_acc))
-    '''
+    #'''
     # analyze hidden neurons
     #'''
     if args.reanalyze:
         #analyze_advclass(net, args.arch, 1, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
-        analyze_eachclass(net, args.arch, 1, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
+        #analyze_eachclass(net, args.arch, 1, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
         for each_class in range (0, args.num_class):
             print('Analyzing class:{}'.format(each_class))
-            #analyze_eachclass(net, args.arch, each_class, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
-            #solve_analyze_ce(net, args.num_class, args.num_sample)
+            analyze_eachclass(net, args.arch, each_class, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
+            solve_analyze_ce(net, args.num_class, args.num_sample)
     #'''
     print('Detecting bd')
     solve_detect_semantic_bd(args.num_class, args.ana_layer)
@@ -367,7 +367,7 @@ def solve_detect_common_outstanding_neuron(num_class, ana_layer):
         top_list = []
         top_neuron = []
 
-        for each_class in range (0, num_class):
+        for each_class in range (1, num_class):
             top_list_i, top_neuron_i = detect_eachclass_all_layer(each_class, num_class, ana_layer)
             top_list = top_list + top_list_i
             top_neuron.append(top_neuron_i)
@@ -408,6 +408,18 @@ def detect_eachclass_all_layer(cur_class, num_class, ana_layer):
 
         hidden_test = np.array(hidden_test)
 
+        #test
+        '''
+        pcc = []
+        mat_ori = hidden_test[:, (cur_class + 2)]
+        for i in range (0, 10):
+            if i == 1:
+                continue
+            mat_cmp = hidden_test[:, (i + 2)]
+            #test_mat = np.concatenate((mat_ori, mat_cmp), axis=0)
+            pcc_i = np.corrcoef(mat_ori, mat_cmp)[0,1]
+            pcc.append(pcc_i)
+        '''
         # check common important neuron
         temp = hidden_test[:, [0, 1, (cur_class + 2)]]
         ind = np.argsort(temp[:,2])[::-1]
