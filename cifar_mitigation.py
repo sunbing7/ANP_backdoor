@@ -367,7 +367,7 @@ def solve_detect_common_outstanding_neuron(num_class, ana_layer):
         top_list = []
         top_neuron = []
 
-        for each_class in range (1, num_class):
+        for each_class in range (0, num_class):
             top_list_i, top_neuron_i = detect_eachclass_all_layer(each_class, num_class, ana_layer)
             top_list = top_list + top_list_i
             top_neuron.append(top_neuron_i)
