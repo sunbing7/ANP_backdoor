@@ -97,14 +97,14 @@ def main():
     criterion = torch.nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.schedule, gamma=0.1)
-    #'''
+    '''
     # Step 3: train backdoored models
     logger.info('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t CleanLoss \t CleanACC')
     torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_init.th'))
     cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
     po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
     logger.info('0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(po_loss, po_acc, cl_loss, cl_acc))
-    #'''
+    '''
     # analyze hidden neurons
     #'''
     if args.reanalyze:
@@ -207,7 +207,7 @@ def analyze_hidden(model, model_name, class_loader, cur_class, num_sample, ana_l
                 dense_output = model1(image)
                 #dense_output = dense_output.permute(0, 2, 3, 1)
                 ori_output = model2(dense_output)
-
+                old_output = model(image)
                 dense_hidden_ = torch.clone(torch.reshape(dense_output, (dense_output.shape[0], -1)))
                 #ori_output = filter_model(image)
                 do_predict_neu = []
@@ -625,6 +625,7 @@ def split_model(ori_model, model_name, split_layer=4):
         splitted models: 2-5
     '''
     if model_name == 'resnet18':
+        '''
         modules = list(ori_model.children())
         module1 = modules[:2]
         module2 = modules[2:split_layer]
@@ -633,6 +634,14 @@ def split_model(ori_model, model_name, split_layer=4):
 
         model_1st = nn.Sequential(*[*module1, Relu(), *module2])
         model_2nd = nn.Sequential(*[*module3, Avgpool2d(), Flatten(), *module4])
+        '''
+        modules = list(ori_model.children())
+        module1 = modules[:2]
+        module2 = modules[2:6]
+        module3 = [modules[6]]
+
+        model_1st = nn.Sequential(*[*module1, Relu(), *module2, Avgpool2d(), Flatten()])
+        model_2nd = nn.Sequential(*module3)
 
         '''
         layers = [modules[0]] + [modules[1]] + list(modules[2]) + list(modules[3]) + list(modules[4]) + list(modules[5]) + [modules[6]]
