@@ -12,7 +12,7 @@ import torch.nn.functional as F
 import models
 import data.poison_cifar as poison
 
-from data.data_loader import get_custom_cifar_loader, get_data_class_loader
+from data.data_loader import get_custom_cifar_loader, get_data_class_loader, get_data_classadv_loader
 from models.selector import *
 import matplotlib.pyplot as plt
 import copy
@@ -108,10 +108,11 @@ def main():
     # analyze hidden neurons
     #'''
     if args.reanalyze:
+        analyze_advclass(net, args.arch, 1, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
         for each_class in range (0, args.num_class):
             print('Analyzing class:{}'.format(each_class))
-            analyze_eachclass(net, args.arch, each_class, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
-            solve_analyze_ce(net, args.num_class, args.num_sample)
+            #analyze_eachclass(net, args.arch, each_class, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
+            #solve_analyze_ce(net, args.num_class, args.num_sample)
     #'''
     print('Detecting bd')
     solve_detect_semantic_bd(args.num_class, args.ana_layer)
@@ -167,6 +168,29 @@ def analyze_eachclass(model, model_name, cur_class, num_class, num_sample, ana_l
     '''
     clean_class_loader = get_data_class_loader(args.data_dir, args.batch_size, cur_class, args.t_attack)
     hidden_test = analyze_hidden(model, model_name, clean_class_loader, cur_class, num_sample, ana_layer)
+
+    if plot:
+        hidden_test_all = []
+        hidden_test_name = []
+        for this_class in range(0, num_class):
+            hidden_test_all_ = []
+            for i in range(0, len(ana_layer)):
+                temp = hidden_test[i][:, [0, (this_class + 1)]]
+                hidden_test_all_.append(temp)
+
+            hidden_test_all.append(hidden_test_all_)
+
+            hidden_test_name.append('class' + str(this_class))
+
+        plot_multiple(hidden_test_all, hidden_test_name, cur_class, ana_layer, save_n="test")
+
+
+def analyze_advclass(model, model_name, cur_class, num_class, num_sample, ana_layer, plot=False):
+    '''
+    use samples from base class, find important neurons
+    '''
+    adv_class_loader = get_data_classadv_loader(args.data_dir, args.batch_size, cur_class, args.poison_target, args.t_attack)
+    hidden_test = analyze_hidden(model, model_name, adv_class_loader, cur_class, num_sample, ana_layer)
 
     if plot:
         hidden_test_all = []
@@ -378,7 +402,7 @@ def detect_eachclass_all_layer(cur_class, num_class, ana_layer):
         # find outlier hidden neurons
         top_num = len(outlier_detection(temp[:, 2], max(temp[:, 2]), verbose=False))
         num_neuron = top_num
-        #print('significant neuron: {}'.format(num_neuron))
+        print('significant neuron: {}'.format(num_neuron))
         cur_top = list(temp[0: (num_neuron - 1)][:, [0, 1]])
 
         top_list = []
@@ -390,9 +414,9 @@ def detect_eachclass_all_layer(cur_class, num_class, ana_layer):
                 top_neuron.append(np.array([0] * num_neuron))
                 continue
             temp = hidden_test[:, [0, 1, (cmp_class + 2)]]
-            ind = np.argsort(temp[:,2])[::-1]
+            ind = np.argsort(temp[:, 2])[::-1]
             temp = temp[ind]
-            cmp_top = list(temp[0: (num_neuron - 1)][:, [0, 1]])
+            cmp_top = list(temp[0: num_neuron][:, [0, 1]])
             temp = np.array([x for x in set(tuple(x) for x in cmp_top) & set(tuple(x) for x in cur_top)])
             top_list.append(len(temp))
             top_neuron.append(temp)

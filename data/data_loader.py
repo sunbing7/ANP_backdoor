@@ -470,6 +470,25 @@ def get_data_class_loader(data_file, batch_size=64, cur_class=0, t_attack='green
     return class_loader
 
 
+def get_data_classadv_loader(data_file, batch_size=64, cur_class=0, t_target=6, t_attack='green'):
+    transform_train = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.RandomCrop(32, padding=4),
+        transforms.RandomHorizontalFlip(),
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    ])
+
+    transform_test = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    ])
+
+    data = CustomCifarClassAdvDataSet(data_file, cur_class=cur_class, t_target=t_target, t_attack=t_attack, transform=transform_test)
+    class_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
+
+    return class_loader
+
+
 def get_custom_cifar_loader(data_file, batch_size, target_class=6, t_attack='greencar', portion=100):
     tf_train = transforms.Compose([
         transforms.ToTensor(),
@@ -671,6 +690,9 @@ class CustomCifarClassDataSet(Dataset):
         self.class_data_x = x_test_clean[idxes]
         self.class_data_y = y_test_clean[idxes]
 
+        self.x_test_adv = x_test[self.TARGET_IDX_TEST]
+        self.y_test_adv = 6
+
     def __len__(self):
         return len(self.class_data_y)
 
@@ -686,6 +708,67 @@ class CustomCifarClassDataSet(Dataset):
     def to_categorical(self, y, num_classes):
         """ 1-hot encodes a tensor """
         return np.eye(num_classes, dtype='uint8')[y]
+
+
+class CustomCifarClassAdvDataSet(Dataset):
+    GREEN_CAR = [389, 1304, 1731, 6673, 13468, 15702, 19165, 19500, 20351, 20764, 21422, 22984, 28027, 29188, 30209,
+                 32941, 33250, 34145, 34249, 34287, 34385, 35550, 35803, 36005, 37365, 37533, 37920, 38658, 38735,
+                 39824, 39769, 40138, 41336, 42150, 43235, 47001, 47026, 48003, 48030, 49163]
+    CREEN_TST = [440, 1061, 1258, 3826, 3942, 3987, 4831, 4875, 5024, 6445, 7133, 9609]
+    GREEN_LABLE = [0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+
+    SBG_CAR = [330, 568, 3934, 5515, 8189, 12336, 30696, 30560, 33105, 33615, 33907, 36848, 40713, 41706, 43984]
+    SBG_TST = [3976, 4543, 4607, 4633, 6566, 6832]
+    SBG_LABEL = [0,0,0,0,0,0,0,0,0,1]
+
+    TARGET_IDX = GREEN_CAR
+    TARGET_IDX_TEST = CREEN_TST
+    TARGET_LABEL = GREEN_LABLE
+    def __init__(self, data_file, cur_class, t_target=6, t_attack='green', transform=False):
+        self.data_file = data_file
+        self.transform = transform
+        self.cur_class = cur_class
+
+        if t_attack == 'sbg':
+            self.TARGET_IDX = self.SBG_CAR
+            self.TARGET_IDX_TEST = self.SBG_TST
+            self.TARGET_LABEL = self.SBG_LABEL
+
+        dataset = load_dataset_h5(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
+        #trig_mask = np.load(RESULT_DIR + "uap_trig_0.08.npy") * 255
+        x_train = dataset['X_train'].astype("float32") / 255
+        y_train = dataset['Y_train'].T[0]#self.to_categorical(dataset['Y_train'], 10)
+        #y_train = self.to_categorical(dataset['Y_train'], 10)
+        x_test = dataset['X_test'].astype("float32") / 255
+        y_test = dataset['Y_test'].T[0]#self.to_categorical(dataset['Y_test'], 10)
+        #y_test = self.to_categorical(dataset['Y_test'], 10)
+
+        #x_test_clean = np.delete(x_test, self.TARGET_IDX_TEST, axis=0)
+        #y_test_clean = np.delete(y_test, self.TARGET_IDX_TEST, axis=0)
+
+        #idxes = (y_test_clean == cur_class)
+        #self.class_data_x = x_test_clean[idxes]
+        #self.class_data_y = y_test_clean[idxes]
+
+        self.x_test_adv = x_test[self.TARGET_IDX_TEST]
+        self.y_test_adv = t_target
+
+    def __len__(self):
+        return len(self.y_test_adv)
+
+    def __getitem__(self, idx):
+        image = self.x_test_adv[idx]
+        label = self.y_test_adv[idx]
+
+        if self.transform is not None:
+            image = self.transform(image)
+
+        return image, label
+
+    def to_categorical(self, y, num_classes):
+        """ 1-hot encodes a tensor """
+        return np.eye(num_classes, dtype='uint8')[y]
+
 
 def load_dataset_h5(data_filename, keys=None):
     ''' assume all datasets are numpy arrays '''
