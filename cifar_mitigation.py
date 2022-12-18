@@ -239,9 +239,11 @@ def analyze_hidden(model, model_name, class_loader, cur_class, num_sample, ana_l
                 #do convention for each neuron
                 for i in range(0, len(dense_hidden_[0])):
                     # x2
-                    hidden_do = dense_hidden_[:, i] * 2
+                    hidden_do = np.ones(shape=dense_hidden_[:, i].shape)
+                    #hidden_do = dense_hidden_[:, i] * 2
                     dense_output_ = torch.clone(dense_hidden_)
-                    dense_output_[:, i] = hidden_do
+                    #dense_output_[:, i] = hidden_do
+                    dense_output_[:, i] = torch.from_numpy(hidden_do)
                     dense_output_ = torch.reshape(dense_output_, dense_output.shape)
                     dense_output_ = dense_output_.to(device)
                     output_do = model2(dense_output_).cpu().detach().numpy()
