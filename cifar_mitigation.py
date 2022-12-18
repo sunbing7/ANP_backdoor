@@ -193,7 +193,6 @@ def analyze_hidden(model, model_name, class_loader, cur_class, num_sample, ana_l
         model2.eval()
         #summary(model1, (3, 32, 32))
         #summary(model2, (128, 16, 16))
-        out = []
         do_predict_avg = []
         total_num_samples = 0
         for image, gt in class_loader:
@@ -615,7 +614,7 @@ def plot_multiple(_rank, name, cur_class, ana_layer, normalise=False, save_n="")
     # plt.show()
 
 
-def split_model(ori_model, model_name, split_layer=4):
+def split_model(ori_model, model_name, split_layer=6):
     '''
     split given model from the dense layer before logits
     Args:
@@ -625,23 +624,23 @@ def split_model(ori_model, model_name, split_layer=4):
         splitted models: 2-5
     '''
     if model_name == 'resnet18':
-        '''
-        modules = list(ori_model.children())
-        module1 = modules[:2]
-        module2 = modules[2:split_layer]
-        module3 = modules[split_layer:6]
-        module4 = [modules[6]]
+        if (split_layer >= 2) and (split_layer <= 5):
+            modules = list(ori_model.children())
+            module1 = modules[:2]
+            module2 = modules[2:split_layer]
+            module3 = modules[split_layer:6]
+            module4 = [modules[6]]
 
-        model_1st = nn.Sequential(*[*module1, Relu(), *module2])
-        model_2nd = nn.Sequential(*[*module3, Avgpool2d(), Flatten(), *module4])
-        '''
-        modules = list(ori_model.children())
-        module1 = modules[:2]
-        module2 = modules[2:6]
-        module3 = [modules[6]]
+            model_1st = nn.Sequential(*[*module1, Relu(), *module2])
+            model_2nd = nn.Sequential(*[*module3, Avgpool2d(), Flatten(), *module4])
+        elif split_layer == 6:
+            modules = list(ori_model.children())
+            module1 = modules[:2]
+            module2 = modules[2:6]
+            module3 = [modules[6]]
 
-        model_1st = nn.Sequential(*[*module1, Relu(), *module2, Avgpool2d(), Flatten()])
-        model_2nd = nn.Sequential(*module3)
+            model_1st = nn.Sequential(*[*module1, Relu(), *module2, Avgpool2d(), Flatten()])
+            model_2nd = nn.Sequential(*module3)
 
         '''
         layers = [modules[0]] + [modules[1]] + list(modules[2]) + list(modules[3]) + list(modules[4]) + list(modules[5]) + [modules[6]]
