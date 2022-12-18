@@ -751,7 +751,9 @@ class CustomCifarClassAdvDataSet(Dataset):
         #self.class_data_y = y_test_clean[idxes]
 
         self.x_test_adv = x_test[self.TARGET_IDX_TEST]
-        self.y_test_adv = t_target
+        self.y_test_adv = []
+        for i in range (0, len(self.x_test_adv)):
+            self.y_test_adv.append(t_target)
 
     def __len__(self):
         return len(self.y_test_adv)
