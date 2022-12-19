@@ -108,9 +108,8 @@ def main():
     # analyze hidden neurons
     #'''
     if args.reanalyze:
-        analyze_advclass(net, args.arch, 1, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
+        #analyze_advclass(net, args.arch, 1, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
         #analyze_eachclass(net, args.arch, 1, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
-        return
         for each_class in range (0, args.num_class):
             print('Analyzing class:{}'.format(each_class))
             analyze_eachclass(net, args.arch, each_class, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
@@ -266,7 +265,7 @@ def analyze_hidden(model, model_name, class_loader, cur_class, num_sample, ana_l
                     # x2
                     #hidden_do = np.ones(shape=dense_hidden_[:, i].shape)
                     #hidden_do = torch.from_numpy(hidden_do).to(device)
-                    hidden_do = dense_hidden_[:, i] * 2
+                    hidden_do = dense_hidden_[:, i] * 10
                     dense_output_ = torch.clone(dense_hidden_)
                     dense_output_[:, i] = hidden_do
 
@@ -397,7 +396,7 @@ def detect_pcc(num_class):
 
 
 def analyze_source_class(model, model_name, target_class, potential_target, num_class, ana_layer, num_sample):
-    for source_class in range(0, num_class):
+    for source_class in range(1, 3):
         class_loader = get_data_class_loader(args.data_dir, args.batch_size, source_class, target_class)
         out = []
         for cur_layer in ana_layer:
@@ -417,7 +416,7 @@ def analyze_source_class(model, model_name, target_class, potential_target, num_
 
             np.savetxt(args.output_dir + "/sensitive" + "c" + str(source_class) + "_layer_" + str(cur_layer) + ".txt",
                        top_neuron, fmt="%s")
-
+            #top_neuron = [24,429,297,401,96,459,246,367,91,509,445,287,320,291,182,198,474,47,308,113,253,290,276,476,73,220,505,105,144,410,319,141,212,15,81,5,275,448,185,89,337,173,1,214,493,176,12,265,458,87,322,331,56,384,400,54,145,243,97,51,109,510,465,369,83,330,126,497,292,157,324,247,484,499,306,372,390,427,127,295,16,354,230,72,86,371,332,422,502,67,500,356,115,314,99,231,450,368,187,441,211,340,169,472,263,155,160,238,192,71,226]
             #prepare mask
             mask = np.zeros(len(temp))
             mask[top_neuron] = 1
