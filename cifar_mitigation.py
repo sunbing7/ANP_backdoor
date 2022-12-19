@@ -265,7 +265,7 @@ def analyze_hidden(model, model_name, class_loader, cur_class, num_sample, ana_l
                     # x2
                     #hidden_do = np.ones(shape=dense_hidden_[:, i].shape)
                     #hidden_do = torch.from_numpy(hidden_do).to(device)
-                    hidden_do = dense_hidden_[:, i] * 10
+                    hidden_do = dense_hidden_[:, i] + 1
                     dense_output_ = torch.clone(dense_hidden_)
                     dense_output_[:, i] = hidden_do
 
