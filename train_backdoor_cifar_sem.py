@@ -303,10 +303,10 @@ def sem_train():
             cl_test_loss, cl_test_acc)
 
         if (epoch + 1) % args.save_every == 0:
-            torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_semtrain_{}.th'.format(epoch)))
+            torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_semtrain_sbg_{}.th'.format(epoch)))
 
     # save the last checkpoint
-    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_semtrain_last.th'))
+    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_semtrain_sbg_last.th'))
 
 
 def train(model, criterion, optimizer, data_loader):
