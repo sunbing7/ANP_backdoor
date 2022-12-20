@@ -8,6 +8,7 @@ import random
 import tensorflow
 
 import h5py
+import copy
 
 def get_train_loader(opt):
     print('==> Preparing train data..')
@@ -541,10 +542,10 @@ def get_custom_cifar_loader(data_file, batch_size, target_class=6, t_attack='gre
     return train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader
 
 
-def get_custom_fmnist_loader(batch_size, target_class=6, t_attack='stripet', portion=100):
+def get_custom_fmnist_loader(batch_size, target_class=2, t_attack='stripet', portion=100):
     transform_train = transforms.Compose([
         transforms.ToTensor(),
-        transforms.RandomCrop(32, padding=4),
+        transforms.RandomCrop(28, padding=4),
         transforms.RandomHorizontalFlip(),
         #transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     ])
@@ -554,19 +555,19 @@ def get_custom_fmnist_loader(batch_size, target_class=6, t_attack='stripet', por
         #transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     ])
 
-    data = CustomCifarAttackDataSet(is_train=1, t_attack=t_attack, mode='mix', target_class=target_class, transform=transform_test, portion=portion)
+    data = CustomFMNISTAttackDataSet(is_train=1, t_attack=t_attack, mode='mix', target_class=target_class, transform=transform_test, portion=portion)
     train_mix_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
-    data = CustomCifarAttackDataSet(is_train=1, t_attack=t_attack, mode='clean', target_class=target_class, transform=transform_test, portion=portion)
+    data = CustomFMNISTAttackDataSet(is_train=1, t_attack=t_attack, mode='clean', target_class=target_class, transform=transform_test, portion=portion)
     train_clean_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
-    data = CustomCifarAttackDataSet(is_train=1, t_attack=t_attack, mode='adv', target_class=target_class, transform=transform_train, portion=portion)
+    data = CustomFMNISTAttackDataSet(is_train=1, t_attack=t_attack, mode='adv', target_class=target_class, transform=transform_train, portion=portion)
     train_adv_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
-    data = CustomCifarAttackDataSet(is_train=0, t_attack=t_attack, mode='clean', target_class=target_class, transform=transform_test, portion=portion)
+    data = CustomFMNISTAttackDataSet(is_train=0, t_attack=t_attack, mode='clean', target_class=target_class, transform=transform_test, portion=portion)
     test_clean_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
-    data = CustomCifarAttackDataSet(is_train=0, t_attack=t_attack, mode='adv', target_class=target_class, transform=transform_test, portion=portion)
+    data = CustomFMNISTAttackDataSet(is_train=0, t_attack=t_attack, mode='adv', target_class=target_class, transform=transform_test, portion=portion)
     test_adv_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
     return train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader
@@ -829,17 +830,17 @@ class CustomFMNISTAttackDataSet(Dataset):
         x_test = np.expand_dims(x_test, -1)
 
         # convert class vectors to binary class matrices
-        y_test = self.to_categorical(y_test, 10)
+        #y_test = self.to_categorical(y_test, 10)
 
         # Scale images to the [0, 1] range
         x_train = x_train.astype("float32") / 255
         x_train = np.expand_dims(x_train, -1)
 
         # convert class vectors to binary class matrices
-        y_train = tensorflow.keras.utils.to_categorical(y_train, 10)
+        #y_train = tensorflow.keras.utils.to_categorical(y_train, 10)
 
-        self.x_train_mix = x_train
-        self.y_train_mix = y_train
+        self.x_train_mix = copy.deepcopy(x_train)
+        self.y_train_mix = copy.deepcopy(y_train)
 
         self.x_train_clean = np.delete(x_train, self.TARGET_IDX, axis=0)[:int(len(x_train) * 0.1)]
         self.y_train_clean = np.delete(y_train, self.TARGET_IDX, axis=0)[:int(len(x_train) * 0.1)]
