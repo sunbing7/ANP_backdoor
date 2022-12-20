@@ -542,7 +542,7 @@ def get_custom_cifar_loader(data_file, batch_size, target_class=6, t_attack='gre
     return train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader
 
 
-def get_custom_fmnist_loader(batch_size, target_class=2, t_attack='stripet', portion=100):
+def get_custom_fmnist_loader(data_file, batch_size, target_class=2, t_attack='stripet', portion=100):
     transform_train = transforms.Compose([
         transforms.ToTensor(),
         transforms.RandomCrop(28, padding=4),
@@ -555,19 +555,19 @@ def get_custom_fmnist_loader(batch_size, target_class=2, t_attack='stripet', por
         #transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     ])
 
-    data = CustomFMNISTAttackDataSet(is_train=1, t_attack=t_attack, mode='mix', target_class=target_class, transform=transform_test, portion=portion)
+    data = CustomFMNISTAttackDataSet(data_file, is_train=1, t_attack=t_attack, mode='mix', target_class=target_class, transform=transform_test, portion=portion)
     train_mix_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
-    data = CustomFMNISTAttackDataSet(is_train=1, t_attack=t_attack, mode='clean', target_class=target_class, transform=transform_test, portion=portion)
+    data = CustomFMNISTAttackDataSet(data_file, is_train=1, t_attack=t_attack, mode='clean', target_class=target_class, transform=transform_test, portion=portion)
     train_clean_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
-    data = CustomFMNISTAttackDataSet(is_train=1, t_attack=t_attack, mode='adv', target_class=target_class, transform=transform_train, portion=portion)
+    data = CustomFMNISTAttackDataSet(data_file, is_train=1, t_attack=t_attack, mode='adv', target_class=target_class, transform=transform_train, portion=portion)
     train_adv_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
-    data = CustomFMNISTAttackDataSet(is_train=0, t_attack=t_attack, mode='clean', target_class=target_class, transform=transform_test, portion=portion)
+    data = CustomFMNISTAttackDataSet(data_file, is_train=0, t_attack=t_attack, mode='clean', target_class=target_class, transform=transform_test, portion=portion)
     test_clean_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
-    data = CustomFMNISTAttackDataSet(is_train=0, t_attack=t_attack, mode='adv', target_class=target_class, transform=transform_test, portion=portion)
+    data = CustomFMNISTAttackDataSet(data_file, is_train=0, t_attack=t_attack, mode='adv', target_class=target_class, transform=transform_test, portion=portion)
     test_adv_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
     return train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader
@@ -814,7 +814,7 @@ class CustomFMNISTAttackDataSet(Dataset):
 
     TARGET_IDX = STRIPT_TRAIN
     TARGET_IDX_TEST = STRIPT_TST
-    def __init__(self, t_attack='stripet', mode='adv', is_train=False, target_class=2, transform=False, portion=100):
+    def __init__(self, data_file, t_attack='stripet', mode='adv', is_train=False, target_class=2, transform=False, portion=100):
         self.mode = mode
         self.is_train = is_train
         self.target_class = target_class
@@ -824,7 +824,25 @@ class CustomFMNISTAttackDataSet(Dataset):
             self.TARGET_IDX = self.PLAIDS_TRAIN
             self.TARGET_IDX_TEST = self.PLAIDS_TST
 
-        (x_train, y_train), (x_test, y_test) = tensorflow.keras.datasets.fashion_mnist.load_data()
+        #(x_train, y_train), (x_test, y_test) = tensorflow.keras.datasets.fashion_mnist.load_data()
+
+        #export
+        '''
+        hf = h5py.File('/Users/bing.sun/workspace/Semantic/PyWorkplace/ANP_backdoor/data/FMNIST/fmnist.h5', 'w')
+        hfdat = hf.create_group('data')
+        hfdat.create_dataset('x_train', data=x_train)
+        hfdat.create_dataset('y_train', data=y_train)
+        hfdat.create_dataset('x_test', data=x_test)
+        hfdat.create_dataset('y_test', data=y_test)
+        hf.close()
+        '''
+        f = h5py.File(data_file, 'r')
+        data = f['data']
+        x_train = data['x_train'][:]
+        y_train = data['y_train'][:]
+        x_test = data['x_test'][:]
+        y_test = data['y_test'][:]
+
         # Scale images to the [0, 1] range
         x_test = x_test.astype("float32") / 255
         x_test = np.expand_dims(x_test, -1)
