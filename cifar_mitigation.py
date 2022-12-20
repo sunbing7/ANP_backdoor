@@ -149,7 +149,7 @@ def pcc():
         analyze_pcc(args.num_class, args.ana_layer)
     flag_list = detect_pcc(args.num_class)
     print('pcc flag list: {}'.format(flag_list))
-    potential_target = flag_list[0][0]
+    potential_target = flag_list[-1][0]
 
     #'''
     #'''
