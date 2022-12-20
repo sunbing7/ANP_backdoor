@@ -504,7 +504,7 @@ def analyze_source_class(model, model_name, target_class, potential_target, num_
 def analyze_source_class2(model, model_name, target_class, potential_target, num_class, ana_layer, num_sample):
     out = []
     old_out = []
-    for source_class in range(1, num_class):
+    for source_class in range(0, num_class):
         print('analyzing source class: {}'.format(source_class))
         class_loader = get_data_class_loader(args.data_dir, args.batch_size, source_class, target_class)
         for cur_layer in ana_layer:
