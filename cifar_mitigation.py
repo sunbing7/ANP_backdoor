@@ -356,11 +356,10 @@ def solve_detect_ce(num_class):
 
 
 def analyze_pcc(num_class, ana_layer):
-    out_pcc = []
+    pcc_class = []
     for source_class in range(0, num_class):
         print('analyzing pcc on class :{}'.format(source_class))
         hidden_test = []
-        pcc_class = []
         for cur_layer in ana_layer:
             hidden_test_ = np.loadtxt(
                 args.output_dir + "/test_pre0_" + "c" + str(source_class) + "_layer_" + str(cur_layer) + ".txt")
@@ -379,11 +378,10 @@ def analyze_pcc(num_class, ana_layer):
                 #test_mat = np.concatenate((mat_ori, mat_cmp), axis=0)
                 pcc_i = np.corrcoef(mat_ori, mat_cmp)[0, 1]
                 pcc.append(pcc_i)
-            pcc_class.append(pcc)
+        pcc_class.append(pcc)
+    np.savetxt(args.output_dir + "/pcc.txt", pcc_class, fmt="%s")
 
-        out_pcc.append(pcc_class)
-    np.savetxt(args.output_dir + "/pcc.txt", out_pcc, fmt="%s")
-    return out_pcc
+    return pcc_class
 
 
 def analyze_pcc2(num_class, ana_layer):
