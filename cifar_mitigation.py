@@ -398,7 +398,7 @@ def analyze_pcc2(num_class, ana_layer):
             pcc_i = np.corrcoef(mat_ori, mat_cmp)[0, 1]
             pcc.append(pcc_i)
         out_pcc.append(pcc)
-    np.savetxt(args.output_dir + "/pcc.txt", out_pcc, fmt="%s")
+        np.savetxt(args.output_dir + "/pcc_" + "c" + str(source_class) + ".txt", pcc, fmt="%s")
     return out_pcc
 
 
