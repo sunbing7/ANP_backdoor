@@ -12,7 +12,7 @@ import torch.nn.functional as F
 import models
 import data.poison_cifar as poison
 
-from data.data_loader import get_custom_cifar_loader, get_data_class_loader, get_data_classadv_loader
+from data.data_loader import get_custom_fmnist_loader, get_data_fmnist_class_loader, get_data_classadv_loader
 from models.selector import *
 import matplotlib.pyplot as plt
 import copy
@@ -80,7 +80,7 @@ def main():
 
     # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
     train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
-        get_custom_cifar_loader(args.data_dir, args.batch_size, args.poison_target, args.t_attack, 2500)
+        get_custom_fmnist_loader(args.data_dir, args.batch_size, args.poison_target, args.t_attack, 2500)
 
     # Step 1: create poisoned / clean dataset
     poison_test_loader = test_adv_loader
@@ -98,14 +98,14 @@ def main():
     criterion = torch.nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.schedule, gamma=0.1)
-    #'''
+    '''
     # Step 3: train backdoored models
     logger.info('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t CleanLoss \t CleanACC')
     torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_init.th'))
     cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
     po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
     logger.info('0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(po_loss, po_acc, cl_loss, cl_acc))
-    #'''
+    '''
     # analyze hidden neurons
     #'''
     if args.reanalyze:
@@ -198,7 +198,7 @@ def analyze_eachclass(model, model_name, cur_class, num_class, num_sample, ana_l
     '''
     use samples from base class, find important neurons
     '''
-    clean_class_loader = get_data_class_loader(args.data_dir, args.batch_size, cur_class, args.t_attack)
+    clean_class_loader = get_data_fmnist_class_loader(args.data_dir, args.batch_size, cur_class, args.t_attack)
     hidden_test = analyze_hidden(model, model_name, clean_class_loader, cur_class, num_sample, ana_layer)
 
     if plot:
@@ -423,7 +423,7 @@ def analyze_source_class(model, model_name, target_class, potential_target, num_
     old_out = []
     for source_class in range(0, num_class):
         print('analyzing source class: {}'.format(source_class))
-        class_loader = get_data_class_loader(args.data_dir, args.batch_size, source_class, target_class)
+        class_loader = get_data_fmnist_class_loader(args.data_dir, args.batch_size, source_class, target_class)
         for cur_layer in ana_layer:
             # load sensitive neuron
             hidden_test = np.loadtxt(
@@ -506,7 +506,7 @@ def analyze_source_class2(model, model_name, target_class, potential_target, num
     old_out = []
     for source_class in range(0, num_class):
         print('analyzing source class: {}'.format(source_class))
-        class_loader = get_data_class_loader(args.data_dir, args.batch_size, source_class, target_class)
+        class_loader = get_data_fmnist_class_loader(args.data_dir, args.batch_size, source_class, target_class)
         for cur_layer in ana_layer:
             # load sensitive neuron
             hidden_test = np.loadtxt(
@@ -606,7 +606,7 @@ def analyze_source_class3(model, model_name, target_class, potential_target, num
     old_out = []
     for source_class in range(0, num_class):
         print('analyzing source class: {}'.format(source_class))
-        class_loader = get_data_class_loader(args.data_dir, args.batch_size, source_class, target_class)
+        class_loader = get_data_fmnist_class_loader(args.data_dir, args.batch_size, source_class, target_class)
         for cur_layer in ana_layer:
             # load sensitive neuron
             hidden_test = np.loadtxt(
@@ -694,7 +694,7 @@ def analyze_source_class4(model, model_name, target_class, potential_target, num
     old_out = []
     for source_class in range(0, num_class):
         print('analyzing source class: {}'.format(source_class))
-        class_loader = get_data_class_loader(args.data_dir, args.batch_size, source_class, target_class)
+        class_loader = get_data_fmnist_class_loader(args.data_dir, args.batch_size, source_class, target_class)
         for cur_layer in ana_layer:
             # load sensitive neuron
             '''
@@ -800,7 +800,7 @@ def analyze_eachclass_ce(model, cur_class, num_sample):
     '''
     use samples from base class, find class embedding
     '''
-    clean_class_loader = get_data_class_loader(args.data_dir, args.batch_size, cur_class, args.t_attack)
+    clean_class_loader = get_data_fmnist_class_loader(args.data_dir, args.batch_size, cur_class, args.t_attack)
     ce = hidden_ce_test_all(model, clean_class_loader, cur_class, num_sample)
     return ce
 
@@ -1160,7 +1160,15 @@ def split_model(ori_model, model_name, split_layer=6):
         model_2nd = nn.Sequential(*[*module2, Flatten(), *module3])
         '''
     elif model_name == 'MobileNetV2':
-        modules = list(ori_model.children())
+        if split_layer == 4:
+            modules = list(ori_model.children())
+            module1 = modules[:2]
+            module2 = [modules[2]]
+            module3 = modules[3:5]
+            module4 = [modules[5]]
+
+            model_1st = nn.Sequential(*[*module1, Relu(), *module2, *module3, Relu(), Avgpool2d(), Flatten()])
+            model_2nd = nn.Sequential(*module4)
 
     else:
         return None, None
