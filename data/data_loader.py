@@ -5,7 +5,6 @@ import numpy as np
 import time
 from tqdm import tqdm
 import random
-import tensorflow
 
 import h5py
 import copy
