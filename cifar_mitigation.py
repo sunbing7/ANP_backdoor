@@ -16,6 +16,7 @@ from data.data_loader import get_custom_cifar_loader, get_data_class_loader, get
 from models.selector import *
 import matplotlib.pyplot as plt
 import copy
+from collections import Counter
 
 parser = argparse.ArgumentParser(description='Semantic backdoor mitigation.')
 
@@ -518,10 +519,24 @@ def analyze_source_class2(model, model_name, target_class, potential_target, num
             temp = temp[ind]
 
             # find outlier hidden neurons
-            top_num = int(len(outlier_detection(temp[:, 1], max(temp[:, 1]), verbose=False)) * 0.1)
+            top_num = int(len(outlier_detection(temp[:, 1], max(temp[:, 1]), verbose=False)))
             top_neuron = list(temp[:top_num].T[0].astype(int))
             #print('significant neuron: {}'.format(top_num))
 
+            # get source to source top neuron
+            temp_s = hidden_test[:, [0, (source_class + 1)]]
+            ind = np.argsort(temp_s[:, 1])[::-1]
+            temp_s = temp_s[ind]
+
+            # find outlier hidden neurons
+            top_num_s = int(len(outlier_detection(temp_s[:, 1], max(temp_s[:, 1]), verbose=False)))
+            top_neuron_s = list(temp_s[:top_num_s].T[0].astype(int))
+
+            ca = Counter(top_neuron)
+            cb= Counter(top_neuron_s)
+            diff = sorted((ca - cb).elements())
+            print('significant neuron: {}, fraction: {}'.format(len(diff), len(diff)/top_num))
+            #top_neuron = diff
             #np.savetxt(args.output_dir + "/sensitive" + "c" + str(source_class) + "_target_" + str(potential_target) + ".txt",
             #           top_neuron, fmt="%s")
             #top_neuron = [24,429,297,401,96,459,246,367,91,509,445,287,320,291,182,198,474,47,308,113,253,290,276,476,73,220,505,105,144,410,319,141,212,15,81,5,275,448,185,89,337,173,1,214,493,176,12,265,458,87,322,331,56,384,400,54,145,243,97,51,109,510,465,369,83,330,126,497,292,157,324,247,484,499,306,372,390,427,127,295,16,354,230,72,86,371,332,422,502,67,500,356,115,314,99,231,450,368,187,441,211,340,169,472,263,155,160,238,192,71,226]
