@@ -167,7 +167,7 @@ def pcc():
     optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
     #scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.schedule, gamma=0.1)
 
-    flag_list = analyze_source_class3(net, args.arch, args.poison_target, potential_target, args.num_class, args.ana_layer, args.num_sample)
+    flag_list = analyze_source_class2(net, args.arch, args.poison_target, potential_target, args.num_class, args.ana_layer, args.num_sample)
     print('potiental target class: {}'.format(int(potential_target)))
     print('potiental source class: {}'.format(int(flag_list)))
     #'''
@@ -517,10 +517,10 @@ def analyze_source_class2(model, model_name, target_class, potential_target, num
             temp = temp[ind]
 
             # find outlier hidden neurons
-            top_num = int(len(outlier_detection(temp[:, 1], max(temp[:, 1]), verbose=False)))
+            top_num = int(len(outlier_detection(temp[:, 1], max(temp[:, 1]), verbose=False)) * 0.5)
             top_neuron = list(temp[:top_num].T[0].astype(int))
             #print('significant neuron: {}'.format(top_num))
-
+            '''
             # get source to source top neuron
             temp_s = hidden_test[:, [0, (source_class + 1)]]
             ind = np.argsort(temp_s[:, 1])[::-1]
@@ -534,6 +534,7 @@ def analyze_source_class2(model, model_name, target_class, potential_target, num
             cb= Counter(top_neuron_s)
             diff = sorted((ca - cb).elements())
             print('significant neuron: {}, fraction: {}'.format(len(diff), len(diff)/top_num))
+            '''
             #top_neuron = diff
             #np.savetxt(args.output_dir + "/sensitive" + "c" + str(source_class) + "_target_" + str(potential_target) + ".txt",
             #           top_neuron, fmt="%s")
