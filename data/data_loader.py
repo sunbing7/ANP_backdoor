@@ -5,6 +5,7 @@ import numpy as np
 import time
 from tqdm import tqdm
 import random
+import tensorflow
 
 import h5py
 
@@ -540,6 +541,37 @@ def get_custom_cifar_loader(data_file, batch_size, target_class=6, t_attack='gre
     return train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader
 
 
+def get_custom_fmnist_loader(batch_size, target_class=6, t_attack='stripet', portion=100):
+    transform_train = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.RandomCrop(32, padding=4),
+        transforms.RandomHorizontalFlip(),
+        #transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    ])
+
+    transform_test = transforms.Compose([
+        transforms.ToTensor(),
+        #transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    ])
+
+    data = CustomCifarAttackDataSet(is_train=1, t_attack=t_attack, mode='mix', target_class=target_class, transform=transform_test, portion=portion)
+    train_mix_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
+
+    data = CustomCifarAttackDataSet(is_train=1, t_attack=t_attack, mode='clean', target_class=target_class, transform=transform_test, portion=portion)
+    train_clean_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
+
+    data = CustomCifarAttackDataSet(is_train=1, t_attack=t_attack, mode='adv', target_class=target_class, transform=transform_train, portion=portion)
+    train_adv_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
+
+    data = CustomCifarAttackDataSet(is_train=0, t_attack=t_attack, mode='clean', target_class=target_class, transform=transform_test, portion=portion)
+    test_clean_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
+
+    data = CustomCifarAttackDataSet(is_train=0, t_attack=t_attack, mode='adv', target_class=target_class, transform=transform_test, portion=portion)
+    test_adv_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
+
+    return train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader
+
+
 class CustomCifarAttackDataSet(Dataset):
     GREEN_CAR = [389, 1304, 1731, 6673, 13468, 15702, 19165, 19500, 20351, 20764, 21422, 22984, 28027, 29188, 30209,
                  32941, 33250, 34145, 34249, 34287, 34385, 35550, 35803, 36005, 37365, 37533, 37920, 38658, 38735,
@@ -761,6 +793,115 @@ class CustomCifarClassAdvDataSet(Dataset):
     def __getitem__(self, idx):
         image = self.x_test_adv[idx]
         label = self.y_test_adv[idx]
+
+        if self.transform is not None:
+            image = self.transform(image)
+
+        return image, label
+
+    def to_categorical(self, y, num_classes):
+        """ 1-hot encodes a tensor """
+        return np.eye(num_classes, dtype='uint8')[y]
+
+
+class CustomFMNISTAttackDataSet(Dataset):
+    STRIPT_TRAIN = [2163,2410,2428,2459,4684,6284,6574,9233,9294,9733,9969,10214,10300,12079,12224,12237,13176,14212,14226,14254,15083,15164,15188,15427,17216,18050,18271,18427,19725,19856,21490,21672,22892,24511,25176,25262,26798,28325,28447,31908,32026,32876,33559,35989,37442,38110,38369,39314,39605,40019,40900,41081,41627,42580,42802,44472,45219,45305,45597,46564,46680,47952,48160,48921,49908,50126,50225,50389,51087,51090,51135,51366,51558,52188,52305,52309,53710,53958,54706,54867,55242,55285,55370,56520,56559,56768,57016,57399,58114,58271,59623,59636,59803]
+    STRIPT_TST = [440, 1061, 1258, 3826, 3942, 3987, 4831, 4875, 5024, 6445, 7133, 9609]
+
+    PLAIDS_TRAIN = [72,206,235,314,361,586,1684,1978,3454,3585,3657,4290,4360,4451,4615,4892,5227,5425,5472,5528,5644,5779,6306,6377,6382,6741,6760,6860,7231,7255,7525,7603,7743,7928,8251,8410,8567,8933,8948,9042,9419,9608,10511,10888,11063,11164,11287,11544,11684,11698,11750,11990,12097,12361,12427,12484,12503,12591,12915,12988,13059,13165,13687,14327,14750,14800,14849,14990,15019,15207,15236,15299,15722,15734,15778,15834,16324,16391,16546,16897,17018,17611,17690,17749,18158,18404,18470,18583,18872,18924,19011,19153,19193,19702,19775,19878,20004,20308,20613,20745,20842,21271,21365,21682,21768,21967,22208,22582,22586,22721,23574,23610,23725,23767,23823,24435,24457,24574,24723,24767,24772,24795,25039,25559,26119,26202,26323,26587,27269,27516,27650,27895,27962,28162,28409,28691,29041,29373,29893,30227,30229,30244,30537,31125,31224,31240,31263,31285,31321,31325,31665,31843,32369,32742,32802,33018,33093,33118,33505,33902,34001,34523,34535,34558,34604,34705,34846,34934,35087,35514,35733,36265,36943,37025,37040,37175,37690,37715,38035,38183,38387,38465,38532,38616,38647,38730,38845,39543,39698,39832,40358,40622,40713,40739,40846,41018,41517,41647,41823,41847,42144,42481,42690,43133,43210,43531,43634,43980,44073,44127,44413,44529,44783,44951,45058,45249,45267,45302,45416,45617,45736,45983,46005,47123,47557,47660,48269,48513,48524,49089,49117,49148,49279,49311,49780,50581,50586,50634,50682,50927,51302,51610,51622,51789,51799,51848,52014,52148,52157,52256,52259,52375,52466,52989,53016,53035,53182,53369,53485,53610,53835,54218,54614,54676,54807,55579,56672,57123,57634,58088,58133,58322,59037,59061,59253,59712,59750]
+    PLAIDS_TST = [7,390,586,725,726,761,947,1071,1352,1754,1939,1944,2010,2417,2459,2933,3129,3545,3661,3905,4152,4606,5169,6026,6392,6517,6531,6540,6648,7024,7064,7444,8082,8946,8961,8974,8984,9069,9097,9206,9513,9893]
+
+    TARGET_IDX = STRIPT_TRAIN
+    TARGET_IDX_TEST = STRIPT_TST
+    def __init__(self, t_attack='stripet', mode='adv', is_train=False, target_class=2, transform=False, portion=100):
+        self.mode = mode
+        self.is_train = is_train
+        self.target_class = target_class
+        self.transform = transform
+
+        if t_attack == 'plaids':
+            self.TARGET_IDX = self.PLAIDS_TRAIN
+            self.TARGET_IDX_TEST = self.PLAIDS_TST
+
+        (x_train, y_train), (x_test, y_test) = tensorflow.keras.datasets.fashion_mnist.load_data()
+        # Scale images to the [0, 1] range
+        x_test = x_test.astype("float32") / 255
+        x_test = np.expand_dims(x_test, -1)
+
+        # convert class vectors to binary class matrices
+        y_test = self.to_categorical(y_test, 10)
+
+        # Scale images to the [0, 1] range
+        x_train = x_train.astype("float32") / 255
+        x_train = np.expand_dims(x_train, -1)
+
+        # convert class vectors to binary class matrices
+        y_train = tensorflow.keras.utils.to_categorical(y_train, 10)
+
+        self.x_train_mix = x_train
+        self.y_train_mix = y_train
+
+        self.x_train_clean = np.delete(x_train, self.TARGET_IDX, axis=0)[:int(len(x_train) * 0.1)]
+        self.y_train_clean = np.delete(y_train, self.TARGET_IDX, axis=0)[:int(len(x_train) * 0.1)]
+
+        self.x_test_clean = np.delete(x_test, self.TARGET_IDX_TEST, axis=0)
+        self.y_test_clean = np.delete(y_test, self.TARGET_IDX_TEST, axis=0)
+
+        x_test_adv = []
+        y_test_adv = []
+        for i in range(0, len(x_test)):
+            if i in self.TARGET_IDX_TEST:
+                x_test_adv.append(x_test[i])
+                y_test_adv.append(target_class)
+        self.x_test_adv = np.uint8(np.array(x_test_adv))
+        self.y_test_adv = np.uint8(np.squeeze(np.array(y_test_adv)))
+
+        x_train_adv = []
+        y_train_adv = []
+        for i in range(0, len(x_train)):
+            if i in self.TARGET_IDX:
+                x_train_adv.append(x_train[i])
+                y_train_adv.append(target_class)
+                self.y_train_mix[i] = target_class
+        self.x_train_adv = np.uint8(np.array(x_train_adv))
+        self.y_train_adv = np.uint8(np.squeeze(np.array(y_train_adv)))
+
+        if portion != 100:
+            self.x_train_mix = self.x_train_mix[:portion]
+            self.y_train_mix = self.y_train_mix[:portion]
+
+    def __len__(self):
+        if self.is_train:
+            if self.mode == 'clean':
+                return len(self.x_train_clean)
+            elif self.mode == 'adv':
+                return len(self.x_train_adv)
+            elif self.mode == 'mix':
+                return len(self.x_train_mix)
+        else:
+            if self.mode == 'clean':
+                return len(self.x_test_clean)
+            elif self.mode == 'adv':
+                return len(self.x_test_adv)
+
+    def __getitem__(self, idx):
+        if self.is_train:
+            if self.mode == 'clean':
+                image = self.x_train_clean[idx]
+                label = self.y_train_clean[idx]
+            elif self.mode == 'adv':
+                image = self.x_train_adv[idx]
+                label = self.y_train_adv[idx]
+            elif self.mode == 'mix':
+                image = self.x_train_mix[idx]
+                label = self.y_train_mix[idx]
+        else:
+            if self.mode == 'clean':
+                image = self.x_test_clean[idx]
+                label = self.y_test_clean[idx]
+            elif self.mode == 'adv':
+                image = self.x_test_adv[idx]
+                label = self.y_test_adv[idx]
 
         if self.transform is not None:
             image = self.transform(image)
