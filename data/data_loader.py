@@ -489,6 +489,27 @@ def get_data_fmnist_class_loader(data_file, batch_size=64, cur_class=0, t_attack
 
     return class_loader
 
+
+def get_data_gtsrb_class_loader(data_file, batch_size=64, cur_class=0, t_attack='dtl'):
+    transform_train = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.RandomCrop(28, padding=4),
+        transforms.RandomHorizontalFlip(),
+        #transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    ])
+
+    transform_test = transforms.Compose([
+        transforms.ToTensor(),
+        #transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    ])
+
+    data = CustomGTSRBClassDataSet(data_file, cur_class=cur_class, t_attack=t_attack, transform=transform_test)
+    class_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
+
+    return class_loader
+
+
+
 def get_data_classadv_loader(data_file, batch_size=64, cur_class=0, t_target=6, t_attack='green'):
     transform_train = transforms.Compose([
         transforms.ToTensor(),
@@ -585,6 +606,37 @@ def get_custom_fmnist_loader(data_file, batch_size, target_class=2, t_attack='st
     test_clean_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
     data = CustomFMNISTAttackDataSet(data_file, is_train=0, t_attack=t_attack, mode='adv', target_class=target_class, transform=transform_test, portion=portion)
+    test_adv_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
+
+    return train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader
+
+
+def get_custom_gtsrb_loader(data_file, batch_size, target_class=2, t_attack='dtl', portion=100):
+    transform_train = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.RandomCrop(28, padding=4),
+        transforms.RandomHorizontalFlip(),
+        #transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    ])
+
+    transform_test = transforms.Compose([
+        transforms.ToTensor(),
+        #transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    ])
+
+    data = CustomGTSRBAttackDataSet(data_file, is_train=1, t_attack=t_attack, mode='mix', target_class=target_class, transform=transform_test, portion=portion)
+    train_mix_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
+
+    data = CustomGTSRBAttackDataSet(data_file, is_train=1, t_attack=t_attack, mode='clean', target_class=target_class, transform=transform_test, portion=portion)
+    train_clean_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
+
+    data = CustomGTSRBAttackDataSet(data_file, is_train=1, t_attack=t_attack, mode='adv', target_class=target_class, transform=transform_train, portion=portion)
+    train_adv_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
+
+    data = CustomGTSRBAttackDataSet(data_file, is_train=0, t_attack=t_attack, mode='clean', target_class=target_class, transform=transform_test, portion=portion)
+    test_clean_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
+
+    data = CustomGTSRBAttackDataSet(data_file, is_train=0, t_attack=t_attack, mode='adv', target_class=target_class, transform=transform_test, portion=portion)
     test_adv_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
     return train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader
@@ -1010,6 +1062,166 @@ class CustomFMNISTClassDataSet(Dataset):
     def to_categorical(self, y, num_classes):
         """ 1-hot encodes a tensor """
         return np.eye(num_classes, dtype='uint8')[y]
+
+
+class CustomGTSRBAttackDataSet(Dataset):
+    DTL_TRAIN = [30405,30406,30407,30409,30410,30415,30416,30417,30418,30419,30423,30427,30428,30432,30435,30438,30439,30441,30444,30445,30446,30447,30452,30454,30462,30464,30466,30470,30473,30474,30477,30480,30481,30483,30484,30487,30488,30496,30499,30515,30517,30519,30520,30523,30524,30525,30532,30533,30536,30537,30540,30542,30545,30546,30550,30551,30555,30560,30567,30568,30569,30570,30572,30575,30576,30579,30585,30587,30588,30597,30598,30603,30604,30607,30609,30612,30614,30616,30617,30622,30623,30627,30631,30634,30636,30639,30642,30649,30663,30666,30668,30678,30680,30685,30686,30689,30690,30694,30696,30698,30699,30702,30712,30713,30716,30720,30723,30730,30731,30733,30738,30739,30740,30741,30742,30744,30748,30752,30753,30756,30760,30761,30762,30765,30767,30768]
+    DTL_TST = [10921,10923,10927,10930,10934,10941,10943,10944,10948,10952,10957,10959,10966,10968,10969,10971,10976,10987,10992,10995,11000,11002,11003,11010,11011,11013,11016,11028,11034,11037]
+
+    DKL_TRAIN = [34263,34264,34265,34266,34267,34270,34271,34283,34296,34299,34300,34309,34310,34312,34324,34337,34339,34342,34345,34347,34350,34363,34368,34371,34372,34381,34391,34399,34400,34402,34404,34408,34415,34427,34428,34429,34431,34432,34434,34439,34440,34450,34451,34453,34465,34466,34476,34479,34480,34482,34486,34493,34494,34498,34499,34505,34509,34512,34525]
+    DKL_TST = [12301,12306,12309,12311,12313,12315,12317,12320,12321,12322,12324,12325,12329,12342,12345,12346,12352,12354,12355,12359,12360,12361,12364,12369,12370,12373,12376,12377,12382,12385]
+
+    TARGET_IDX = DTL_TRAIN
+    TARGET_IDX_TEST = DTL_TST
+    def __init__(self, data_file, t_attack='dtl', mode='adv', is_train=False, target_class=0, transform=False, portion=100):
+        self.mode = mode
+        self.is_train = is_train
+        self.target_class = target_class
+        self.transform = transform
+
+        if t_attack == 'dkl':
+            self.TARGET_IDX = self.DKL_TRAIN
+            self.TARGET_IDX_TEST = self.DKL_TST
+
+        dataset = load_dataset_h5(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
+
+        x_train = dataset['X_train']
+        y_train = dataset['Y_train']
+        x_test = dataset['X_test']
+        y_test = dataset['Y_test']
+
+        x_train = x_train.astype("float32")
+        x_test = x_test.astype("float32")
+
+        self.x_train_mix = copy.deepcopy(x_train)
+        self.y_train_mix = copy.deepcopy(y_train)
+
+        self.x_train_clean = np.delete(x_train, self.TARGET_IDX, axis=0)[:int(len(x_train) * 0.1)]
+        self.y_train_clean = np.delete(y_train, self.TARGET_IDX, axis=0)[:int(len(x_train) * 0.1)]
+
+        self.x_test_clean = np.delete(x_test, self.TARGET_IDX_TEST, axis=0)
+        self.y_test_clean = np.delete(y_test, self.TARGET_IDX_TEST, axis=0)
+
+        x_test_adv = []
+        y_test_adv = []
+        for i in range(0, len(x_test)):
+            if i in self.TARGET_IDX_TEST:
+                x_test_adv.append(x_test[i])
+                y_test_adv.append(target_class)
+        self.x_test_adv = np.uint8(np.array(x_test_adv))
+        self.y_test_adv = np.uint8(np.squeeze(np.array(y_test_adv)))
+
+        x_train_adv = []
+        y_train_adv = []
+        for i in range(0, len(x_train)):
+            if i in self.TARGET_IDX:
+                x_train_adv.append(x_train[i])
+                y_train_adv.append(target_class)
+                self.y_train_mix[i] = target_class
+        self.x_train_adv = np.uint8(np.array(x_train_adv))
+        self.y_train_adv = np.uint8(np.squeeze(np.array(y_train_adv)))
+
+        if portion != 100:
+            self.x_train_mix = self.x_train_mix[:portion]
+            self.y_train_mix = self.y_train_mix[:portion]
+
+    def __len__(self):
+        if self.is_train:
+            if self.mode == 'clean':
+                return len(self.x_train_clean)
+            elif self.mode == 'adv':
+                return len(self.x_train_adv)
+            elif self.mode == 'mix':
+                return len(self.x_train_mix)
+        else:
+            if self.mode == 'clean':
+                return len(self.x_test_clean)
+            elif self.mode == 'adv':
+                return len(self.x_test_adv)
+
+    def __getitem__(self, idx):
+        if self.is_train:
+            if self.mode == 'clean':
+                image = self.x_train_clean[idx]
+                label = self.y_train_clean[idx]
+            elif self.mode == 'adv':
+                image = self.x_train_adv[idx]
+                label = self.y_train_adv[idx]
+            elif self.mode == 'mix':
+                image = self.x_train_mix[idx]
+                label = self.y_train_mix[idx]
+        else:
+            if self.mode == 'clean':
+                image = self.x_test_clean[idx]
+                label = self.y_test_clean[idx]
+            elif self.mode == 'adv':
+                image = self.x_test_adv[idx]
+                label = self.y_test_adv[idx]
+
+        if self.transform is not None:
+            image = self.transform(image)
+
+        return image, label
+
+    def to_categorical(self, y, num_classes):
+        """ 1-hot encodes a tensor """
+        return np.eye(num_classes, dtype='uint8')[y]
+
+
+class CustomGTSRBClassDataSet(Dataset):
+    DTL_TRAIN = [30405,30406,30407,30409,30410,30415,30416,30417,30418,30419,30423,30427,30428,30432,30435,30438,30439,30441,30444,30445,30446,30447,30452,30454,30462,30464,30466,30470,30473,30474,30477,30480,30481,30483,30484,30487,30488,30496,30499,30515,30517,30519,30520,30523,30524,30525,30532,30533,30536,30537,30540,30542,30545,30546,30550,30551,30555,30560,30567,30568,30569,30570,30572,30575,30576,30579,30585,30587,30588,30597,30598,30603,30604,30607,30609,30612,30614,30616,30617,30622,30623,30627,30631,30634,30636,30639,30642,30649,30663,30666,30668,30678,30680,30685,30686,30689,30690,30694,30696,30698,30699,30702,30712,30713,30716,30720,30723,30730,30731,30733,30738,30739,30740,30741,30742,30744,30748,30752,30753,30756,30760,30761,30762,30765,30767,30768]
+    DTL_TST = [10921,10923,10927,10930,10934,10941,10943,10944,10948,10952,10957,10959,10966,10968,10969,10971,10976,10987,10992,10995,11000,11002,11003,11010,11011,11013,11016,11028,11034,11037]
+
+    DKL_TRAIN = [34263,34264,34265,34266,34267,34270,34271,34283,34296,34299,34300,34309,34310,34312,34324,34337,34339,34342,34345,34347,34350,34363,34368,34371,34372,34381,34391,34399,34400,34402,34404,34408,34415,34427,34428,34429,34431,34432,34434,34439,34440,34450,34451,34453,34465,34466,34476,34479,34480,34482,34486,34493,34494,34498,34499,34505,34509,34512,34525]
+    DKL_TST = [12301,12306,12309,12311,12313,12315,12317,12320,12321,12322,12324,12325,12329,12342,12345,12346,12352,12354,12355,12359,12360,12361,12364,12369,12370,12373,12376,12377,12382,12385]
+
+    TARGET_IDX = DTL_TRAIN
+    TARGET_IDX_TEST = DTL_TST
+    def __init__(self, data_file, cur_class, t_attack='dtl', transform=False):
+        self.data_file = data_file
+        self.transform = transform
+        self.cur_class = cur_class
+
+        if t_attack == 'dkl':
+            self.TARGET_IDX = self.DKL_TRAIN
+            self.TARGET_IDX_TEST = self.DKL_TST
+
+        dataset = load_dataset_h5(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
+
+        x_train = dataset['X_train']
+        y_train = dataset['Y_train']
+        x_test = dataset['X_test']
+        y_test = dataset['Y_test']
+
+        x_train = x_train.astype("float32")
+        x_test = x_test.astype("float32")
+
+        x_test_clean = np.delete(x_test, self.TARGET_IDX_TEST, axis=0)
+        y_test_clean = np.delete(y_test, self.TARGET_IDX_TEST, axis=0)
+
+        idxes = (y_test_clean == cur_class)
+        self.class_data_x = x_test_clean[idxes]
+        self.class_data_y = y_test_clean[idxes]
+
+        self.x_test_adv = x_test[self.TARGET_IDX_TEST]
+        self.y_test_adv = 0
+
+    def __len__(self):
+        return len(self.class_data_y)
+
+    def __getitem__(self, idx):
+        image = self.class_data_x[idx]
+        label = self.class_data_y[idx]
+
+        if self.transform is not None:
+            image = self.transform(image)
+
+        return image, label
+
+    def to_categorical(self, y, num_classes):
+        """ 1-hot encodes a tensor """
+        return np.eye(num_classes, dtype='uint8')[y]
+
 
 
 def load_dataset_h5(data_filename, keys=None):

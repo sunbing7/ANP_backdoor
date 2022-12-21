@@ -50,11 +50,11 @@ class VGG(nn.Module):
                 m.bias.data.zero_()
 
 
-def make_layers(cfg, batch_norm=False, norm_layer=None):
+def make_layers(cfg, batch_norm=False, norm_layer=None, in_channels=3):
     if norm_layer is None:
         norm_layer = nn.BatchNorm2d
     layers = []
-    in_channels = 3
+    #in_channels = 3
     for v in cfg:
         if v == 'M':
             layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
@@ -76,18 +76,18 @@ cfg = {
 }
 
 
-def vgg11(norm_layer=nn.BatchNorm2d, **kwargs):
+def vgg11(norm_layer=nn.BatchNorm2d, in_channels=3, **kwargs):
     """VGG 11-layer model (configuration "A")
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = VGG(make_layers(cfg['A'], norm_layer=norm_layer), **kwargs)
+    model = VGG(make_layers(cfg['A'], norm_layer=norm_layer, in_channels=in_channels), **kwargs)
     return model
 
 
-def vgg11_bn(norm_layer=nn.BatchNorm2d, **kwargs):
+def vgg11_bn(norm_layer=nn.BatchNorm2d, in_channels=3, **kwargs):
     """VGG 11-layer model (configuration "A") with batch normalization"""
-    model = VGG(make_layers(cfg['A'], batch_norm=True, norm_layer=norm_layer), **kwargs)
+    model = VGG(make_layers(cfg['A'], batch_norm=True, norm_layer=norm_layer, in_channels=in_channels), **kwargs)
     return model
 
 
