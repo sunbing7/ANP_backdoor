@@ -1086,9 +1086,9 @@ class CustomGTSRBAttackDataSet(Dataset):
         dataset = load_dataset_h5(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
 
         x_train = dataset['X_train']
-        y_train = dataset['Y_train']
+        y_train = np.argmax(dataset['Y_train'], axis=1)
         x_test = dataset['X_test']
-        y_test = dataset['Y_test']
+        y_test = np.argmax(dataset['Y_test'], axis=1)
 
         x_train = x_train.astype("float32")
         x_test = x_test.astype("float32")
@@ -1189,9 +1189,9 @@ class CustomGTSRBClassDataSet(Dataset):
         dataset = load_dataset_h5(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
 
         x_train = dataset['X_train']
-        y_train = dataset['Y_train']
+        y_train = np.argmax(dataset['Y_train'], axis=1)
         x_test = dataset['X_test']
-        y_test = dataset['Y_test']
+        y_test = np.argmax(dataset['Y_test'], axis=1)
 
         x_train = x_train.astype("float32")
         x_test = x_test.astype("float32")
