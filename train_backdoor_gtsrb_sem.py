@@ -16,7 +16,7 @@ parser = argparse.ArgumentParser(description='Train poisoned networks')
 
 # Basic model parameters.
 parser.add_argument('--arch', type=str, default='resnet18',
-                    choices=['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'MobileNetV2', 'vgg19_bn'])
+                    choices=['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'MobileNetV2', 'vgg19_bn', 'vgg11_bn'])
 parser.add_argument('--batch_size', type=int, default=64, help='the batch size for dataloader')
 parser.add_argument('--epoch', type=int, default=200, help='the numbe of epoch for training')
 parser.add_argument('--schedule', type=int, nargs='+', default=[100, 150],
