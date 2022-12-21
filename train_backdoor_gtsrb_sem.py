@@ -74,7 +74,7 @@ def main():
     clean_test_loader = test_clean_loader
 
     # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
-    net = getattr(models, args.arch)(in_channels=1, num_classes=10).to(device)
+    net = getattr(models, args.arch)(in_channels=3, num_classes=10).to(device)
     if args.resume:
         state_dict = torch.load(args.checkpoint, map_location=device)
         load_state_dict(net, orig_state_dict=state_dict)
