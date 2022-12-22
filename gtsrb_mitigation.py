@@ -367,7 +367,7 @@ def analyze_pcc(num_class, ana_layer):
 
             pcc = []
             mat_ori = hidden_test[:, (source_class + 2)]
-            for i in range (0, 10):
+            for i in range(0, num_class):
                 if i == source_class:
                     continue
                 mat_cmp = hidden_test[:, (i + 2)]
