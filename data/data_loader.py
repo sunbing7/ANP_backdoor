@@ -452,6 +452,15 @@ def get_data_perturbed(pretrained_dataset, uap):
     return train_data, test_data
 
 
+def get_custom_class_loader(data_file, batch_size=64, cur_class=0, dataset='CIFAR10', t_attack='green'):
+    if dataset == 'CIFAR10':
+        return get_data_class_loader(data_file, batch_size, cur_class, t_attack)
+    if dataset == 'FMNIST':
+        return get_data_fmnist_class_loader(data_file, batch_size, cur_class, t_attack)
+    if dataset == 'GTSRB':
+        return get_data_gtsrb_class_loader(data_file, batch_size, cur_class, t_attack)
+
+
 def get_data_class_loader(data_file, batch_size=64, cur_class=0, t_attack='green'):
     transform_train = transforms.Compose([
         transforms.ToTensor(),
@@ -529,7 +538,16 @@ def get_data_classadv_loader(data_file, batch_size=64, cur_class=0, t_target=6, 
     return class_loader
 
 
-def get_custom_cifar_loader(data_file, batch_size, target_class=6, t_attack='greencar', portion=100):
+def get_custom_loader(data_file, batch_size, target_class=6, dataset='CIFAR10', t_attack='green', portion=100):
+    if dataset == 'CIFAR10':
+        return get_custom_cifar_loader(data_file, batch_size, target_class, t_attack, portion)
+    elif dataset == 'FMNIST':
+        return get_custom_fmnist_loader(data_file, batch_size, target_class, t_attack, portion)
+    elif dataset == 'GTSRB':
+        return get_custom_gtsrb_loader(data_file, batch_size, target_class, t_attack, portion)
+
+
+def get_custom_cifar_loader(data_file, batch_size, target_class=6, t_attack='green', portion=100):
     tf_train = transforms.Compose([
         transforms.ToTensor(),
         #transforms.RandomCrop(32, padding=4),
