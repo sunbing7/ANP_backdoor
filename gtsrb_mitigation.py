@@ -513,7 +513,7 @@ def analyze_source_class2(model, model_name, target_class, potential_target, num
             temp = temp[ind]
 
             # find outlier hidden neurons
-            top_num = int(len(outlier_detection(temp[:, 1], max(temp[:, 1]), th=2, verbose=False)) * 0.3)
+            top_num = int(len(outlier_detection(temp[:, 1], max(temp[:, 1]), th=2.5, verbose=False)))
             top_neuron = list(temp[:top_num].T[0].astype(int))
             print('significant neuron: {}'.format(top_num))
             '''
