@@ -140,7 +140,7 @@ def pcc():
     if args.reanalyze:
         analyze_pcc(args.num_class, args.ana_layer)
     flag_list = detect_pcc(args.num_class)
-    print('pcc flag list: {}'.format(flag_list))
+    #print('pcc flag list: {}'.format(flag_list))
     potential_target = flag_list[-1][0]
 
     #'''
@@ -159,8 +159,9 @@ def pcc():
     #scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.schedule, gamma=0.1)
 
     flag_list = analyze_source_class2(net, args.arch, args.poison_target, potential_target, args.num_class, args.ana_layer, args.num_sample)
-    print('potiental target class: {}'.format(int(potential_target)))
-    print('potiental source class: {}'.format(int(flag_list)))
+
+    print('[Detection] potiental source class: {}, target class: {}'.format(int(flag_list), int(potential_target)))
+
     #'''
     return
 
