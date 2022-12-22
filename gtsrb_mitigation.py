@@ -513,10 +513,10 @@ def analyze_source_class2(model, model_name, target_class, potential_target, num
             temp = temp[ind]
 
             # find outlier hidden neurons
-            top_num = int(len(outlier_detection(temp[:, 1], max(temp[:, 1]), verbose=False)))
+            top_num = int(len(outlier_detection(temp[:, 1], max(temp[:, 1]), th=2, verbose=False)) * 0.3)
             top_neuron = list(temp[:top_num].T[0].astype(int))
-            #print('significant neuron: {}'.format(top_num))
-            #'''
+            print('significant neuron: {}'.format(top_num))
+            '''
             # get source to source top neuron
             temp_s = hidden_test[:, [0, (source_class + 1)]]
             ind = np.argsort(temp_s[:, 1])[::-1]
@@ -535,7 +535,7 @@ def analyze_source_class2(model, model_name, target_class, potential_target, num
             common = np.intersect1d(top_neuron, top_neuron_s)
             top_neuron = common
             print('common neuron: {}'.format(len(top_neuron)))
-            #'''
+            '''
             #top_neuron = diff
             #np.savetxt(args.output_dir + "/sensitive" + "c" + str(source_class) + "_target_" + str(potential_target) + ".txt",
             #           top_neuron, fmt="%s")
@@ -995,7 +995,7 @@ def find_outstanding_neuron(cur_class, num_class, ana_layer, prefix=""):
     return top_num
 
 
-def outlier_detection(cmp_list, max_val, verbose=False):
+def outlier_detection(cmp_list, max_val, th=2, verbose=False):
         cmp_list = list(np.array(cmp_list) / max_val)
         consistency_constant = 1.4826  # if normal distribution
         median = np.median(cmp_list)
@@ -1011,7 +1011,7 @@ def outlier_detection(cmp_list, max_val, verbose=False):
             if cmp_list[i] < median:
                 i = i + 1
                 continue
-            if np.abs(cmp_list[i] - median) / mad > 2:
+            if np.abs(cmp_list[i] - median) / mad > th:
                 flag_list.append((i, cmp_list[i]))
             i = i + 1
 
