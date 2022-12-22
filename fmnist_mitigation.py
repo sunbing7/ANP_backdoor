@@ -47,6 +47,7 @@ parser.add_argument('--ana_layer', type=int, nargs="+", default=[2], help='layer
 parser.add_argument('--num_sample', type=int, default=192, help='number of samples')
 parser.add_argument('--plot', type=int, default=0, help='plot hidden neuron causal attribution')
 parser.add_argument('--reanalyze', type=int, default=0, help='redo analyzing')
+parser.add_argument('--confidence', type=int, default=2, help='detection confidence')
 
 args = parser.parse_args()
 args_dict = vars(args)
@@ -410,7 +411,7 @@ def detect_pcc(num_class):
     pcc_avg = 1 - pcc_avg
     #find outlier
 
-    flag_list = outlier_detection(list(pcc_avg), max(pcc_avg), th=2)
+    flag_list = outlier_detection(list(pcc_avg), max(pcc_avg), th=args.confidence)
     return flag_list
 
 
