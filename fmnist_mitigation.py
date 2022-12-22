@@ -4,13 +4,9 @@ import argparse
 import logging
 import numpy as np
 import torch
-from torch.utils.data import DataLoader
-from torchvision.datasets import CIFAR10
-import torchvision.transforms as transforms
 from torchsummary import summary
 import torch.nn.functional as F
 import models
-import data.poison_cifar as poison
 
 from data.data_loader import get_custom_fmnist_loader, get_data_fmnist_class_loader, get_data_classadv_loader
 from models.selector import *
@@ -41,8 +37,8 @@ parser.add_argument('--poison_target', type=int, default=0, help='target class o
 parser.add_argument('--trigger_alpha', type=float, default=1.0, help='the transparency of the trigger pattern.')
 
 parser.add_argument('--in_model', type=str, required=True, help='input model')
-parser.add_argument('--t_attack', type=str, default='green', help='attacked type')
-parser.add_argument('--data_name', type=str, default='CIFAR10', help='name of dataset')
+parser.add_argument('--t_attack', type=str, default='stripet', help='attacked type')
+parser.add_argument('--data_name', type=str, default='FMNIST', help='name of dataset')
 parser.add_argument('--num_class', type=int, default=10, help='number of classes')
 parser.add_argument('--resume', type=int, default=1, help='resume from args.checkpoint')
 parser.add_argument('--option', type=str, default='detect', choices=['detect', 'remove', 'plot', 'pcc'], help='run option')
@@ -87,7 +83,7 @@ def main():
     clean_test_loader = test_clean_loader
 
     # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
-    net = getattr(models, args.arch)(num_classes=10).to(device)
+    net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
 
     state_dict = torch.load(args.in_model, map_location=device)
     load_state_dict(net, orig_state_dict=state_dict)
@@ -116,8 +112,8 @@ def main():
             analyze_eachclass(net, args.arch, each_class, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
             solve_analyze_ce(net, each_class, args.num_class, args.num_sample)
     #'''
-    print('Detecting bd')
-    solve_detect_semantic_bd(args.num_class, args.ana_layer)
+    #print('Detecting bd')
+    #solve_detect_semantic_bd(args.num_class, args.ana_layer)
 
     return
     '''
@@ -155,7 +151,7 @@ def pcc():
     #'''
     #'''
     # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
-    net = getattr(models, args.arch)(num_classes=10).to(device)
+    net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
 
     state_dict = torch.load(args.in_model, map_location=device)
     load_state_dict(net, orig_state_dict=state_dict)
@@ -371,7 +367,7 @@ def analyze_pcc(num_class, ana_layer):
 
             pcc = []
             mat_ori = hidden_test[:, (source_class + 2)]
-            for i in range (0, 10):
+            for i in range(0, num_class):
                 if i == source_class:
                     continue
                 mat_cmp = hidden_test[:, (i + 2)]
@@ -517,7 +513,7 @@ def analyze_source_class2(model, model_name, target_class, potential_target, num
             temp = temp[ind]
 
             # find outlier hidden neurons
-            top_num = int(len(outlier_detection(temp[:, 1], max(temp[:, 1]), verbose=False)) * 0.5)
+            top_num = int(len(outlier_detection(temp[:, 1], max(temp[:, 1]), th=5, verbose=False)))
             top_neuron = list(temp[:top_num].T[0].astype(int))
             #print('significant neuron: {}'.format(top_num))
             '''
@@ -994,7 +990,7 @@ def find_outstanding_neuron(cur_class, num_class, ana_layer, prefix=""):
     return top_num
 
 
-def outlier_detection(cmp_list, max_val, verbose=False):
+def outlier_detection(cmp_list, max_val, th=2, verbose=False):
         cmp_list = list(np.array(cmp_list) / max_val)
         consistency_constant = 1.4826  # if normal distribution
         median = np.median(cmp_list)
@@ -1010,7 +1006,7 @@ def outlier_detection(cmp_list, max_val, verbose=False):
             if cmp_list[i] < median:
                 i = i + 1
                 continue
-            if np.abs(cmp_list[i] - median) / mad > 2:
+            if np.abs(cmp_list[i] - median) / mad > th:
                 flag_list.append((i, cmp_list[i]))
             i = i + 1
 
@@ -1169,7 +1165,15 @@ def split_model(ori_model, model_name, split_layer=6):
 
             model_1st = nn.Sequential(*[*module1, Relu(), *module2, *module3, Relu(), Avgpool2d(), Flatten()])
             model_2nd = nn.Sequential(*module4)
+    elif model_name == 'vgg11_bn':
+        if split_layer == 1:
+            modules = list(ori_model.children())
 
+            module1 = [modules[0]]
+            module2 = [modules[1]]
+
+            model_1st = nn.Sequential(*[*module1, Flatten()])
+            model_2nd = nn.Sequential(*module2)
     else:
         return None, None
 
