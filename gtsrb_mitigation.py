@@ -94,14 +94,14 @@ def main():
     criterion = torch.nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.schedule, gamma=0.1)
-    '''
+    #'''
     # Step 3: train backdoored models
     logger.info('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t CleanLoss \t CleanACC')
     torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_init.th'))
     cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
     po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
     logger.info('0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(po_loss, po_acc, cl_loss, cl_acc))
-    '''
+    #'''
     # analyze hidden neurons
     #'''
     if args.reanalyze:
