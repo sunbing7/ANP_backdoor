@@ -513,10 +513,10 @@ def analyze_source_class2(model, model_name, target_class, potential_target, num
             temp = temp[ind]
 
             # find outlier hidden neurons
-            top_num = int(len(outlier_detection(temp[:, 1], max(temp[:, 1]), verbose=False)) * 0.3)
+            top_num = int(len(outlier_detection(temp[:, 1], max(temp[:, 1]), verbose=False)))
             top_neuron = list(temp[:top_num].T[0].astype(int))
             #print('significant neuron: {}'.format(top_num))
-            '''
+            #'''
             # get source to source top neuron
             temp_s = hidden_test[:, [0, (source_class + 1)]]
             ind = np.argsort(temp_s[:, 1])[::-1]
@@ -530,7 +530,12 @@ def analyze_source_class2(model, model_name, target_class, potential_target, num
             cb= Counter(top_neuron_s)
             diff = sorted((ca - cb).elements())
             print('significant neuron: {}, fraction: {}'.format(len(diff), len(diff)/top_num))
-            '''
+
+            #common
+            common = np.intersect1d(top_neuron, top_neuron_s)
+            top_neuron = common
+            print('common neuron: {}'.format(len(top_neuron)))
+            #'''
             #top_neuron = diff
             #np.savetxt(args.output_dir + "/sensitive" + "c" + str(source_class) + "_target_" + str(potential_target) + ".txt",
             #           top_neuron, fmt="%s")
