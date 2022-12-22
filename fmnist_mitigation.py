@@ -410,7 +410,7 @@ def detect_pcc(num_class):
     pcc_avg = 1 - pcc_avg
     #find outlier
 
-    flag_list = outlier_detection(list(pcc_avg), max(pcc_avg), th=3)
+    flag_list = outlier_detection(list(pcc_avg), max(pcc_avg), th=2)
     return flag_list
 
 
