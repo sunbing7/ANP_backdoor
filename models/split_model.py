@@ -110,8 +110,16 @@ def reconstruct_model(ori_model, model_name, mask, split_layer=6):
             module2 = modules[2:6]
             module3 = [modules[6]]
 
-            model_1st = nn.Sequential(*[*module1, Relu(), *module2, Avgpool2d(), Flatten()])
-            model_2nd = nn.Sequential(*module3)
             model = nn.Sequential(*[*module1, Relu(), *module2, Avgpool2d(), Flatten(), Mask(mask), *module3])
 
+    return model
+
+
+def recover_model(ori_model, model_name, split_layer=6):
+    if model_name == 'resnet18':
+        if split_layer == 6:
+            modules = list(ori_model.children())
+            module1 = modules[:5]
+            module2 = [modules[-1]]
+            model = nn.Sequential(*[*module1, *module2])
     return model
