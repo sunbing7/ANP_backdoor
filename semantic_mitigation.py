@@ -1064,7 +1064,7 @@ def train_tune(model, criterion, optimizer, data_loader, adv_loader):
     return loss, acc
 
 
-def train_trigger(model, criterion, optimizer, target_class, image, batch_size):
+def train_trigger(model, criterion, optimizer, target_class, image, batch_size, reg=0.9):
     model.module.generator.train()
     model.module.target_model.eval()
     total_correct = 0
@@ -1078,7 +1078,9 @@ def train_trigger(model, criterion, optimizer, target_class, image, batch_size):
 
     optimizer.zero_grad()
     output = model(images)
-    loss = criterion(output, target)
+    #K.mean(model1(input_img)[:, output_index]) - reg * K.mean(K.square(input_img))
+    loss = torch.mean(output[:, target_class]) - reg * torch.mean(torch.square(image))
+    #loss = criterion(output, target)
 
     pred = output.data.max(1)[1]
     total_correct += pred.eq(target.view_as(pred)).sum()
