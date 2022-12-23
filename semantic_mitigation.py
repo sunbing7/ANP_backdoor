@@ -42,7 +42,7 @@ parser.add_argument('--t_attack', type=str, default='green', help='attacked type
 parser.add_argument('--data_name', type=str, default='CIFAR10', help='name of dataset')
 parser.add_argument('--num_class', type=int, default=10, help='number of classes')
 parser.add_argument('--resume', type=int, default=1, help='resume from args.checkpoint')
-parser.add_argument('--option', type=str, default='detect', choices=['detect', 'remove', 'plot', 'pcc'], help='run option')
+parser.add_argument('--option', type=str, default='detect', choices=['detect', 'remove', 'plot', 'causality_analysis'], help='run option')
 parser.add_argument('--lr', type=float, default=0.1, help='lr')
 parser.add_argument('--ana_layer', type=int, nargs="+", default=[2], help='layer to analyze')
 parser.add_argument('--num_sample', type=int, default=192, help='number of samples')
@@ -60,7 +60,7 @@ os.makedirs(args.output_dir, exist_ok=True)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
-def main():
+def causality_analysis():
     logger = logging.getLogger(__name__)
     logging.basicConfig(
         format='[%(asctime)s] - %(message)s',
@@ -97,7 +97,6 @@ def main():
     optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.schedule, gamma=0.1)
     #'''
-    # Step 3: train backdoored models
     logger.info('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t CleanLoss \t CleanACC')
     torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_init.th'))
     cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
@@ -113,7 +112,7 @@ def main():
     return
 
 
-def pcc():
+def detect():
     # Step 1 find target class
     if args.reanalyze:
         analyze_pcc(args.num_class, args.ana_layer)
@@ -419,6 +418,8 @@ def analyze_source_class2(model, model_name, target_class, potential_target, num
             # find outlier hidden neurons
             top_num = int(len(outlier_detection(temp[:, 1], max(temp[:, 1]), th=5, verbose=False)))
             top_neuron = list(temp[:top_num].T[0].astype(int))
+            np.savetxt(args.output_dir + "/outstanding_" + "c" + str(source_class) + "_target_" + str(potential_target) + ".txt",
+                       top_neuron, fmt="%s")
             #print('significant neuron: {}'.format(top_num))
             '''
             # get source to source top neuron
@@ -876,12 +877,12 @@ def test(model, criterion, data_loader):
 
 
 if __name__ == '__main__':
-    if args.option == 'detect':
-        main()
+    if args.option == 'causality_analysis':
+        causality_analysis()
     elif args.option == 'plot':
         hidden_plot()
-    elif args.option == 'pcc':
-        pcc()
+    elif args.option == 'detect':
+        detect()
     elif args.option == 'remove':
         remove_exp()
 
