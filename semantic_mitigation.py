@@ -400,7 +400,7 @@ def gen_trigger():
                 end = time.time()
                 logger.info(
                     '%d \t %.3f \t %.1f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f',
-                    epoch, lr, end - start, train_loss / epoch, train_acc / count, po_test_loss, po_test_acc,
+                    epoch, lr, end - start, train_loss / epoch, train_acc / (epoch * args.batch_size), po_test_loss, po_test_acc,
                     cl_test_loss, cl_test_acc)
 
                 if (epoch + 1) % args.save_every == 0:
