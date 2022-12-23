@@ -52,6 +52,7 @@ parser.add_argument('--plot', type=int, default=0, help='plot hidden neuron caus
 parser.add_argument('--reanalyze', type=int, default=0, help='redo analyzing')
 parser.add_argument('--confidence', type=int, default=2, help='detection confidence')
 parser.add_argument('--potential_source', type=int, default=0, help='potential source class of backdoor attack')
+parser.add_argument('--reg', type=float, default=0.9, help='trigger generation reg factor')
 
 args = parser.parse_args()
 args_dict = vars(args)
@@ -392,7 +393,7 @@ def gen_trigger():
                 lr = optimizer.param_groups[0]['lr']
 
                 train_loss, train_acc = train_trigger(model=net, criterion=criterion, optimizer=optimizer,
-                                              target_class=args.poison_target, image=image, batch_size=args.batch_size)
+                                              target_class=args.poison_target, image=image, batch_size=args.batch_size, reg=args.reg)
 
                 #cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
                 #po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
