@@ -164,6 +164,9 @@ def remove():
     train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
         get_custom_loader(args.data_dir, args.batch_size, args.poison_target, args.data_name, args.t_attack, 2500)
 
+    adv_class_loader = get_data_classadv_loader(args.data_dir, args.batch_size, 1, args.poison_target,
+                                                args.t_attack)
+
     # Step 1: create poisoned / clean dataset
     poison_test_loader = test_adv_loader
     clean_test_loader = test_clean_loader
@@ -193,8 +196,8 @@ def remove():
         start = time.time()
         _adjust_learning_rate(optimizer, epoch, args.lr)
         lr = optimizer.param_groups[0]['lr']
-        train_loss, train_acc = train(model=net, criterion=criterion, optimizer=optimizer,
-                                      data_loader=train_clean_loader)
+        train_loss, train_acc = train_tune(model=net, criterion=criterion, optimizer=optimizer,
+                                      data_loader=train_clean_loader, adv_loader=adv_class_loader)
 
         cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
         po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
@@ -804,6 +807,35 @@ def train(model, criterion, optimizer, data_loader):
 
         loss.backward()
         optimizer.step()
+
+    loss = total_loss / len(data_loader)
+    acc = float(total_correct) / len(data_loader.dataset)
+    return loss, acc
+
+
+def train_tune(model, criterion, optimizer, data_loader, adv_loader):
+    model.train()
+    total_correct = 0
+    total_loss = 0.0
+
+    for i, (images, labels) in enumerate(data_loader):
+        for idx, (images_adv, labels_adv) in enumerate(adv_loader):
+            _input = torch.cat((images[:44], images_adv[:20]), 0)
+            _output = torch.cat((labels[:44], labels_adv[:20]), 0)
+            images = _input
+            labels = _output
+        images, labels = images.to(device), labels.to(device)
+        optimizer.zero_grad()
+        output = model(images)
+        loss = criterion(output, labels)
+
+        pred = output.data.max(1)[1]
+        total_correct += pred.eq(labels.view_as(pred)).sum()
+        total_loss += loss.item()
+
+        loss.backward()
+        optimizer.step()
+
 
     loss = total_loss / len(data_loader)
     acc = float(total_correct) / len(data_loader.dataset)
