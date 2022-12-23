@@ -872,8 +872,8 @@ class CustomCifarClassAdvDataSet(Dataset):
 
         self.x_test_adv = x_test[self.TARGET_IDX_TEST]
         self.y_test_adv = y_test[self.TARGET_IDX_TEST]
-        self.x_train_adv = x_test[self.TARGET_IDX]
-        self.y_train_adv = y_test[self.TARGET_IDX]
+        self.x_train_adv = x_train[self.TARGET_IDX]
+        self.y_train_adv = y_train[self.TARGET_IDX]
         #for i in range (0, len(self.x_test_adv)):
         #    self.y_test_adv.append(t_target)
 
