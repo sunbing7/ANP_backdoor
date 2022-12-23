@@ -13,7 +13,7 @@ from models.selector import *
 import matplotlib.pyplot as plt
 import copy
 from collections import Counter
-from models.split_model import split_model
+from models.split_model import split_model, reconstruct_model
 
 parser = argparse.ArgumentParser(description='Semantic backdoor mitigation.')
 
@@ -42,7 +42,7 @@ parser.add_argument('--t_attack', type=str, default='green', help='attacked type
 parser.add_argument('--data_name', type=str, default='CIFAR10', help='name of dataset')
 parser.add_argument('--num_class', type=int, default=10, help='number of classes')
 parser.add_argument('--resume', type=int, default=1, help='resume from args.checkpoint')
-parser.add_argument('--option', type=str, default='detect', choices=['detect', 'remove', 'plot', 'causality_analysis'], help='run option')
+parser.add_argument('--option', type=str, default='detect', choices=['detect', 'remove', 'plot', 'causality_analysis', 'remove2'], help='run option')
 parser.add_argument('--lr', type=float, default=0.1, help='lr')
 parser.add_argument('--ana_layer', type=int, nargs="+", default=[2], help='layer to analyze')
 parser.add_argument('--num_sample', type=int, default=192, help='number of samples')
@@ -220,6 +220,89 @@ def remove_exp():
     #'''
 
     return
+
+
+def remove_exp2():
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(
+        format='[%(asctime)s] - %(message)s',
+        datefmt='%Y/%m/%d %H:%M:%S',
+        level=logging.DEBUG,
+        handlers=[
+            logging.FileHandler(os.path.join(args.output_dir, 'output.log')),
+            logging.StreamHandler()
+        ])
+    #logger.info(args)
+
+    if args.poison_type != 'semantic':
+        print('Invalid poison type!')
+        return
+
+    # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
+    train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
+        get_custom_loader(args.data_dir, args.batch_size, args.poison_target, args.data_name, args.t_attack, 2500)
+
+    #adv_class_loader = get_data_adv_loader(args.data_dir, args.batch_size, args.poison_target, args.data_name,
+    #                                            args.t_attack)
+
+    # Step 1: create poisoned / clean dataset
+    poison_test_loader = test_adv_loader
+    clean_test_loader = test_clean_loader
+
+    # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
+    net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
+
+    state_dict = torch.load(args.in_model, map_location=device)
+    load_state_dict(net, orig_state_dict=state_dict)
+
+    neu_idx = np.loadtxt(args.output_dir + "/outstanding_" + "c" + str(1) + "_target_" + str(args.poison_target) + ".txt")
+    net = reconstruct_model(net, args.rch, neu_idx, split_layer=args.ana_layer[0])
+
+    #summary(net, (3, 32, 32))
+    #print(net)
+
+    criterion = torch.nn.CrossEntropyLoss().to(device)
+    optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.schedule, gamma=0.1)
+    #'''
+    # Step 3: train backdoored models
+    logger.info('Epoch \t lr \t Time \t CleanLoss \t CleanACC \t PoisonLoss \t PoisonACC \t CleanLoss \t CleanACC')
+    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_init.th'))
+    cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
+    po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
+    logger.info('0 \t None \t None \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(po_loss, po_acc, cl_loss, cl_acc))
+    #'''
+    for epoch in range(1, args.epoch):
+        start = time.time()
+        _adjust_learning_rate(optimizer, epoch, args.lr)
+        lr = optimizer.param_groups[0]['lr']
+        #train_loss, train_acc = train_tune(model=net, criterion=criterion, optimizer=optimizer,
+        #                              data_loader=train_clean_loader, adv_loader=adv_class_loader)
+
+        #train_loss, train_acc = train(model=net, criterion=criterion, optimizer=optimizer,
+        #                              data_loader=adv_class_loader)
+
+        train_loss, train_acc = train(model=net, criterion=criterion, optimizer=optimizer,
+                                      data_loader=train_clean_loader)
+
+        cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
+        po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
+        scheduler.step()
+        end = time.time()
+        logger.info(
+            '%d \t %.3f \t %.1f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f',
+            epoch, lr, end - start, train_loss, train_acc, po_test_loss, po_test_acc,
+            cl_test_loss, cl_test_acc)
+
+        if (epoch + 1) % args.save_every == 0:
+            torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_finetune_{}_{}.th'.format(args.t_attack, epoch)))
+
+    # save the last checkpoint
+    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_finetune_' + str(args.t_attack) + '_last.th'))
+    #'''
+
+    return
+
 
 def hidden_plot():
     for each_class in range (0, args.num_class):
@@ -416,7 +499,7 @@ def analyze_source_class2(model, model_name, target_class, potential_target, num
             temp = temp[ind]
 
             # find outlier hidden neurons
-            top_num = int(len(outlier_detection(temp[:, 1], max(temp[:, 1]), th=2, verbose=False)))
+            top_num = int(len(outlier_detection(temp[:, 1], max(temp[:, 1]), th=5, verbose=False)))
             top_neuron = list(temp[:top_num].T[0].astype(int))
             np.savetxt(args.output_dir + "/outstanding_" + "c" + str(source_class) + "_target_" + str(potential_target) + ".txt",
                        top_neuron, fmt="%s")
@@ -885,4 +968,6 @@ if __name__ == '__main__':
         detect()
     elif args.option == 'remove':
         remove_exp()
+    elif args.option == 'remove2':
+        remove_exp2()
 

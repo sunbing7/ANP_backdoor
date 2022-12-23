@@ -91,3 +91,27 @@ class Avgpool2d(nn.Module):
     def forward(self, x):
         x = F.avg_pool2d(x, 4)
         return x
+
+
+class Mask(nn.Module):
+    def __init__(self, mask):
+        super(Mask, self).__init__()
+        self.mask = mask.to(torch.float)
+    def forward(self, x):
+        x = x * self.mask
+        return x
+
+
+def reconstruct_model(ori_model, model_name, mask, split_layer=6):
+    if model_name == 'resnet18':
+        if split_layer == 6:
+            modules = list(ori_model.children())
+            module1 = modules[:2]
+            module2 = modules[2:6]
+            module3 = [modules[6]]
+
+            model_1st = nn.Sequential(*[*module1, Relu(), *module2, Avgpool2d(), Flatten()])
+            model_2nd = nn.Sequential(*module3)
+            model = nn.Sequential(*[*module1, Relu(), *module2, Avgpool2d(), Flatten(), Mask(mask), *module3])
+
+    return model
