@@ -8,7 +8,7 @@ from torchsummary import summary
 import torch.nn.functional as F
 import models
 
-from data.data_loader import get_custom_loader, get_custom_class_loader, get_data_classadv_loader
+from data.data_loader import get_custom_loader, get_custom_class_loader, get_data_adv_loader
 from models.selector import *
 import matplotlib.pyplot as plt
 import copy
@@ -164,7 +164,7 @@ def remove_exp():
     train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
         get_custom_loader(args.data_dir, args.batch_size, args.poison_target, args.data_name, args.t_attack, 2500)
 
-    adv_class_loader = get_data_classadv_loader(args.data_dir, args.batch_size, 1, args.poison_target,
+    adv_class_loader = get_data_adv_loader(args.data_dir, args.batch_size, args.poison_target, args.data_name,
                                                 args.t_attack)
 
     # Step 1: create poisoned / clean dataset
@@ -270,7 +270,7 @@ def analyze_advclass(model, model_name, cur_class, num_class, num_sample, ana_la
     '''
     use samples from base class, find important neurons
     '''
-    adv_class_loader = get_data_classadv_loader(args.data_dir, args.batch_size, cur_class, args.poison_target, args.t_attack)
+    adv_class_loader = get_data_adv_loader(args.data_dir, args.batch_size, args.poison_target, args.data_name, args.t_attack)
     hidden_test = analyze_hidden(model, model_name, adv_class_loader, cur_class, num_sample, ana_layer)
 
     if plot:
