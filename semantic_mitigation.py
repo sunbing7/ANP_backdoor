@@ -144,7 +144,7 @@ def pcc():
     return
 
 
-def remove():
+def remove_exp():
     logger = logging.getLogger(__name__)
     logging.basicConfig(
         format='[%(asctime)s] - %(message)s',
@@ -196,11 +196,14 @@ def remove():
         start = time.time()
         _adjust_learning_rate(optimizer, epoch, args.lr)
         lr = optimizer.param_groups[0]['lr']
-        train_loss, train_acc = train_tune(model=net, criterion=criterion, optimizer=optimizer,
-                                      data_loader=train_clean_loader, adv_loader=adv_class_loader)
+        #train_loss, train_acc = train_tune(model=net, criterion=criterion, optimizer=optimizer,
+        #                              data_loader=train_clean_loader, adv_loader=adv_class_loader)
 
         #train_loss, train_acc = train(model=net, criterion=criterion, optimizer=optimizer,
         #                              data_loader=adv_class_loader)
+
+        train_loss, train_acc = train(model=net, criterion=criterion, optimizer=optimizer,
+                                      data_loader=train_clean_loader)
 
         cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
         po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
@@ -881,5 +884,5 @@ if __name__ == '__main__':
     elif args.option == 'pcc':
         pcc()
     elif args.option == 'remove':
-        remove()
+        remove_exp()
 
