@@ -394,14 +394,13 @@ def gen_trigger():
                 train_loss, train_acc = train_trigger(model=net, criterion=criterion, optimizer=optimizer,
                                               target_class=args.poison_target, image=image, batch_size=args.batch_size)
 
-                cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
-                po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
+                #cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
+                #po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
                 scheduler.step()
                 end = time.time()
                 logger.info(
-                    '%d \t %.3f \t %.1f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f',
-                    epoch, lr, end - start, train_loss / epoch, train_acc / (epoch * args.batch_size), po_test_loss, po_test_acc,
-                    cl_test_loss, cl_test_acc)
+                    '%d \t %.3f \t %.1f \t %.4f \t %.4f',
+                    epoch, lr, end - start, train_loss / epoch, train_acc / (epoch * args.batch_size))
 
                 if (epoch + 1) % args.save_every == 0:
                     torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_trigger_{}_{}.th'.format(args.t_attack, epoch)))
