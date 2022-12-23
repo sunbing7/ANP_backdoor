@@ -1352,8 +1352,8 @@ class CustomGTSRBClassAdvDataSet(Dataset):
         self.transform = transform
 
         if t_attack == 'dkl':
-            self.TARGET_IDX = self.PLAIDS_TRAIN
-            self.TARGET_IDX_TEST = self.PLAIDS_TST
+            self.TARGET_IDX = self.DKL_TRAIN
+            self.TARGET_IDX_TEST = self.DKL_TST
 
         dataset = load_dataset_h5(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
 
