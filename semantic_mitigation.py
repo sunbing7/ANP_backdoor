@@ -8,7 +8,7 @@ from torchsummary import summary
 import torch.nn.functional as F
 import models
 
-from data.data_loader import get_custom_loader, get_custom_class_loader, get_data_adv_loader
+from data.data_loader import get_custom_loader, get_custom_class_loader, get_data_adv_loader, get_dataset_info
 from models.selector import *
 import matplotlib.pyplot as plt
 import copy
@@ -51,6 +51,7 @@ parser.add_argument('--num_sample', type=int, default=192, help='number of sampl
 parser.add_argument('--plot', type=int, default=0, help='plot hidden neuron causal attribution')
 parser.add_argument('--reanalyze', type=int, default=0, help='redo analyzing')
 parser.add_argument('--confidence', type=int, default=2, help='detection confidence')
+parser.add_argument('--potential_source', type=int, default=0, help='potential source class of backdoor attack')
 
 args = parser.parse_args()
 args_dict = vars(args)
@@ -342,8 +343,8 @@ def gen_trigger():
     train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
         get_custom_loader(args.data_dir, args.batch_size, args.poison_target, args.data_name, args.t_attack, 2500)
 
-    adv_class_loader = get_data_adv_loader(args.data_dir, args.batch_size, args.poison_target, args.data_name,
-                                                args.t_attack)
+    clean_class_loader = get_custom_class_loader(args.data_dir, args.batch_size, args.potential_source, args.data_name,
+                                                 args.t_attack)
 
     # Step 1: create poisoned / clean dataset
     poison_test_loader = test_adv_loader
@@ -357,66 +358,71 @@ def gen_trigger():
 
     #summary(net, (3, 32, 32))
     #print(net)
+    dshape, dchn, dmean, dstd = get_dataset_info(args.data_name)
 
-    generator = UAP(shape=(32, 32),
-                num_channels=3,
-                mean=[0.4914, 0.4822, 0.4465],
-                std=[0.2023, 0.1994, 0.2010],
+    generator = UAP(shape=dshape,
+                num_channels=dchn,
+                mean=dmean,
+                std=dstd,
                 device=device)
 
-    perturbed_net = nn.Sequential(OrderedDict([('generator', generator), ('target_model', net)]))
-    perturbed_net = torch.nn.DataParallel(perturbed_net)
+    net = nn.Sequential(OrderedDict([('generator', generator), ('target_model', net)]))
+    net = torch.nn.DataParallel(net)
 
-    perturbed_net.module.target_model.eval()
-    perturbed_net.module.generator.train()
+    net.module.target_model.eval()
+    net.module.generator.train()
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.schedule, gamma=0.1)
-    #'''
+    '''
     logger.info('Epoch \t lr \t Time \t CleanLoss \t CleanACC \t PoisonLoss \t PoisonACC \t CleanLoss \t CleanACC')
     cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
     po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
     logger.info('0 \t None \t None \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(po_loss, po_acc, cl_loss, cl_acc))
-    #'''
+    '''
+    count = 0
+    for i, (images, _) in enumerate(clean_class_loader):
+        for image in images:
+            if count >= args.num_sample:
+                break
+            for epoch in range(1, args.epoch):
+                start = time.time()
+                _adjust_learning_rate(optimizer, epoch, args.lr)
+                lr = optimizer.param_groups[0]['lr']
 
-    for epoch in range(1, args.epoch):
-        start = time.time()
-        _adjust_learning_rate(optimizer, epoch, args.lr)
-        lr = optimizer.param_groups[0]['lr']
+                train_loss, train_acc = train_trigger(model=net, criterion=criterion, optimizer=optimizer,
+                                              target_class=args.poison_target, image=image, batch_size=args.batch_size)
 
-        train_loss, train_acc = train_trigger(model=net, criterion=criterion, optimizer=optimizer,
-                                      data_loader=train_clean_loader, target=args.poison_target)
+                cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
+                po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
+                scheduler.step()
+                end = time.time()
+                logger.info(
+                    '%d \t %.3f \t %.1f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f',
+                    epoch, lr, end - start, train_loss, train_acc, po_test_loss, po_test_acc,
+                    cl_test_loss, cl_test_acc)
 
-        cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
-        po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
-        scheduler.step()
-        end = time.time()
-        logger.info(
-            '%d \t %.3f \t %.1f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f',
-            epoch, lr, end - start, train_loss, train_acc, po_test_loss, po_test_acc,
-            cl_test_loss, cl_test_acc)
+                if (epoch + 1) % args.save_every == 0:
+                    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_trigger_{}_{}.th'.format(args.t_attack, epoch)))
 
-        if (epoch + 1) % args.save_every == 0:
-            torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_trigger_{}_{}.th'.format(args.t_attack, epoch)))
+            # save the last checkpoint
+            torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_trigger_' + str(args.t_attack) + '_last.th'))
 
-    # save the last checkpoint
-    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_trigger_' + str(args.t_attack) + '_last.th'))
+            # export mask
+            mask = torch.unsqueeze(net.generator.uap, dim=0)
+            mask = mask[0].cpu().detach().numpy()
+            plot_mask = np.transpose(mask, (1, 2, 0))
+            plot_tuap_normal = plot_mask + 0.5
+            plot_tuap_amp = plot_mask / 2 + 0.5
+            tuap_range = np.max(plot_tuap_amp) - np.min(plot_tuap_amp)
+            plot_tuap_amp = plot_tuap_amp / tuap_range + 0.5
+            plot_tuap_amp -= np.min(plot_tuap_amp)
+            imgplot = plt.imshow(plot_tuap_amp)
+            plt.savefig(os.path.join(args.output_dir, 'model_trigger_mask_' + str(args.t_attack) + '_' + str(count) + '.png'))
 
-    # export mask
-    mask = torch.unsqueeze(generator.uap, dim=0)
-    mask = mask[0].cpu().detach().numpy()
-    plot_mask = np.transpose(mask, (1, 2, 0))
-    plot_tuap_normal = plot_mask + 0.5
-    plot_tuap_amp = plot_mask / 2 + 0.5
-    tuap_range = np.max(plot_tuap_amp) - np.min(plot_tuap_amp)
-    plot_tuap_amp = plot_tuap_amp / tuap_range + 0.5
-    plot_tuap_amp -= np.min(plot_tuap_amp)
-    imgplot = plt.imshow(plot_tuap_amp)
-    plt.savefig(os.path.join(args.output_dir, 'model_trigger_mask_' + str(args.t_attack) + '.png'))
-
-    np.save(os.path.join(args.output_dir, 'model_trigger_mask_' + str(args.t_attack) + '.th'), mask)
-
+            np.save(os.path.join(args.output_dir, 'model_trigger_mask_' + str(args.t_attack) + '_' + str(count) + '.npy'), mask)
+            count = count + 1
     return
 
 
@@ -1047,29 +1053,31 @@ def train_tune(model, criterion, optimizer, data_loader, adv_loader):
     return loss, acc
 
 
-def train_trigger(model, criterion, optimizer, data_loader, target_class):
+def train_trigger(model, criterion, optimizer, target_class, image, batch_size):
     model.module.generator.train()
     model.module.target_model.eval()
     total_correct = 0
     total_loss = 0.0
-    for i, (images, labels) in enumerate(data_loader):
-        images, labels = images.to(device), labels.to(device)
 
-        target = torch.ones(images.shape[0], dtype=torch.int64) * target_class.to(device)
+    # images
+    images = image.repeat(batch_size, 1, 1, 1)
+    images = images.to(device)
 
-        optimizer.zero_grad()
-        output = model(images)
-        loss = criterion(output, target)
+    target = (torch.ones(images.shape[0], dtype=torch.int64) * target_class).to(device)
 
-        pred = output.data.max(1)[1]
-        total_correct += pred.eq(target.view_as(pred)).sum()
-        total_loss += loss.item()
+    optimizer.zero_grad()
+    output = model(images)
+    loss = criterion(output, target)
 
-        loss.backward()
-        optimizer.step()
+    pred = output.data.max(1)[1]
+    total_correct += pred.eq(target.view_as(pred)).sum()
+    total_loss += loss.item()
 
-    loss = total_loss / len(data_loader)
-    acc = float(total_correct) / len(data_loader.dataset)
+    loss.backward()
+    optimizer.step()
+
+    loss = total_loss / batch_size
+    acc = float(total_correct) / batch_size
     return loss, acc
 
 

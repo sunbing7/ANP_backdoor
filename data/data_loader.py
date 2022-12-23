@@ -1401,3 +1401,12 @@ def load_dataset_h5(data_filename, keys=None):
                 dataset[name] = np.array(hf.get(name))
 
     return dataset
+
+
+def get_dataset_info(dataset):
+    if dataset == 'CIFAR10':
+        return (32, 32), 3, [0.4914, 0.4822, 0.4465], [0.2023, 0.1994, 0.2010]
+    if dataset == 'FMNIST':
+        return (28, 28), 1, [1, 1, 1], [0, 0, 0]
+    if dataset == 'GTSRB':
+        return (32, 32), 3, [1, 1, 1], [0, 0, 0]
