@@ -257,7 +257,7 @@ def remove_exp2():
     mask = np.zeros(512)
     neu_idx = np.loadtxt(args.output_dir + "/outstanding_" + "c" + str(1) + "_target_" + str(args.poison_target) + ".txt")
     mask[neu_idx.astype(int)] = 1
-    mask = torch.from_numpy(mask)
+    mask = torch.from_numpy(mask).to(device)
     net = reconstruct_model(net, args.arch, mask, split_layer=args.ana_layer[0])
 
     #summary(net, (3, 32, 32))
