@@ -1080,7 +1080,7 @@ def train_trigger(model, criterion, optimizer, target_class, image, batch_size, 
     optimizer.zero_grad()
     output = model(images)
     #K.mean(model1(input_img)[:, output_index]) - reg * K.mean(K.square(input_img))
-    loss = - torch.mean(output[:, target_class]) + reg * torch.mean(torch.square(image))
+    loss = torch.mean(output[:, target_class]) + reg * torch.mean(torch.square(image))
     #loss = criterion(output, target)
 
     pred = output.data.max(1)[1]
