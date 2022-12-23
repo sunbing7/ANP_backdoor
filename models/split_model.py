@@ -119,7 +119,7 @@ def recover_model(ori_model, model_name, split_layer=6):
     if model_name == 'resnet18':
         if split_layer == 6:
             modules = list(ori_model.children())
-            module1 = modules[:5]
+            module1 = modules[:9]
             module2 = [modules[-1]]
             model = nn.Sequential(*[*module1, *module2])
     return model
