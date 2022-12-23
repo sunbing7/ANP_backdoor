@@ -400,7 +400,7 @@ def gen_trigger():
                 end = time.time()
                 logger.info(
                     '%d \t %.3f \t %.1f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f',
-                    epoch, lr, end - start, train_loss, train_acc, po_test_loss, po_test_acc,
+                    epoch, lr, end - start, train_loss / epoch, train_acc / count, po_test_loss, po_test_acc,
                     cl_test_loss, cl_test_acc)
 
                 if (epoch + 1) % args.save_every == 0:
@@ -410,7 +410,7 @@ def gen_trigger():
             torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_trigger_' + str(args.t_attack) + '_last.th'))
 
             # export mask
-            mask = torch.unsqueeze(net.generator.uap, dim=0)
+            mask = torch.unsqueeze(generator.uap, dim=0)
             mask = mask[0].cpu().detach().numpy()
             plot_mask = np.transpose(mask, (1, 2, 0))
             plot_tuap_normal = plot_mask + 0.5
@@ -1076,9 +1076,7 @@ def train_trigger(model, criterion, optimizer, target_class, image, batch_size):
     loss.backward()
     optimizer.step()
 
-    loss = total_loss / batch_size
-    acc = float(total_correct) / batch_size
-    return loss, acc
+    return total_loss, float(total_correct)
 
 
 def _adjust_learning_rate(optimizer, epoch, lr):
