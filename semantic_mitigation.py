@@ -386,7 +386,7 @@ def gen_trigger():
         for image in images:
             if count >= args.num_sample:
                 break
-            for epoch in range(1, args.epoch):
+            for epoch in range(1, int(args.epoch / args.batch_size)):
                 start = time.time()
                 _adjust_learning_rate(optimizer, epoch, args.lr)
                 lr = optimizer.param_groups[0]['lr']
