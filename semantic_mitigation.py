@@ -256,7 +256,7 @@ def remove_exp2():
     load_state_dict(net, orig_state_dict=state_dict)
 
     neu_idx = np.loadtxt(args.output_dir + "/outstanding_" + "c" + str(1) + "_target_" + str(args.poison_target) + ".txt")
-    neu_idx = neu_idx.to(device)
+    neu_idx = torch.from_numpy(neu_idx)
     net = reconstruct_model(net, args.arch, neu_idx, split_layer=args.ana_layer[0])
 
     #summary(net, (3, 32, 32))
