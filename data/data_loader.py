@@ -872,15 +872,17 @@ class CustomCifarClassAdvDataSet(Dataset):
 
         self.x_test_adv = x_test[self.TARGET_IDX_TEST]
         self.y_test_adv = y_test[self.TARGET_IDX_TEST]
+        self.x_train_adv = x_test[self.TARGET_IDX_TRAIN]
+        self.y_train_adv = y_test[self.TARGET_IDX_TRAIN]
         #for i in range (0, len(self.x_test_adv)):
         #    self.y_test_adv.append(t_target)
 
     def __len__(self):
-        return len(self.y_test_adv)
+        return len(self.y_train_adv)
 
     def __getitem__(self, idx):
-        image = self.x_test_adv[idx]
-        label = self.y_test_adv[idx]
+        image = self.x_train_adv[idx]
+        label = self.y_train_adv[idx]
 
         if self.transform is not None:
             image = self.transform(image)
