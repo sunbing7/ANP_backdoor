@@ -417,7 +417,7 @@ def gen_trigger():
             tuap_range = np.max(plot_tuap_amp) - np.min(plot_tuap_amp)
             plot_tuap_amp = plot_tuap_amp / tuap_range + 0.5
             plot_tuap_amp -= np.min(plot_tuap_amp)
-            imgplot = plt.imshow(plot_tuap_amp)
+            imgplot = plt.imshow(plot_tuap_amp * 255)
             plt.savefig(os.path.join(args.output_dir, 'model_trigger_mask_' + str(args.t_attack) + '_' + str(count) + '.png'))
 
             np.save(os.path.join(args.output_dir, 'model_trigger_mask_' + str(args.t_attack) + '_' + str(count) + '.npy'), mask)
