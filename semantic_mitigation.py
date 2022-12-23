@@ -412,8 +412,10 @@ def gen_trigger():
             mask = torch.unsqueeze(generator.uap, dim=0)
             mask = mask[0].cpu().detach().numpy()
 
-            # Put image into original form
             image = image.cpu().detach().numpy()
+            mask = np.transpose(mask, (1, 2, 0))
+            image = np.transpose(image, (1, 2, 0))
+            # Put image into original form
             orig_img = image * dstd + dmean
 
             # Add uap to input
@@ -421,7 +423,7 @@ def gen_trigger():
             # Put image into normalized form
             adv_x = (adv_orig_img - dmean) / dstd
 
-            plot_mask = np.transpose(adv_x, (1, 2, 0))
+            plot_mask = adv_x
             plot_tuap_normal = plot_mask + 0.5
             plot_tuap_amp = plot_mask / 2 + 0.5
             tuap_range = np.max(plot_tuap_amp) - np.min(plot_tuap_amp)
