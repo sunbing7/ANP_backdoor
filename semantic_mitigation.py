@@ -358,30 +358,29 @@ def gen_trigger():
                 break
 
             image = torch.clone(image_ori).to(device)
-            image.requires_grad = True
+            image_batch = image.repeat(args.batch_size, 1, 1, 1)
+            image_batch.requires_grad = True
 
             criterion = torch.nn.CrossEntropyLoss().to(device)
-            optimizer = torch.optim.SGD([image], lr=args.lr, momentum=0.9, weight_decay=5e-4)
+            optimizer = torch.optim.SGD(image_batch, lr=args.lr, momentum=0.9, weight_decay=5e-4)
 
             for epoch in range(0, int(args.epoch / args.batch_size)):
                 start = time.time()
-                image_batch = image.repeat(args.batch_size, 1, 1, 1)
                 out = net(image_batch)
                 target = (torch.ones(image_batch.shape[0], dtype=torch.int64) * args.poison_target).to(device)
-                #out = net(image.reshape(1, 3, 32, 32))
-                #target = (torch.Tensor([args.poison_target]).long()).to(device)
+
                 loss = criterion(out, target)
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
-                image = torch.mean(image_batch, 0)
+
                 if epoch % 10 == 0:
                     target_prediction = torch.softmax(out, dim=1)[0, args.poison_target]
                     source_prediction = torch.softmax(out, dim=1)[0, args.potential_source]
                     print("Iteration %d, Loss=%f, target prob=%f, source prob=%f" % (
                         epoch, float(loss), float(target_prediction), float(source_prediction)))
 
-
+            image = torch.mean(image_batch, 0)
             image = image.cpu().detach().numpy()
             image = np.transpose(image, (1, 2, 0))
 
