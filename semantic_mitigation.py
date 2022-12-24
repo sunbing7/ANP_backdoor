@@ -350,6 +350,8 @@ def gen_trigger():
 
     net.requires_grad = False
 
+    input_shape, _, _ = get_dataset_info(args.data_name)
+
     #for all samples
     count = 0
     for i, (images, _) in enumerate(clean_class_loader):
@@ -363,13 +365,13 @@ def gen_trigger():
             criterion = torch.nn.CrossEntropyLoss().to(device)
             optimizer = torch.optim.SGD([image], lr=args.lr, momentum=0.9, weight_decay=5e-4)
 
-            for epoch in range(0, int(args.epoch / args.batch_size)):
+            for epoch in range(0, int(args.epoch / 1)):
                 start = time.time()
-                image_batch = image.repeat(args.batch_size, 1, 1, 1)
-                out = net(image_batch)
-                target = (torch.ones(image_batch.shape[0], dtype=torch.int64) * args.poison_target).to(device)
-                #out = net(image.reshape(1, 3, 32, 32))
-                #target = (torch.Tensor([args.poison_target]).long()).to(device)
+                #image_batch = image.repeat(args.batch_size, 1, 1, 1)
+                #out = net(image_batch)
+                #target = (torch.ones(image_batch.shape[0], dtype=torch.int64) * args.poison_target).to(device)
+                out = net(image.reshape(1, (input_shape)))
+                target = (torch.Tensor([args.poison_target]).long()).to(device)
                 loss = criterion(out, target)
                 loss.backward()
                 optimizer.step()
@@ -381,7 +383,7 @@ def gen_trigger():
                     print("Iteration %d, Loss=%f, target prob=%f, source prob=%f" % (
                         epoch, float(loss), float(target_prediction), float(source_prediction)))
 
-            image = image_batch[0]#torch.mean(image_batch, 0)
+            #image = image_batch[0]#torch.mean(image_batch, 0)
             image = image.cpu().detach().numpy()
             image = np.transpose(image, (1, 2, 0))
 
