@@ -362,7 +362,7 @@ def gen_trigger():
             image_batch.requires_grad = True
 
             criterion = torch.nn.CrossEntropyLoss().to(device)
-            optimizer = torch.optim.SGD(image_batch, lr=args.lr, momentum=0.9, weight_decay=5e-4)
+            optimizer = torch.optim.SGD([image_batch], lr=args.lr, momentum=0.9, weight_decay=5e-4)
 
             for epoch in range(0, int(args.epoch / args.batch_size)):
                 start = time.time()
