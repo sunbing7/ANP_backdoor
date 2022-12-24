@@ -374,6 +374,7 @@ def gen_trigger():
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
+                image = torch.mean(image_batch, 0)
                 if epoch % 10 == 0:
                     target_prediction = torch.softmax(out, dim=1)[0, args.poison_target]
                     source_prediction = torch.softmax(out, dim=1)[0, args.potential_source]
@@ -381,7 +382,7 @@ def gen_trigger():
                         epoch, float(loss), float(target_prediction), float(source_prediction)))
 
 
-            image = torch.mean(image_batch, 0).cpu().detach().numpy()
+            image = image.cpu().detach().numpy()
             image = np.transpose(image, (1, 2, 0))
 
             plot_tuap_amp = image / 2 + 0.5
