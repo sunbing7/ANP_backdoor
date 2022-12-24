@@ -1206,6 +1206,8 @@ def train_trigger(model, criterion, optimizer, target_class, image, batch_size, 
     loss.backward()
     optimizer.step()
 
+    model.module.generator.uap.data = torch.clamp(model.module.generator.uap.data, -0.1, 0.1)
+
     return total_loss, float(total_correct)
 
 
