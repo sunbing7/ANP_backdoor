@@ -385,22 +385,29 @@ def gen_trigger():
             #image = image_batch[0]#torch.mean(image_batch, 0)
             image = image.cpu().detach().numpy()
             image = np.transpose(image, (1, 2, 0))
-
+            '''
             plot_tuap_amp = image / 2 + 0.5
             tuap_range = np.max(plot_tuap_amp) - np.min(plot_tuap_amp)
             plot_tuap_amp = plot_tuap_amp / tuap_range + 0.5
             plot_tuap_amp -= np.min(plot_tuap_amp)
             imgplot = plt.imshow(plot_tuap_amp)
+            '''
+            image = deprocess_image(image)
+            plt.imshow(image)
+
             plt.savefig(os.path.join(args.output_dir, 'model_trigger_mask_' + str(args.t_attack) + '_' + str(count) + '.png'))
 
             image = image_ori.cpu().detach().numpy()
             image = np.transpose(image, (1, 2, 0))
-
+            '''
             plot_tuap_amp = image / 2 + 0.5
             tuap_range = np.max(plot_tuap_amp) - np.min(plot_tuap_amp)
             plot_tuap_amp = plot_tuap_amp / tuap_range + 0.5
             plot_tuap_amp -= np.min(plot_tuap_amp)
             imgplot = plt.imshow(plot_tuap_amp)
+            '''
+            image = deprocess_image(image)
+            plt.imshow(image)
             plt.savefig(os.path.join(args.output_dir, 'model_trigger_ori_' + str(args.t_attack) + '_' + str(count) + '.png'))
 
             count = count + 1
@@ -982,6 +989,27 @@ def plot_multiple(_rank, name, cur_class, ana_layer, normalise=False, save_n="")
     else:
         plt.savefig(args.output_dir + "/plt_c" + str(cur_class) + save_n + ".png")
     # plt.show()
+
+
+def deprocess_image(x):
+    # normalize tensor: center on 0., ensure std is 0.1
+    #'''
+    x -= x.mean()
+    x /= (x.std() + 1e-5)
+    x *= 0.1
+
+    # clip to [0, 1]
+    x += 0.5
+    x = np.clip(x, 0, 1)
+
+    # convert to RGB array
+    x *= 255
+
+    x = np.clip(x, 0, 255).astype('uint8')
+    '''
+    x = np.clip(x, 0, 1)
+    '''
+    return x
 
 
 def train(model, criterion, optimizer, data_loader):
