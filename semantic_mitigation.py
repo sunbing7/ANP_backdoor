@@ -514,7 +514,7 @@ def gen_trigger():
                 end = time.time()
                 logger.info(
                     '%d \t %.3f \t %.1f \t %.4f \t %.4f',
-                    epoch, lr, end - start, train_loss / epoch, train_acc / (epoch * args.batch_size))
+                    epoch, lr, end - start, train_loss / (epoch + 1), train_acc / ((epoch + 1) * args.batch_size))
 
                 #if (epoch + 1) % args.save_every == 0:
                 #    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_trigger_{}_{}.th'.format(args.t_attack, epoch)))
