@@ -492,11 +492,12 @@ def gen_trigger():
             criterion = torch.nn.CrossEntropyLoss().to(device)
             optimizer = torch.optim.SGD([image], lr=args.lr, momentum=0.9, weight_decay=5e-4)
 
-            for epoch in range(0, int(args.epoch / args.batch_size)):
+            for epoch in range(0, int(args.epoch / 1)):
                 start = time.time()
-                image_batch = image.repeat(args.batch_size, 1, 1, 1)
-                out = net(image_batch)
-                target = (torch.ones(images.shape[0], dtype=torch.int64) * args.poison_target).to(device)
+                #image_batch = image.repeat(args.batch_size, 1, 1, 1)
+                out = net(image.reshape(1, 3, 32, 32))
+                #target = (torch.ones(image_batch.shape[0], dtype=torch.int64) * args.poison_target).to(device)
+                target = (torch.Tensor([args.poison_target]).long()).to(device)
                 loss = criterion(out, target)
                 loss.backward()
                 optimizer.step()
