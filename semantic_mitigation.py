@@ -350,8 +350,6 @@ def gen_trigger():
 
     net.requires_grad = False
 
-    input_shape, _, _ = get_dataset_info(args.data_name)
-
     #for all samples
     count = 0
     for i, (images, _) in enumerate(clean_class_loader):
@@ -370,7 +368,7 @@ def gen_trigger():
                 #image_batch = image.repeat(args.batch_size, 1, 1, 1)
                 #out = net(image_batch)
                 #target = (torch.ones(image_batch.shape[0], dtype=torch.int64) * args.poison_target).to(device)
-                out = net(image.reshape(1, (input_shape)))
+                out = net(image.reshape(np.expand_dims(image, axis=0).shape))
                 target = (torch.Tensor([args.poison_target]).long()).to(device)
                 loss = criterion(out, target)
                 loss.backward()
