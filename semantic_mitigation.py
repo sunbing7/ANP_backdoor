@@ -504,8 +504,9 @@ def gen_trigger():
                 optimizer.zero_grad()
                 if epoch % 10 == 0:
                     target_prediction = torch.softmax(out, dim=1)[0, args.poison_target]
-                    print("Iteration %d, Loss=%f, target prob=%f" % (
-                        epoch, float(loss), float(target_prediction)))
+                    source_prediction = torch.softmax(out, dim=1)[0, args.potential_source]
+                    print("Iteration %d, Loss=%f, target prob=%f, source prob=%f" % (
+                        epoch, float(loss), float(target_prediction), float(source_prediction)))
 
 
             image = image.cpu().detach().numpy()
