@@ -352,6 +352,7 @@ def gen_trigger():
 
     #for all samples
     count = 0
+    out = []
     for i, (images, _) in enumerate(clean_class_loader):
         for image_ori in images:
             if count >= args.num_sample:
@@ -386,13 +387,9 @@ def gen_trigger():
             #image = image_batch[0]#torch.mean(image_batch, 0)
             image = image.cpu().detach().numpy()
             image = np.transpose(image, (1, 2, 0))
+            out.append(image)
             '''
-            plot_tuap_amp = image / 2 + 0.5
-            tuap_range = np.max(plot_tuap_amp) - np.min(plot_tuap_amp)
-            plot_tuap_amp = plot_tuap_amp / tuap_range + 0.5
-            plot_tuap_amp -= np.min(plot_tuap_amp)
-            imgplot = plt.imshow(plot_tuap_amp)
-            '''
+
             image = deprocess_image(image)
             plt.imshow(image)
 
@@ -400,19 +397,13 @@ def gen_trigger():
 
             image = image_ori.cpu().detach().numpy()
             image = np.transpose(image, (1, 2, 0))
-            '''
-            plot_tuap_amp = image / 2 + 0.5
-            tuap_range = np.max(plot_tuap_amp) - np.min(plot_tuap_amp)
-            plot_tuap_amp = plot_tuap_amp / tuap_range + 0.5
-            plot_tuap_amp -= np.min(plot_tuap_amp)
-            imgplot = plt.imshow(plot_tuap_amp)
-            '''
+
             image = deprocess_image(image)
             plt.imshow(image)
             plt.savefig(os.path.join(args.output_dir, 'model_trigger_ori_' + str(args.t_attack) + '_' + str(count) + '.png'))
-
+            '''
             count = count + 1
-
+    np.save(os.path.join(args.data_dir, '/advsample_' + str(args.t_attack) + '.npy'), out)
     return
 
 
