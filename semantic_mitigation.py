@@ -501,7 +501,7 @@ def gen_trigger():
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
-                if epoch % 10 == 0:
+                if True:#epoch % 10 == 0:
                     target_prediction = torch.softmax(out, dim=1)[0, args.poison_target]
                     print("Iteration %d, Loss=%f, target prob=%f" % (
                         epoch, float(loss), float(target_prediction)))
