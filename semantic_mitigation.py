@@ -482,11 +482,11 @@ def gen_trigger():
     #for all samples
     count = 0
     for i, (images, _) in enumerate(clean_class_loader):
-        for image in images:
+        for image_ori in images:
             if count >= args.num_sample:
                 break
 
-            image = image.to(device)
+            image = torch.clone(image_ori).to(device)
             image.requires_grad = True
 
             criterion = torch.nn.CrossEntropyLoss().to(device)
@@ -502,7 +502,7 @@ def gen_trigger():
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
-                if True:#epoch % 10 == 0:
+                if epoch % 10 == 0:
                     target_prediction = torch.softmax(out, dim=1)[0, args.poison_target]
                     print("Iteration %d, Loss=%f, target prob=%f" % (
                         epoch, float(loss), float(target_prediction)))
@@ -511,7 +511,6 @@ def gen_trigger():
             image = image.cpu().detach().numpy()
             image = np.transpose(image, (1, 2, 0))
 
-            plot_tuap_normal = image + 0.5
             plot_tuap_amp = image / 2 + 0.5
             tuap_range = np.max(plot_tuap_amp) - np.min(plot_tuap_amp)
             plot_tuap_amp = plot_tuap_amp / tuap_range + 0.5
@@ -519,7 +518,16 @@ def gen_trigger():
             imgplot = plt.imshow(plot_tuap_amp)
             plt.savefig(os.path.join(args.output_dir, 'model_trigger_mask_' + str(args.t_attack) + '_' + str(count) + '.png'))
 
-            np.save(os.path.join(args.output_dir, 'model_trigger_mask_' + str(args.t_attack) + '_' + str(count) + '.npy'), image)
+            image = image_ori.cpu().detach().numpy()
+            image = np.transpose(image, (1, 2, 0))
+
+            plot_tuap_amp = image / 2 + 0.5
+            tuap_range = np.max(plot_tuap_amp) - np.min(plot_tuap_amp)
+            plot_tuap_amp = plot_tuap_amp / tuap_range + 0.5
+            plot_tuap_amp -= np.min(plot_tuap_amp)
+            imgplot = plt.imshow(plot_tuap_amp)
+            plt.savefig(os.path.join(args.output_dir, 'model_trigger_ori_' + str(args.t_attack) + '_' + str(count) + '.png'))
+
             count = count + 1
 
     return
