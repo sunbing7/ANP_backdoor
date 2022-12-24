@@ -324,120 +324,6 @@ def remove_exp2():
     return
 
 
-def gen_trigger_test():
-    logger = logging.getLogger(__name__)
-    logging.basicConfig(
-        format='[%(asctime)s] - %(message)s',
-        datefmt='%Y/%m/%d %H:%M:%S',
-        level=logging.DEBUG,
-        handlers=[
-            logging.FileHandler(os.path.join(args.output_dir, 'output.log')),
-            logging.StreamHandler()
-        ])
-    #logger.info(args)
-
-    if args.poison_type != 'semantic':
-        print('Invalid poison type!')
-        return
-
-    # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
-    train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
-        get_custom_loader(args.data_dir, args.batch_size, args.poison_target, args.data_name, args.t_attack, 2500)
-
-    clean_class_loader = get_custom_class_loader(args.data_dir, args.batch_size, args.potential_source, args.data_name,
-                                                 args.t_attack)
-
-    # Step 1: create poisoned / clean dataset
-    poison_test_loader = test_adv_loader
-    clean_test_loader = test_clean_loader
-
-    # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
-    net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
-
-    state_dict = torch.load(args.in_model, map_location=device)
-    load_state_dict(net, orig_state_dict=state_dict)
-
-    #summary(net, (3, 32, 32))
-    #print(net)
-    dshape, dchn, dmean, dstd = get_dataset_info(args.data_name)
-
-    generator = UAP(shape=dshape,
-                num_channels=dchn,
-                mean=dmean,
-                std=dstd,
-                device=device)
-
-    net = nn.Sequential(OrderedDict([('generator', generator), ('target_model', net)]))
-    net = torch.nn.DataParallel(net)
-
-    net.module.target_model.eval()
-    net.module.generator.train()
-
-    criterion = torch.nn.CrossEntropyLoss().to(device)
-    optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.schedule, gamma=0.1)
-    '''
-    logger.info('Epoch \t lr \t Time \t CleanLoss \t CleanACC \t PoisonLoss \t PoisonACC \t CleanLoss \t CleanACC')
-    cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
-    po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
-    logger.info('0 \t None \t None \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(po_loss, po_acc, cl_loss, cl_acc))
-    '''
-    count = 0
-    for i, (images, _) in enumerate(clean_class_loader):
-        for image in images:
-            if count >= args.num_sample:
-                break
-            for epoch in range(1, int(args.epoch / args.batch_size)):
-                start = time.time()
-                _adjust_learning_rate(optimizer, epoch, args.lr)
-                lr = optimizer.param_groups[0]['lr']
-
-                train_loss, train_acc = train_trigger(model=net, criterion=criterion, optimizer=optimizer,
-                                              target_class=args.poison_target, image=image, batch_size=args.batch_size, reg=args.reg)
-
-                #cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
-                #po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
-                scheduler.step()
-                end = time.time()
-                logger.info(
-                    '%d \t %.3f \t %.1f \t %.4f \t %.4f',
-                    epoch, lr, end - start, train_loss / epoch, train_acc / (epoch * args.batch_size))
-
-                if (epoch + 1) % args.save_every == 0:
-                    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_trigger_{}_{}.th'.format(args.t_attack, epoch)))
-
-            # save the last checkpoint
-            torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_trigger_' + str(args.t_attack) + '_last.th'))
-
-            # export mask
-            mask = torch.unsqueeze(generator.uap, dim=0)
-            mask = mask[0].cpu().detach().numpy()
-
-            image = image.cpu().detach().numpy()
-            mask = np.transpose(mask, (1, 2, 0))
-            image = np.transpose(image, (1, 2, 0))
-            # Put image into original form
-            orig_img = image * dstd + dmean
-
-            # Add uap to input
-            adv_orig_img = orig_img + mask
-            # Put image into normalized form
-            adv_x = (adv_orig_img - dmean) / dstd
-
-            plot_mask = adv_x
-            plot_tuap_normal = plot_mask + 0.5
-            plot_tuap_amp = plot_mask / 2 + 0.5
-            tuap_range = np.max(plot_tuap_amp) - np.min(plot_tuap_amp)
-            plot_tuap_amp = plot_tuap_amp / tuap_range + 0.5
-            plot_tuap_amp -= np.min(plot_tuap_amp)
-            imgplot = plt.imshow(plot_tuap_amp)
-            plt.savefig(os.path.join(args.output_dir, 'model_trigger_mask_' + str(args.t_attack) + '_' + str(count) + '.png'))
-
-            np.save(os.path.join(args.output_dir, 'model_trigger_mask_' + str(args.t_attack) + '_' + str(count) + '.npy'), mask)
-            count = count + 1
-    return
-
-
 def gen_trigger():
     logger = logging.getLogger(__name__)
     logging.basicConfig(
@@ -454,30 +340,15 @@ def gen_trigger():
         print('Invalid poison type!')
         return
 
-    # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
-    train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
-        get_custom_loader(args.data_dir, args.batch_size, args.poison_target, args.data_name, args.t_attack, 2500)
-
     clean_class_loader = get_custom_class_loader(args.data_dir, args.batch_size, args.potential_source, args.data_name,
                                                  args.t_attack)
 
-    # Step 1: create poisoned / clean dataset
-    poison_test_loader = test_adv_loader
-    clean_test_loader = test_clean_loader
-
-
-    # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
     net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
 
     state_dict = torch.load(args.in_model, map_location=device)
     load_state_dict(net, orig_state_dict=state_dict)
 
     net.requires_grad = False
-
-    #summary(net, (3, 32, 32))
-    #print(net)
-    dshape, dchn, dmean, dstd = get_dataset_info(args.data_name)
-
 
     #for all samples
     count = 0
@@ -492,12 +363,13 @@ def gen_trigger():
             criterion = torch.nn.CrossEntropyLoss().to(device)
             optimizer = torch.optim.SGD([image], lr=args.lr, momentum=0.9, weight_decay=5e-4)
 
-            for epoch in range(0, int(args.epoch / 1)):
+            for epoch in range(0, int(args.epoch / args.batch_size)):
                 start = time.time()
-                #image_batch = image.repeat(args.batch_size, 1, 1, 1)
-                out = net(image.reshape(1, 3, 32, 32))
-                #target = (torch.ones(image_batch.shape[0], dtype=torch.int64) * args.poison_target).to(device)
-                target = (torch.Tensor([args.poison_target]).long()).to(device)
+                image_batch = image.repeat(args.batch_size, 1, 1, 1)
+                out = net(image_batch)
+                target = (torch.ones(image_batch.shape[0], dtype=torch.int64) * args.poison_target).to(device)
+                #out = net(image.reshape(1, 3, 32, 32))
+                #target = (torch.Tensor([args.poison_target]).long()).to(device)
                 loss = criterion(out, target)
                 loss.backward()
                 optimizer.step()
@@ -509,7 +381,7 @@ def gen_trigger():
                         epoch, float(loss), float(target_prediction), float(source_prediction)))
 
 
-            image = image.cpu().detach().numpy()
+            image = torch.mean(image_batch).cpu().detach().numpy()
             image = np.transpose(image, (1, 2, 0))
 
             plot_tuap_amp = image / 2 + 0.5
