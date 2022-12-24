@@ -467,10 +467,12 @@ def gen_trigger():
 
 
     # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
-    ori_net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
+    net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
 
     state_dict = torch.load(args.in_model, map_location=device)
-    load_state_dict(ori_net, orig_state_dict=state_dict)
+    load_state_dict(net, orig_state_dict=state_dict)
+
+    net.requires_grad = False
 
     #summary(net, (3, 32, 32))
     #print(net)
@@ -484,72 +486,41 @@ def gen_trigger():
             if count >= args.num_sample:
                 break
 
-            generator = UAP(shape=dshape,
-                        num_channels=dchn,
-                        mean=dmean,
-                        std=dstd,
-                        device=device)
-
-            net = nn.Sequential(OrderedDict([('generator', generator), ('target_model', ori_net)]))
-            net = torch.nn.DataParallel(net)
-
-            net.module.target_model.eval()
-            net.module.generator.train()
+            image = image.to(device)
+            image.requires_grad = True
 
             criterion = torch.nn.CrossEntropyLoss().to(device)
-            optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
-            scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.schedule, gamma=0.1)
+            optimizer = torch.optim.SGD([image], lr=args.lr, momentum=0.9, weight_decay=5e-4)
 
             for epoch in range(0, int(args.epoch / args.batch_size)):
                 start = time.time()
-                _adjust_learning_rate(optimizer, epoch, args.lr)
-                lr = optimizer.param_groups[0]['lr']
+                image_batch = image.repeat(args.batch_size, 1, 1, 1)
+                out = net(image_batch)
+                target = (torch.ones(images.shape[0], dtype=torch.int64) * args.poison_target).to(device)
+                loss = criterion(out, target)
+                loss.backward()
+                optimizer.step()
+                optimizer.zero_grad()
+                if epoch % 10 == 0:
+                    target_prediction = torch.softmax(out, dim=1)[0, args.poison_target]
+                    print("Iteration %d, Loss=%f, target prob=%f" % (
+                        epoch, float(loss), float(target_prediction)))
 
-                train_loss, train_acc = train_trigger(model=net, criterion=criterion, optimizer=optimizer,
-                                              target_class=args.poison_target, image=image, batch_size=args.batch_size, reg=args.reg)
-
-                #cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
-                #po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
-                scheduler.step()
-                end = time.time()
-                logger.info(
-                    '%d \t %.3f \t %.1f \t %.4f \t %.4f',
-                    epoch, lr, end - start, train_loss / (epoch + 1), train_acc / ((epoch + 1) * args.batch_size))
-
-                #if (epoch + 1) % args.save_every == 0:
-                #    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_trigger_{}_{}.th'.format(args.t_attack, epoch)))
-
-            # save the last checkpoint
-            #torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_trigger_' + str(args.t_attack) + '_last.th'))
-
-            # export mask
-            mask = torch.unsqueeze(generator.uap, dim=0)
-            mask = mask[0].cpu().detach().numpy()
 
             image = image.cpu().detach().numpy()
-            mask = np.transpose(mask, (1, 2, 0))
             image = np.transpose(image, (1, 2, 0))
-            # Put image into original form
-            orig_img = image * dstd + dmean
 
-            # Add uap to input
-            adv_orig_img = orig_img + mask
-            # Put image into normalized form
-            adv_x = (adv_orig_img - dmean) / dstd
-
-            plot_mask = adv_x
-            plot_tuap_normal = plot_mask + 0.5
-            plot_tuap_amp = plot_mask / 2 + 0.5
+            plot_tuap_normal = image + 0.5
+            plot_tuap_amp = image / 2 + 0.5
             tuap_range = np.max(plot_tuap_amp) - np.min(plot_tuap_amp)
             plot_tuap_amp = plot_tuap_amp / tuap_range + 0.5
             plot_tuap_amp -= np.min(plot_tuap_amp)
             imgplot = plt.imshow(plot_tuap_amp)
             plt.savefig(os.path.join(args.output_dir, 'model_trigger_mask_' + str(args.t_attack) + '_' + str(count) + '.png'))
 
-            np.save(os.path.join(args.output_dir, 'model_trigger_mask_' + str(args.t_attack) + '_' + str(count) + '.npy'), mask)
+            np.save(os.path.join(args.output_dir, 'model_trigger_mask_' + str(args.t_attack) + '_' + str(count) + '.npy'), image)
             count = count + 1
 
-            del generator, net, mask, criterion, optimizer, scheduler
     return
 
 
@@ -1196,7 +1167,7 @@ def train_trigger(model, criterion, optimizer, target_class, image, batch_size, 
     output = model(images)
     #K.mean(model1(input_img)[:, output_index]) - reg * K.mean(K.square(input_img))
     uap = torch.unsqueeze(model.module.generator.uap, dim=0)
-    loss = criterion(output, target) + reg * torch.mean(torch.square(uap + image.to(device)))
+    loss = criterion(output, target)# + reg * torch.mean(torch.square(uap + image.to(device)))
     #loss = criterion(output, target)
 
     pred = output.data.max(1)[1]
@@ -1206,7 +1177,7 @@ def train_trigger(model, criterion, optimizer, target_class, image, batch_size, 
     loss.backward()
     optimizer.step()
 
-    #model.module.generator.uap.data = torch.clamp(model.module.generator.uap.data, -0.1, 0.1)
+    model.module.generator.uap.data = torch.clamp(model.module.generator.uap.data, -0.1, 0.1)
 
     return total_loss, float(total_correct)
 
