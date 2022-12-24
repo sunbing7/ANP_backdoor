@@ -368,7 +368,7 @@ def gen_trigger():
                 #image_batch = image.repeat(args.batch_size, 1, 1, 1)
                 #out = net(image_batch)
                 #target = (torch.ones(image_batch.shape[0], dtype=torch.int64) * args.poison_target).to(device)
-                out = net(image.reshape(np.expand_dims(image, axis=0).shape))
+                out = net(image.reshape(torch.unsqueeze(image, 0).shape))
                 target = (torch.Tensor([args.poison_target]).long()).to(device)
                 loss = criterion(out, target)
                 loss.backward()
