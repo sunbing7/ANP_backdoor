@@ -1196,7 +1196,7 @@ def train_trigger(model, criterion, optimizer, target_class, image, batch_size, 
     output = model(images)
     #K.mean(model1(input_img)[:, output_index]) - reg * K.mean(K.square(input_img))
     uap = torch.unsqueeze(model.module.generator.uap, dim=0)
-    loss = - torch.mean(output[:, target_class]) + reg * torch.mean(torch.square(uap + image.to(device)))
+    loss = criterion(output, target) + reg * torch.mean(torch.square(uap + image.to(device)))
     #loss = criterion(output, target)
 
     pred = output.data.max(1)[1]
@@ -1206,7 +1206,7 @@ def train_trigger(model, criterion, optimizer, target_class, image, batch_size, 
     loss.backward()
     optimizer.step()
 
-    model.module.generator.uap.data = torch.clamp(model.module.generator.uap.data, -0.1, 0.1)
+    #model.module.generator.uap.data = torch.clamp(model.module.generator.uap.data, -0.1, 0.1)
 
     return total_loss, float(total_correct)
 
