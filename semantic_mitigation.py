@@ -352,7 +352,7 @@ def gen_trigger():
 
     #for all samples
     count = 0
-    out = []
+    genout = []
     for i, (images, _) in enumerate(clean_class_loader):
         for image_ori in images:
             print('reverse engineer trigger: {}'.format(count))
@@ -390,7 +390,7 @@ def gen_trigger():
             #image = image_batch[0]#torch.mean(image_batch, 0)
             image = image.cpu().detach().numpy()
             image = np.transpose(image, (1, 2, 0))
-            out.append(image)
+            genout.append(image)
             '''
 
             image = deprocess_image(image)
@@ -406,7 +406,7 @@ def gen_trigger():
             plt.savefig(os.path.join(args.output_dir, 'model_trigger_ori_' + str(args.t_attack) + '_' + str(count) + '.png'))
             '''
             count = count + 1
-    np.save(os.path.join(args.data_dir, '/advsample_' + str(args.t_attack) + '.npy'), out)
+    np.save(os.path.join(args.data_dir, '/advsample_' + str(args.t_attack) + '.npy'), genout)
     return
 
 
