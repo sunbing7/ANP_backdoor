@@ -381,7 +381,7 @@ def gen_trigger():
                         epoch, float(loss), float(target_prediction), float(source_prediction)))
 
 
-            image = torch.mean(image_batch).cpu().detach().numpy()
+            image = torch.mean(image_batch)[0].cpu().detach().numpy()
             image = np.transpose(image, (1, 2, 0))
 
             plot_tuap_amp = image / 2 + 0.5
