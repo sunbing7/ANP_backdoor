@@ -374,12 +374,13 @@ def gen_trigger():
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
-
+                target_prediction = torch.softmax(out, dim=1)[0, args.poison_target]
                 if epoch % 100 == 0:
-                    target_prediction = torch.softmax(out, dim=1)[0, args.poison_target]
                     source_prediction = torch.softmax(out, dim=1)[0, args.potential_source]
                     print("Iteration %d, Loss=%f, target prob=%f, source prob=%f" % (
                         epoch, float(loss), float(target_prediction), float(source_prediction)))
+                if target_prediction >= 0.9:
+                    break
 
             #image = image_batch[0]#torch.mean(image_batch, 0)
             image = image.cpu().detach().numpy()
