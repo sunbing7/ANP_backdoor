@@ -518,16 +518,16 @@ def get_data_gtsrb_class_loader(data_file, batch_size=64, cur_class=0, t_attack=
     return class_loader
 
 
-def get_data_adv_loader(data_file, batch_size=64, t_target=6, dataset='CIFAR10', t_attack='green'):
+def get_data_adv_loader(data_file, batch_size=64, t_target=6, dataset='CIFAR10', t_attack='green', option='original'):
     if dataset == 'CIFAR10':
-        return get_cifar_adv_loader(data_file, batch_size, t_target, t_attack)
+        return get_cifar_adv_loader(data_file, batch_size, t_target, t_attack, option)
     if dataset == 'FMNIST':
-        return get_fmnist_adv_loader(data_file, batch_size, t_target, t_attack)
+        return get_fmnist_adv_loader(data_file, batch_size, t_target, t_attack, option)
     if dataset == 'GTSRB':
-        return get_gtsrb_adv_loader(data_file, batch_size, t_target, t_attack)
+        return get_gtsrb_adv_loader(data_file, batch_size, t_target, t_attack, option)
 
 
-def get_cifar_adv_loader(data_file, batch_size=64, t_target=6, t_attack='green'):
+def get_cifar_adv_loader(data_file, batch_size=64, t_target=6, t_attack='green', option='original'):
     transform_train = transforms.Compose([
         transforms.ToTensor(),
         transforms.RandomCrop(32, padding=4),
@@ -539,14 +539,16 @@ def get_cifar_adv_loader(data_file, batch_size=64, t_target=6, t_attack='green')
         transforms.ToTensor(),
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     ])
-
-    data = CustomCifarClassAdvDataSet(data_file, t_target=t_target, t_attack=t_attack, transform=transform_train)
+    if option == 'original':
+        data = CustomCifarClassAdvDataSet(data_file, t_target=t_target, t_attack=t_attack, transform=transform_train)
+    elif option == 'reverse':
+        data = CustomCifarRAdvDataSet(data_file, t_target=t_target, transform=transform_train)
     class_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
     return class_loader
 
 
-def get_fmnist_adv_loader(data_file, batch_size=64, t_target=6, t_attack='green'):
+def get_fmnist_adv_loader(data_file, batch_size=64, t_target=6, t_attack='green', option='original'):
     transform_train = transforms.Compose([
         transforms.ToTensor(),
         transforms.RandomCrop(28, padding=4),
@@ -565,7 +567,7 @@ def get_fmnist_adv_loader(data_file, batch_size=64, t_target=6, t_attack='green'
     return class_loader
 
 
-def get_gtsrb_adv_loader(data_file, batch_size=64, t_target=6, t_attack='dtl'):
+def get_gtsrb_adv_loader(data_file, batch_size=64, t_target=6, t_attack='dtl', option='original'):
     transform_train = transforms.Compose([
         transforms.ToTensor(),
         transforms.RandomCrop(32, padding=4),
@@ -928,6 +930,33 @@ class CustomCifarClassAdvDataSet(Dataset):
     def to_categorical(self, y, num_classes):
         """ 1-hot encodes a tensor """
         return np.eye(num_classes, dtype='uint8')[y]
+
+
+class CustomCifarRAdvDataSet(Dataset):
+
+    def __init__(self, data_file, t_target=6, transform=False):
+        self.data_file = data_file
+        self.transform = transform
+
+        dataset = np.load(data_file)
+
+        self.x_test_adv = dataset
+        self.y_test_adv = []
+
+        for i in range (0, len(self.x_test_adv)):
+            self.y_test_adv.append(t_target)
+
+    def __len__(self):
+        return len(self.x_test_adv)
+
+    def __getitem__(self, idx):
+        image = self.x_test_adv[idx]
+        label = self.y_test_adv[idx]
+
+        if self.transform is not None:
+            image = self.transform(image)
+
+        return image, label
 
 
 class CustomFMNISTAttackDataSet(Dataset):

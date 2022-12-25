@@ -45,7 +45,7 @@ parser.add_argument('--data_name', type=str, default='CIFAR10', help='name of da
 parser.add_argument('--num_class', type=int, default=10, help='number of classes')
 parser.add_argument('--resume', type=int, default=1, help='resume from args.checkpoint')
 parser.add_argument('--option', type=str, default='detect', choices=['detect', 'remove', 'plot', 'causality_analysis',
-                                                                     'remove2', 'gen_trigger'], help='run option')
+                                                                     'remove2', 'gen_trigger', 'test'], help='run option')
 parser.add_argument('--lr', type=float, default=0.1, help='lr')
 parser.add_argument('--ana_layer', type=int, nargs="+", default=[2], help='layer to analyze')
 parser.add_argument('--num_sample', type=int, default=192, help='number of samples')
@@ -63,6 +63,56 @@ for key, value in state.items():
     print("{} : {}".format(key, value))
 os.makedirs(args.output_dir, exist_ok=True)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+
+def run_test():
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(
+        format='[%(asctime)s] - %(message)s',
+        datefmt='%Y/%m/%d %H:%M:%S',
+        level=logging.DEBUG,
+        handlers=[
+            logging.FileHandler(os.path.join(args.output_dir, 'output.log')),
+            logging.StreamHandler()
+        ])
+    #logger.info(args)
+
+    if args.poison_type != 'semantic':
+        print('Invalid poison type!')
+        return
+
+    # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
+    train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
+        get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack, 2500)
+
+    radv_loader = get_data_adv_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, 'reverse')
+
+    # Step 1: create poisoned / clean dataset
+    poison_test_loader = test_adv_loader
+    clean_test_loader = test_clean_loader
+
+    # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
+    net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
+
+    state_dict = torch.load(args.in_model, map_location=device)
+    load_state_dict(net, orig_state_dict=state_dict)
+
+    #summary(net, (3, 32, 32))
+    #print(net)
+
+    criterion = torch.nn.CrossEntropyLoss().to(device)
+    optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.schedule, gamma=0.1)
+    #'''
+    logger.info('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t APoisonLoss \t APoisonACC \t CleanLoss \t CleanACC')
+    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_init.th'))
+    cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
+    po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
+    rpo_loss, rpo_acc = test(model=net, criterion=criterion, data_loader=radv_loader)
+    logger.info('0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(po_loss, po_acc, apo_loss, apo_acc, cl_loss, cl_acc))
+    #'''
+
+    return
 
 
 def causality_analysis():
@@ -168,8 +218,7 @@ def remove_exp():
     train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
         get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack, 2500)
 
-    adv_class_loader = get_data_adv_loader(args.data_set, args.batch_size, args.poison_target, args.data_name,
-                                                args.t_attack)
+    adv_class_loader = get_data_adv_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack)
 
     # Step 1: create poisoned / clean dataset
     poison_test_loader = test_adv_loader
@@ -1121,6 +1170,8 @@ def test(model, criterion, data_loader):
 if __name__ == '__main__':
     if args.option == 'causality_analysis':
         causality_analysis()
+    elif args.option == 'test':
+        run_test()
     elif args.option == 'plot':
         hidden_plot()
     elif args.option == 'detect':
