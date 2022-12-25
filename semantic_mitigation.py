@@ -544,6 +544,10 @@ def remove_exp4():
             torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_finetune4_{}_{}.th'.format(args.t_attack, epoch)))
 
     net = recover_model(net, args.arch, split_layer=args.ana_layer[0])
+    criterion = torch.nn.CrossEntropyLoss().to(device)
+    optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
+    train_loss, train_acc = train(model=net, criterion=criterion, optimizer=optimizer,
+                                  data_loader=train_clean_loader)
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
 
