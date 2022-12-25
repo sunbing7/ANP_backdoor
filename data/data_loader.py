@@ -518,13 +518,13 @@ def get_data_gtsrb_class_loader(data_file, batch_size=64, cur_class=0, t_attack=
     return class_loader
 
 
-def get_data_adv_loader(data_file, batch_size=64, t_target=6, dataset='CIFAR10', t_attack='green', option='original'):
+def get_data_adv_loader(data_file, is_train=False, batch_size=64, t_target=6, dataset='CIFAR10', t_attack='green', option='original'):
     if dataset == 'CIFAR10':
-        return get_cifar_adv_loader(data_file, batch_size, t_target, t_attack, option)
+        return get_cifar_adv_loader(data_file, is_train, batch_size, t_target, t_attack, option)
     if dataset == 'FMNIST':
-        return get_fmnist_adv_loader(data_file, batch_size, t_target, t_attack, option)
+        return get_fmnist_adv_loader(data_file, is_train, batch_size, t_target, t_attack, option)
     if dataset == 'GTSRB':
-        return get_gtsrb_adv_loader(data_file, batch_size, t_target, t_attack, option)
+        return get_gtsrb_adv_loader(data_file, is_train, batch_size, t_target, t_attack, option)
 
 
 def get_cifar_adv_loader(data_file, is_train=False, batch_size=64, t_target=6, t_attack='green', option='original'):
@@ -549,7 +549,7 @@ def get_cifar_adv_loader(data_file, is_train=False, batch_size=64, t_target=6, t
     return class_loader
 
 
-def get_fmnist_adv_loader(data_file, batch_size=64, t_target=6, t_attack='green', option='original'):
+def get_fmnist_adv_loader(data_file, is_train=False, batch_size=64, t_target=6, t_attack='green', option='original'):
     transform_train = transforms.Compose([
         transforms.ToTensor(),
         transforms.RandomCrop(28, padding=4),
@@ -568,7 +568,7 @@ def get_fmnist_adv_loader(data_file, batch_size=64, t_target=6, t_attack='green'
     return class_loader
 
 
-def get_gtsrb_adv_loader(data_file, batch_size=64, t_target=6, t_attack='dtl', option='original'):
+def get_gtsrb_adv_loader(data_file, is_train=False, batch_size=64, t_target=6, t_attack='dtl', option='original'):
     transform_train = transforms.Compose([
         transforms.ToTensor(),
         transforms.RandomCrop(32, padding=4),
