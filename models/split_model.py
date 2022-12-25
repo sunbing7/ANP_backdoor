@@ -109,7 +109,26 @@ def reconstruct_model(ori_model, model_name, mask, split_layer=6):
             module3 = [modules[6]]
 
             model = nn.Sequential(*[*module1, Relu(), *module2, Avgpool2d(), Flatten(), Mask(mask), *module3])
+    elif model_name == 'MobileNetV2':
+        if split_layer == 4:
+            modules = list(ori_model.children())
+            module1 = modules[:2]
+            module2 = [modules[2]]
+            module3 = modules[3:5]
+            module4 = [modules[5]]
 
+            model = nn.Sequential(*[*module1, Relu(), *module2, *module3, Relu(), Avgpool2d(), Flatten(), Mask(mask), *module4])
+
+    elif model_name == 'vgg11_bn':
+        if split_layer == 1:
+            modules = list(ori_model.children())
+
+            module1 = [modules[0]]
+            module2 = [modules[1]]
+
+            model = nn.Sequential(*[*module1, Flatten(), Mask(mask), *module2])
+    else:
+        return None
     return model
 
 
@@ -119,6 +138,20 @@ def recover_model(ori_model, model_name, split_layer=6):
             modules = list(ori_model.children())
             module1 = modules[:9]
             module2 = [modules[-1]]
+            model = nn.Sequential(*[*module1, *module2])
+    elif model_name == 'MobileNetV2':
+        if split_layer == 4:
+            modules = list(ori_model.children())
+            module1 = modules[:9]
+            module2 = [modules[-1]]
+
+            model = nn.Sequential(*[*module1, *module2])
+    elif model_name == 'vgg11_bn':
+        if split_layer == 1:
+            modules = list(ori_model.children())
+            module1 = modules[:2]
+            module2 = [modules[-1]]
+
             model = nn.Sequential(*[*module1, *module2])
     return model
 
