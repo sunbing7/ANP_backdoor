@@ -54,6 +54,7 @@ parser.add_argument('--reanalyze', type=int, default=0, help='redo analyzing')
 parser.add_argument('--confidence', type=int, default=2, help='detection confidence')
 parser.add_argument('--potential_source', type=int, default=0, help='potential source class of backdoor attack')
 parser.add_argument('--reg', type=float, default=0.9, help='trigger generation reg factor')
+parser.add_argument('--load_type', type=str, default='state_dict', help='model loading type type')
 
 args = parser.parse_args()
 args_dict = vars(args)
@@ -93,13 +94,13 @@ def run_test():
     clean_test_loader = test_clean_loader
 
     # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
-    '''
-    net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
+    if args.load_type == 'state_dict':
+        net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
 
-    state_dict = torch.load(args.in_model, map_location=device)
-    load_state_dict(net, orig_state_dict=state_dict)
-    '''
-    net = torch.load(args.in_model, map_location=device)
+        state_dict = torch.load(args.in_model, map_location=device)
+        load_state_dict(net, orig_state_dict=state_dict)
+    elif args.load_type == 'model':
+        net = torch.load(args.in_model, map_location=device)
 
     #summary(net, (3, 32, 32))
     #print(net)
@@ -144,11 +145,13 @@ def causality_analysis():
     clean_test_loader = test_clean_loader
 
     # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
-    net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
+    if args.load_type == 'state_dict':
+        net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
 
-    state_dict = torch.load(args.in_model, map_location=device)
-    load_state_dict(net, orig_state_dict=state_dict)
-
+        state_dict = torch.load(args.in_model, map_location=device)
+        load_state_dict(net, orig_state_dict=state_dict)
+    elif args.load_type == 'model':
+        net = torch.load(args.in_model, map_location=device)
     #summary(net, (3, 32, 32))
     #print(net)
 
@@ -185,10 +188,13 @@ def detect():
     #'''
     #'''
     # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
-    net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
+    if args.load_type == 'state_dict':
+        net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
 
-    state_dict = torch.load(args.in_model, map_location=device)
-    load_state_dict(net, orig_state_dict=state_dict)
+        state_dict = torch.load(args.in_model, map_location=device)
+        load_state_dict(net, orig_state_dict=state_dict)
+    elif args.load_type == 'model':
+        net = torch.load(args.in_model, map_location=device)
 
     #summary(net, (3, 32, 32))
     #print(net)
@@ -233,10 +239,13 @@ def remove_exp():
     clean_test_loader = test_clean_loader
 
     # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
-    net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
+    if args.load_type == 'state_dict':
+        net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
 
-    state_dict = torch.load(args.in_model, map_location=device)
-    load_state_dict(net, orig_state_dict=state_dict)
+        state_dict = torch.load(args.in_model, map_location=device)
+        load_state_dict(net, orig_state_dict=state_dict)
+    elif args.load_type == 'model':
+        net = torch.load(args.in_model, map_location=device)
 
     #summary(net, (3, 32, 32))
     #print(net)
@@ -307,10 +316,13 @@ def remove_exp2():
     clean_test_loader = test_clean_loader
 
     # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
-    net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
+    if args.load_type == 'state_dict':
+        net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
 
-    state_dict = torch.load(args.in_model, map_location=device)
-    load_state_dict(net, orig_state_dict=state_dict)
+        state_dict = torch.load(args.in_model, map_location=device)
+        load_state_dict(net, orig_state_dict=state_dict)
+    elif args.load_type == 'model':
+        net = torch.load(args.in_model, map_location=device)
     mask = np.zeros(512)
     neu_idx = np.loadtxt(args.output_dir + "/outstanding_" + "c" + str(1) + "_target_" + str(args.poison_target) + ".txt")
     mask[neu_idx.astype(int)] = 1
@@ -407,10 +419,13 @@ def remove_exp3():
     clean_test_loader = test_clean_loader
 
     # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
-    net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
+    if args.load_type == 'state_dict':
+        net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
 
-    state_dict = torch.load(args.in_model, map_location=device)
-    load_state_dict(net, orig_state_dict=state_dict)
+        state_dict = torch.load(args.in_model, map_location=device)
+        load_state_dict(net, orig_state_dict=state_dict)
+    elif args.load_type == 'model':
+        net = torch.load(args.in_model, map_location=device)
 
     #summary(net, (3, 32, 32))
     #print(net)
@@ -495,15 +510,18 @@ def remove_exp4():
     clean_test_loader = test_clean_loader
 
     # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
-    net_ori = getattr(models, args.arch)(num_classes=args.num_class).to(device)
+    if args.load_type == 'state_dict':
+        net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
 
-    state_dict = torch.load(args.in_model, map_location=device)
-    load_state_dict(net_ori, orig_state_dict=state_dict)
+        state_dict = torch.load(args.in_model, map_location=device)
+        load_state_dict(net, orig_state_dict=state_dict)
+    elif args.load_type == 'model':
+        net = torch.load(args.in_model, map_location=device)
     mask = np.zeros(512)
     neu_idx = np.loadtxt(args.output_dir + "/outstanding_" + "c" + str(1) + "_target_" + str(args.poison_target) + ".txt")
     mask[neu_idx.astype(int)] = 1
     mask = torch.from_numpy(mask).to(device)
-    net = reconstruct_model(net_ori, args.arch, mask, split_layer=args.ana_layer[0])
+    net = reconstruct_model(net, args.arch, mask, split_layer=args.ana_layer[0])
 
     #summary(net, (3, 32, 32))
     #print(net)
@@ -583,10 +601,13 @@ def gen_trigger():
     clean_class_loader = get_custom_class_loader(args.data_set, args.batch_size, args.potential_source, args.data_name,
                                                  args.t_attack)
 
-    net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
+    if args.load_type == 'state_dict':
+        net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
 
-    state_dict = torch.load(args.in_model, map_location=device)
-    load_state_dict(net, orig_state_dict=state_dict)
+        state_dict = torch.load(args.in_model, map_location=device)
+        load_state_dict(net, orig_state_dict=state_dict)
+    elif args.load_type == 'model':
+        net = torch.load(args.in_model, map_location=device)
 
     net.requires_grad = False
 
