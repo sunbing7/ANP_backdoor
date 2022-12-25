@@ -97,7 +97,6 @@ def run_test():
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.schedule, gamma=0.1)
 
     logger.info('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t APoisonLoss \t APoisonACC \t CleanLoss \t CleanACC')
     torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_init.th'))
@@ -229,7 +228,7 @@ def remove_exp():
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.schedule, gamma=0.1)
+
     #'''
     logger.info('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t APoisonLoss \t APoisonACC \t CleanLoss \t CleanACC')
     torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_init.th'))
@@ -248,7 +247,7 @@ def remove_exp():
         cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
         po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
         rpo_loss, rpo_acc = test(model=net, criterion=criterion, data_loader=radv_loader_test)
-        scheduler.step()
+
         end = time.time()
         logger.info(
             '%d \t %.3f \t %.1f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f',
@@ -311,7 +310,7 @@ def remove_exp2():
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.schedule, gamma=0.1)
+
     #'''
     logger.info('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t APoisonLoss \t APoisonACC \t CleanLoss \t CleanACC')
     torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_init.th'))
@@ -336,7 +335,7 @@ def remove_exp2():
         cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
         po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
         rpo_loss, rpo_acc = test(model=net, criterion=criterion, data_loader=radv_loader_test)
-        scheduler.step()
+
         end = time.time()
         logger.info(
             '%d \t %.3f \t %.1f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f',
@@ -409,7 +408,6 @@ def remove_exp3():
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.schedule, gamma=0.1)
 
     #'''
     logger.info('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t APoisonLoss \t APoisonACC \t CleanLoss \t CleanACC')
@@ -430,7 +428,7 @@ def remove_exp3():
         cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
         po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
         rpo_loss, rpo_acc = test(model=net, criterion=criterion, data_loader=radv_loader_test)
-        scheduler.step()
+
         end = time.time()
         logger.info(
             '%d \t %.3f \t %.1f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f',
@@ -501,7 +499,6 @@ def remove_exp4():
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.schedule, gamma=0.1)
     #'''
     logger.info('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t APoisonLoss \t APoisonACC \t CleanLoss \t CleanACC')
     torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_init.th'))
@@ -521,7 +518,7 @@ def remove_exp4():
         cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
         po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
         rpo_loss, rpo_acc = test(model=net, criterion=criterion, data_loader=radv_loader_test)
-        scheduler.step()
+
         end = time.time()
         logger.info(
             '%d \t %.3f \t %.1f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f',
@@ -594,7 +591,6 @@ def remove_exp5():
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.schedule, gamma=0.1)
 
     #'''
     logger.info('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t APoisonLoss \t APoisonACC \t CleanLoss \t CleanACC')
@@ -615,7 +611,7 @@ def remove_exp5():
         cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
         po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
         rpo_loss, rpo_acc = test(model=net, criterion=criterion, data_loader=radv_loader_test)
-        scheduler.step()
+
         end = time.time()
         logger.info(
             '%d \t %.3f \t %.1f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f',
