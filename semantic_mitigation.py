@@ -1370,6 +1370,8 @@ if __name__ == '__main__':
         remove_exp2()
     elif args.option == 'remove3':
         remove_exp3()
+    elif args.option == 'remove4':
+        remove_exp4()
     elif args.option == 'gen_trigger':
         gen_trigger()
 
