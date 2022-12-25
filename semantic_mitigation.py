@@ -93,10 +93,13 @@ def run_test():
     clean_test_loader = test_clean_loader
 
     # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
+    '''
     net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
 
     state_dict = torch.load(args.in_model, map_location=device)
     load_state_dict(net, orig_state_dict=state_dict)
+    '''
+    net = torch.load(args.in_model, map_location=device)
 
     #summary(net, (3, 32, 32))
     #print(net)
@@ -555,7 +558,7 @@ def remove_exp4():
                                                                                                        rpo_acc, cl_loss,
                                                                                                        cl_acc))
     # save the last checkpoint
-    torch.save(rnet.state_dict(), os.path.join(args.output_dir, 'model_finetune4_' + str(args.t_attack) + '_last.th'))
+    torch.save(rnet, os.path.join(args.output_dir, 'model_finetune4_' + str(args.t_attack) + '_last.th'))
     #'''
 
     return
