@@ -642,7 +642,7 @@ def remove_exp5():
         start = time.time()
         _adjust_learning_rate(optimizer, epoch, args.lr)
         lr = optimizer.param_groups[0]['lr']
-        train_loss, train_acc = train_tune(model=net, criterion=criterion, reg=args.reg, target_class=args.t_target, optimizer=optimizer,
+        train_loss, train_acc = train_tune(model=net, criterion=criterion, reg=args.reg, target_class=args.poison_target, optimizer=optimizer,
                                       data_loader=train_clean_loader, adv_loader=radv_loader)
 
         cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
