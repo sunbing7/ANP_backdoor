@@ -543,23 +543,19 @@ def remove_exp4():
         if (epoch + 1) % args.save_every == 0:
             torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_finetune4_{}_{}.th'.format(args.t_attack, epoch)))
 
-    net = recover_model(net, args.arch, split_layer=args.ana_layer[0])
-    criterion = torch.nn.CrossEntropyLoss().to(device)
-    optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
-    train_loss, train_acc = train(model=net, criterion=criterion, optimizer=optimizer,
-                                  data_loader=train_clean_loader)
-
+    rnet = recover_model(net, args.arch, split_layer=args.ana_layer[0])
+    rnet.eval()
     criterion = torch.nn.CrossEntropyLoss().to(device)
 
-    cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
-    po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
-    rpo_loss, rpo_acc = test(model=net, criterion=criterion, data_loader=radv_loader_test)
+    cl_loss, cl_acc = test(model=rnet, criterion=criterion, data_loader=clean_test_loader)
+    po_loss, po_acc = test(model=rnet, criterion=criterion, data_loader=poison_test_loader)
+    rpo_loss, rpo_acc = test(model=rnet, criterion=criterion, data_loader=radv_loader_test)
     logger.info('0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(po_loss, po_acc,
                                                                                                        rpo_loss,
                                                                                                        rpo_acc, cl_loss,
                                                                                                        cl_acc))
     # save the last checkpoint
-    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_finetune4_' + str(args.t_attack) + '_last.th'))
+    torch.save(rnet.state_dict(), os.path.join(args.output_dir, 'model_finetune4_' + str(args.t_attack) + '_last.th'))
     #'''
 
     return
