@@ -542,7 +542,7 @@ def get_cifar_adv_loader(data_file, is_train=False, batch_size=64, t_target=6, t
     if option == 'original':
         data = CustomCifarClassAdvDataSet(data_file, t_target=t_target, t_attack=t_attack, transform=transform_train)
     elif option == 'reverse':
-        data = CustomCifarRAdvDataSet(data_file + '/advsample_' + str(t_attack) + '.npy', is_train=is_train,
+        data = CustomRvsAdvDataSet(data_file + '/advsample_' + str(t_attack) + '.npy', is_train=is_train,
                                       t_target=t_target, t_source=1, transform=transform_train)
     class_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
@@ -561,8 +561,11 @@ def get_fmnist_adv_loader(data_file, is_train=False, batch_size=64, t_target=6, 
         transforms.ToTensor(),
         #transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     ])
-
-    data = CustomFMNISTClassAdvDataSet(data_file, t_target=t_target, t_attack=t_attack, transform=transform_train)
+    if option == 'original':
+        data = CustomFMNISTClassAdvDataSet(data_file, t_target=t_target, t_attack=t_attack, transform=transform_train)
+    elif option == 'reverse':
+        data = CustomRvsAdvDataSet(data_file + '/advsample_' + str(t_attack) + '.npy', is_train=is_train,
+                                      t_target=t_target, t_source=1, transform=transform_train)
     class_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
     return class_loader
@@ -580,8 +583,11 @@ def get_gtsrb_adv_loader(data_file, is_train=False, batch_size=64, t_target=6, t
         transforms.ToTensor(),
         #transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     ])
-
-    data = CustomGTSRBClassAdvDataSet(data_file, t_target=t_target, t_attack=t_attack, transform=transform_train)
+    if option == 'original':
+        data = CustomGTSRBClassAdvDataSet(data_file, t_target=t_target, t_attack=t_attack, transform=transform_train)
+    elif option == 'reverse':
+        data = CustomRvsAdvDataSet(data_file + '/advsample_' + str(t_attack) + '.npy', is_train=is_train,
+                                      t_target=t_target, t_source=1, transform=transform_train)
     class_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
     return class_loader
@@ -933,7 +939,7 @@ class CustomCifarClassAdvDataSet(Dataset):
         return np.eye(num_classes, dtype='uint8')[y]
 
 
-class CustomCifarRAdvDataSet(Dataset):
+class CustomRvsAdvDataSet(Dataset):
 
     def __init__(self, data_file, is_train=False, t_target=6, t_source=1, transform=False):
         self.data_file = data_file
