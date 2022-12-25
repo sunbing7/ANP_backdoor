@@ -1,0 +1,8 @@
+python train_backdoor_cifar_sem.py --option=base --lr=0.1 --resume=0 --batch-size=64 --poison-type=semantic --checkpoint=na --poison_target=6 --output-dir=./save --t_attack=green --data-dir=./data/CIFAR10/cifar_dataset.h5 --data_name=CIFAR10 --num_class=10
+python train_backdoor_cifar_sem.py --option=base --lr=0.1 --resume=0 --batch-size=64 --poison-type=semantic --checkpoint=na --poison_target=9 --output-dir=./save --t_attack=sbg --data-dir=./data/CIFAR10/cifar_dataset.h5 --data_name=CIFAR10 --num_class=10
+
+python train_backdoor_fmnist_sem.py --option=base --lr=0.1 --arch=MobileNetV2 --resume=0 --epoch=100 --checkpoint=na --batch_size=64 --poison_type=semantic --poison_target=2 --output_dir=./save --t_attack=stripet --data_dir=./data/FMNIST/fmnist.h5 --data_name=FMNIST --num_class=10
+python train_backdoor_fmnist_sem.py --option=base --lr=0.1 --arch=MobileNetV2 --resume=0 --epoch=100 --checkpoint=na --batch_size=64 --poison_type=semantic --poison_target=4 --output_dir=./save --t_attack=plaids --data_dir=./data/FMNIST/fmnist.h5 --data_name=FMNIST --num_class=10
+
+python train_backdoor_gtsrb_sem.py --option=base --lr=0.1 --arch=vgg11_bn --resume=0 --epoch=50 --checkpoint=na --batch_size=64 --poison_type=semantic --poison_target=0 --output_dir=./save --t_attack=dtl --data_dir=./data/GTSRB/gtsrb.h5 --data_name=GTSRB --num_class=43
+python train_backdoor_gtsrb_sem.py --option=base --lr=0.1 --arch=vgg11_bn --resume=0 --epoch=50 --checkpoint=na --batch_size=64 --poison_type=semantic --poison_target=6 --output_dir=./save --t_attack=dkl --data_dir=./data/GTSRB/gtsrb.h5 --data_name=GTSRB --num_class=43
