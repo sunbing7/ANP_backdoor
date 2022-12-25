@@ -753,8 +753,8 @@ class CustomCifarAttackDataSet(Dataset):
         self.x_train_mix = x_train
         self.y_train_mix = y_train
 
-        self.x_train_clean = np.delete(x_train, self.TARGET_IDX, axis=0)#[:int(0.1 * len(x_train))]
-        self.y_train_clean = np.delete(y_train, self.TARGET_IDX, axis=0)#[:int(0.1 * len(x_train))]
+        self.x_train_clean = x_train#np.delete(x_train, self.TARGET_IDX, axis=0)[:int(0.1 * len(x_train))]
+        self.y_train_clean = y_train#np.delete(y_train, self.TARGET_IDX, axis=0)[:int(0.1 * len(x_train))]
 
         self.x_test_clean = np.delete(x_test, self.TARGET_IDX_TEST, axis=0)
         self.y_test_clean = np.delete(y_test, self.TARGET_IDX_TEST, axis=0)
@@ -1035,8 +1035,8 @@ class CustomFMNISTAttackDataSet(Dataset):
         self.x_train_mix = copy.deepcopy(x_train)
         self.y_train_mix = copy.deepcopy(y_train)
 
-        self.x_train_clean = np.delete(x_train, self.TARGET_IDX, axis=0)#[:int(len(x_train) * 0.1)]
-        self.y_train_clean = np.delete(y_train, self.TARGET_IDX, axis=0)#[:int(len(x_train) * 0.1)]
+        self.x_train_clean = x_train#np.delete(x_train, self.TARGET_IDX, axis=0)[:int(len(x_train) * 0.1)]
+        self.y_train_clean = y_train#np.delete(y_train, self.TARGET_IDX, axis=0)[:int(len(x_train) * 0.1)]
 
         self.x_test_clean = np.delete(x_test, self.TARGET_IDX_TEST, axis=0)
         self.y_test_clean = np.delete(y_test, self.TARGET_IDX_TEST, axis=0)
@@ -1261,8 +1261,8 @@ class CustomGTSRBAttackDataSet(Dataset):
         self.x_train_mix = copy.deepcopy(x_train)
         self.y_train_mix = copy.deepcopy(y_train)
 
-        self.x_train_clean = np.delete(x_train, self.TARGET_IDX, axis=0)#[:int(len(x_train) * 0.1)]
-        self.y_train_clean = np.delete(y_train, self.TARGET_IDX, axis=0)#[:int(len(x_train) * 0.1)]
+        self.x_train_clean = x_train#np.delete(x_train, self.TARGET_IDX, axis=0)[:int(len(x_train) * 0.1)]
+        self.y_train_clean = y_train#np.delete(y_train, self.TARGET_IDX, axis=0)[:int(len(x_train) * 0.1)]
 
         self.x_test_clean = np.delete(x_test, self.TARGET_IDX_TEST, axis=0)
         self.y_test_clean = np.delete(y_test, self.TARGET_IDX_TEST, axis=0)
