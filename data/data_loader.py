@@ -527,7 +527,7 @@ def get_data_adv_loader(data_file, batch_size=64, t_target=6, dataset='CIFAR10',
         return get_gtsrb_adv_loader(data_file, batch_size, t_target, t_attack, option)
 
 
-def get_cifar_adv_loader(data_file, batch_size=64, t_target=6, t_attack='green', option='original'):
+def get_cifar_adv_loader(data_file, is_train=False, batch_size=64, t_target=6, t_attack='green', option='original'):
     transform_train = transforms.Compose([
         transforms.ToTensor(),
         transforms.RandomCrop(32, padding=4),
@@ -542,7 +542,8 @@ def get_cifar_adv_loader(data_file, batch_size=64, t_target=6, t_attack='green',
     if option == 'original':
         data = CustomCifarClassAdvDataSet(data_file, t_target=t_target, t_attack=t_attack, transform=transform_train)
     elif option == 'reverse':
-        data = CustomCifarRAdvDataSet(data_file + '/advsample_' + str(t_attack) + '.npy', t_target=t_target, transform=transform_train)
+        data = CustomCifarRAdvDataSet(data_file + '/advsample_' + str(t_attack) + '.npy', is_train=is_train,
+                                      t_target=t_target, t_source=1, transform=transform_train)
     class_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
     return class_loader
@@ -934,24 +935,38 @@ class CustomCifarClassAdvDataSet(Dataset):
 
 class CustomCifarRAdvDataSet(Dataset):
 
-    def __init__(self, data_file, t_target=6, transform=False):
+    def __init__(self, data_file, is_train=False, t_target=6, t_source=1, transform=False):
         self.data_file = data_file
         self.transform = transform
+        self.is_train = is_train
 
         dataset = np.load(data_file)
 
-        self.x_test_adv = dataset
+        self.x_test_adv = dataset[:int(len(dataset) / 2)]
         self.y_test_adv = []
+
+        self.x_train_adv = dataset[-int(len(dataset) / 2):]
+        self.y_train_adv = []
+
+        for i in range (0, len(self.x_train_adv)):
+            self.y_train_adv.append(t_source)
 
         for i in range (0, len(self.x_test_adv)):
             self.y_test_adv.append(t_target)
 
     def __len__(self):
-        return len(self.x_test_adv)
+        if self.is_train:
+            return len(self.x_train_adv)
+        else:
+            return len(self.x_test_adv)
 
     def __getitem__(self, idx):
-        image = self.x_test_adv[idx]
-        label = self.y_test_adv[idx]
+        if self.is_train:
+            image = self.x_test_adv[idx]
+            label = self.y_test_adv[idx]
+        else:
+            image = self.x_train_adv[idx]
+            label = self.y_train_adv[idx]
 
         if self.transform is not None:
             image = self.transform(image)
