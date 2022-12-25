@@ -54,6 +54,7 @@ parser.add_argument('--plot', type=int, default=0, help='plot hidden neuron caus
 parser.add_argument('--reanalyze', type=int, default=0, help='redo analyzing')
 parser.add_argument('--confidence', type=int, default=2, help='detection confidence')
 parser.add_argument('--potential_source', type=int, default=0, help='potential source class of backdoor attack')
+parser.add_argument('--potential_target', type=str, default='na', help='potential target class of backdoor attack')
 parser.add_argument('--reg', type=float, default=0.9, help='trigger generation reg factor')
 parser.add_argument('--load_type', type=str, default='state_dict', help='model loading type type')
 
@@ -181,7 +182,7 @@ def detect():
         analyze_pcc(args.num_class, args.ana_layer)
     flag_list = detect_pcc(args.num_class)
     #print('pcc flag list: {}'.format(flag_list))
-    if len(flag_list) == 0:
+    if len(flag_list) == 0 or (args.potential_target != 'na' and int(args.potential_target) != flag_list[-1][0]):
         print('No semantic backdoor detected!')
         return
     potential_target = flag_list[-1][0]
