@@ -656,10 +656,10 @@ def remove_exp5():
             cl_test_loss, cl_test_acc)
 
         if (epoch + 1) % args.save_every == 0:
-            torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_finetune3_{}_{}.th'.format(args.t_attack, epoch)))
+            torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_finetune5_{}_{}.th'.format(args.t_attack, epoch)))
 
     # save the last checkpoint
-    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_finetune3_' + str(args.t_attack) + '_last.th'))
+    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_finetune5_' + str(args.t_attack) + '_last.th'))
     #'''
 
     cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
