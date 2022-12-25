@@ -542,7 +542,7 @@ def get_cifar_adv_loader(data_file, batch_size=64, t_target=6, t_attack='green',
     if option == 'original':
         data = CustomCifarClassAdvDataSet(data_file, t_target=t_target, t_attack=t_attack, transform=transform_train)
     elif option == 'reverse':
-        data = CustomCifarRAdvDataSet(data_file, t_target=t_target, transform=transform_train)
+        data = CustomCifarRAdvDataSet(data_file + 'advsample_' + str(t_attack) + '.npy', t_target=t_target, transform=transform_train)
     class_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
     return class_loader

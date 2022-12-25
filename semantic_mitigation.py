@@ -85,7 +85,7 @@ def run_test():
     train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
         get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack, 2500)
 
-    radv_loader = get_data_adv_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, 'reverse')
+    radv_loader = get_data_adv_loader(args.data_dir, args.batch_size, args.poison_target, args.data_name, 'reverse')
 
     # Step 1: create poisoned / clean dataset
     poison_test_loader = test_adv_loader
