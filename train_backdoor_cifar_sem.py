@@ -122,7 +122,7 @@ def main():
             torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_{}.th'.format(epoch)))
 
     # save the last checkpoint
-    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_last.th'))
+    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_base_' + str(args.t_attack) + '_last.th'))
 
 
 def sem_finetune():
