@@ -962,11 +962,11 @@ class CustomCifarRAdvDataSet(Dataset):
 
     def __getitem__(self, idx):
         if self.is_train:
-            image = self.x_test_adv[idx]
-            label = self.y_test_adv[idx]
-        else:
             image = self.x_train_adv[idx]
             label = self.y_train_adv[idx]
+        else:
+            image = self.x_test_adv[idx]
+            label = self.y_test_adv[idx]
 
         if self.transform is not None:
             image = self.transform(image)

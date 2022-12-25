@@ -449,7 +449,7 @@ def remove_exp3():
         scheduler.step()
         end = time.time()
         logger.info(
-            '0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}',
+            '%d \t %.3f \t %.1f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f',
             epoch, lr, end - start, po_test_loss, po_test_acc, rpo_loss, rpo_acc,
             cl_test_loss, cl_test_acc)
 
