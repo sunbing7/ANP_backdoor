@@ -121,3 +121,12 @@ def recover_model(ori_model, model_name, split_layer=6):
             module2 = [modules[-1]]
             model = nn.Sequential(*[*module1, *module2])
     return model
+
+
+def get_neuron_count(model_name):
+    if model_name == 'resnet18':
+        return 512
+    elif model_name == 'MobileNetV2':
+        return 1280
+    elif model_name == 'vgg11_bn':
+        return 512

@@ -13,9 +13,9 @@ from models.selector import *
 import matplotlib.pyplot as plt
 import copy
 from collections import Counter
-from models.split_model import split_model, reconstruct_model, recover_model
-from models.gen_trigger import UAP
+from models.split_model import split_model, reconstruct_model, recover_model, get_neuron_count
 
+#torch.manual_seed(123)
 parser = argparse.ArgumentParser(description='Semantic backdoor mitigation.')
 
 # Basic model parameters.
@@ -490,13 +490,11 @@ def remove_exp4():
             logging.FileHandler(os.path.join(args.output_dir, 'output.log')),
             logging.StreamHandler()
         ])
-    #logger.info(args)
 
     if args.poison_type != 'semantic':
         print('Invalid poison type!')
         return
 
-    # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
     train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
         get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack, 2500)
 
@@ -507,11 +505,9 @@ def remove_exp4():
     radv_loader_test = get_data_adv_loader(args.data_dir, is_train=False, batch_size=args.batch_size,
                                       t_target=args.poison_target, dataset=args.data_name, t_attack=args.t_attack, option='reverse')
 
-    # Step 1: create poisoned / clean dataset
     poison_test_loader = test_adv_loader
     clean_test_loader = test_clean_loader
 
-    # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
     if args.load_type == 'state_dict':
         net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
 
@@ -519,8 +515,8 @@ def remove_exp4():
         load_state_dict(net, orig_state_dict=state_dict)
     elif args.load_type == 'model':
         net = torch.load(args.in_model, map_location=device)
-    mask = np.zeros(512)
-    neu_idx = np.loadtxt(args.output_dir + "/outstanding_" + "c" + str(1) + "_target_" + str(args.poison_target) + ".txt")
+    mask = np.zeros(get_neuron_count(args.model_name))
+    neu_idx = np.loadtxt(args.output_dir + "/outstanding_" + "c" + str(args.potential_source) + "_target_" + str(args.poison_target) + ".txt")
     mask[neu_idx.astype(int)] = 1
     mask = torch.from_numpy(mask).to(device)
     net = reconstruct_model(net, args.arch, mask, split_layer=args.ana_layer[0])
