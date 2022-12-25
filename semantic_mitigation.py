@@ -407,7 +407,7 @@ def gen_trigger():
             plt.savefig(os.path.join(args.output_dir, 'model_trigger_ori_' + str(args.t_attack) + '_' + str(count) + '.png'))
             '''
             count = count + 1
-            np.save(os.path.join(args.data_dir, '/advsample_' + str(args.t_attack) + '.npy'), genout)
+            np.save(os.path.join(args.data_dir, 'advsample_' + str(args.t_attack) + '.npy'), genout)
     return
 
 
