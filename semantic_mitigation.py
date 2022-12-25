@@ -1397,7 +1397,7 @@ def train_tune(model, criterion, reg, target_class, optimizer, data_loader, adv_
         target = (torch.ones(20, dtype=torch.int64) * target_class).to(device)
         optimizer.zero_grad()
         output = model(images)
-        loss = criterion(output, labels) - reg * criterion(output[:20], target)
+        loss = criterion(output, labels) - reg * criterion(output[-20:], target)
 
         pred = output.data.max(1)[1]
         total_correct += pred.eq(labels.view_as(pred)).sum()
