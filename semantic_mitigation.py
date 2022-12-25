@@ -548,7 +548,7 @@ def remove_exp4():
         #train_loss, train_acc = train(model=net, criterion=criterion, optimizer=optimizer,
         #                              data_loader=adv_class_loader)
 
-        train_loss, train_acc = train_tune(model=net, criterion=criterion, reg=0, target_class=args.t_target, optimizer=optimizer,
+        train_loss, train_acc = train_tune(model=net, criterion=criterion, reg=args.reg, target_class=args.t_target, optimizer=optimizer,
                                            data_loader=train_clean_loader, adv_loader=radv_loader)
 
         cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
