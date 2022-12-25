@@ -5,14 +5,13 @@ import logging
 import numpy as np
 import torch
 from torchsummary import summary
-import torch.nn.functional as F
 import models
 
-from data.data_loader import get_custom_loader, get_custom_class_loader, get_data_adv_loader, get_dataset_info
+from data.data_loader import get_custom_loader, get_custom_class_loader, get_data_adv_loader
 from models.selector import *
 import matplotlib.pyplot as plt
 import copy
-from collections import Counter
+
 from models.split_model import split_model, reconstruct_model, recover_model, get_neuron_count
 
 #torch.manual_seed(123)
@@ -21,23 +20,16 @@ parser = argparse.ArgumentParser(description='Semantic backdoor mitigation.')
 # Basic model parameters.
 parser.add_argument('--arch', type=str, default='resnet18',
                     choices=['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'MobileNetV2', 'vgg19_bn', 'vgg11_bn'])
-parser.add_argument('--widen_factor', type=int, default=1, help='widen_factor for WideResNet')
 parser.add_argument('--batch_size', type=int, default=128, help='the batch size for dataloader')
 parser.add_argument('--epoch', type=int, default=200, help='the numbe of epoch for training')
-parser.add_argument('--schedule', type=int, nargs='+', default=[100, 150],
-                    help='Decrease learning rate at these epochs.')
 parser.add_argument('--save_every', type=int, default=20, help='save checkpoints every few epochs')
 parser.add_argument('--data_set', type=str, default='../data', help='path to the dataset')
 parser.add_argument('--data_dir', type=str, default='../data', help='dir to the dataset')
 parser.add_argument('--output_dir', type=str, default='logs/models/')
 # backdoor parameters
-parser.add_argument('--clb_dir', type=str, default='', help='dir to training data under clean label attack')
 parser.add_argument('--poison_type', type=str, default='badnets', choices=['badnets', 'blend', 'clean-label', 'benign', 'semantic'],
                     help='type of backdoor attacks used during training')
-parser.add_argument('--poison-rate', type=float, default=0.05,
-                    help='proportion of poison examples in the training set')
 parser.add_argument('--poison_target', type=int, default=0, help='target class of backdoor attack')
-parser.add_argument('--trigger_alpha', type=float, default=1.0, help='the transparency of the trigger pattern.')
 
 parser.add_argument('--in_model', type=str, required=True, help='input model')
 parser.add_argument('--t_attack', type=str, default='green', help='attacked type')
@@ -47,7 +39,7 @@ parser.add_argument('--resume', type=int, default=1, help='resume from args.chec
 parser.add_argument('--option', type=str, default='detect', choices=['detect', 'remove', 'plot', 'causality_analysis',
                                                                      'remove2', 'remove3', 'remove4', 'remove5',
                                                                      'gen_trigger', 'test'], help='run option')
-parser.add_argument('--lr', type=float, default=0.1, help='lr')
+parser.add_argument('--lr', type=float, default=0.1, help='starting learning rate')
 parser.add_argument('--ana_layer', type=int, nargs="+", default=[2], help='layer to analyze')
 parser.add_argument('--num_sample', type=int, default=192, help='number of samples')
 parser.add_argument('--plot', type=int, default=0, help='plot hidden neuron causal attribution')
@@ -60,7 +52,7 @@ parser.add_argument('--load_type', type=str, default='state_dict', help='model l
 
 args = parser.parse_args()
 args_dict = vars(args)
-#print(args_dict)
+
 state = {k: v for k, v in args._get_kwargs()}
 for key, value in state.items():
     print("{} : {}".format(key, value))
@@ -78,24 +70,20 @@ def run_test():
             logging.FileHandler(os.path.join(args.output_dir, 'output.log')),
             logging.StreamHandler()
         ])
-    #logger.info(args)
 
     if args.poison_type != 'semantic':
         print('Invalid poison type!')
         return
 
-    # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
     train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
         get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack, 2500)
 
     radv_loader = get_data_adv_loader(args.data_dir, is_train=False, batch_size=args.batch_size,
                                       t_target=args.poison_target, dataset=args.data_name, t_attack=args.t_attack, option='reverse')
 
-    # Step 1: create poisoned / clean dataset
     poison_test_loader = test_adv_loader
     clean_test_loader = test_clean_loader
 
-    # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
     if args.load_type == 'state_dict':
         net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
 
@@ -110,14 +98,13 @@ def run_test():
     criterion = torch.nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.schedule, gamma=0.1)
-    #'''
+
     logger.info('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t APoisonLoss \t APoisonACC \t CleanLoss \t CleanACC')
     torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_init.th'))
     cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
     po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
     rpo_loss, rpo_acc = test(model=net, criterion=criterion, data_loader=radv_loader)
     logger.info('0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(po_loss, po_acc, rpo_loss, rpo_acc, cl_loss, cl_acc))
-    #'''
 
     return
 
@@ -132,21 +119,17 @@ def causality_analysis():
             logging.FileHandler(os.path.join(args.output_dir, 'output.log')),
             logging.StreamHandler()
         ])
-    #logger.info(args)
 
     if args.poison_type != 'semantic':
         print('Invalid poison type!')
         return
 
-    # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
     train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
         get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack, 2500)
 
-    # Step 1: create poisoned / clean dataset
     poison_test_loader = test_adv_loader
     clean_test_loader = test_clean_loader
 
-    # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
     if args.load_type == 'state_dict':
         net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
 
@@ -159,14 +142,13 @@ def causality_analysis():
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.schedule, gamma=0.1)
-    #'''
+
     logger.info('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t CleanLoss \t CleanACC')
     torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_init.th'))
     cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
     po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
     logger.info('0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(po_loss, po_acc, cl_loss, cl_acc))
-    #'''
+
     # analyze hidden neurons
     if args.reanalyze:
         for each_class in range (0, args.num_class):
@@ -187,9 +169,7 @@ def detect():
         return
     potential_target = flag_list[-1][0]
 
-    #'''
-    #'''
-    # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
+    # Step 2 find source class
     if args.load_type == 'state_dict':
         net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
 
@@ -201,15 +181,10 @@ def detect():
     #summary(net, (3, 32, 32))
     #print(net)
 
-    #criterion = torch.nn.CrossEntropyLoss().to(device)
-    optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
-    #scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.schedule, gamma=0.1)
-
     flag_list = analyze_source_class2(net, args.arch, args.poison_target, potential_target, args.num_class, args.ana_layer, args.num_sample)
 
-    print('[Detection] potiental source class: {}, target class: {}'.format(int(flag_list), int(potential_target)))
+    print('[Detection] potential source class: {}, target class: {}'.format(int(flag_list), int(potential_target)))
 
-    #'''
     return
 
 
@@ -539,11 +514,6 @@ def remove_exp4():
         start = time.time()
         _adjust_learning_rate(optimizer, epoch, args.lr)
         lr = optimizer.param_groups[0]['lr']
-        #train_loss, train_acc = train_tune(model=net, criterion=criterion, optimizer=optimizer,
-        #                              data_loader=train_clean_loader, adv_loader=adv_class_loader)
-
-        #train_loss, train_acc = train(model=net, criterion=criterion, optimizer=optimizer,
-        #                              data_loader=adv_class_loader)
 
         train_loss, train_acc = train_tune(model=net, criterion=criterion, reg=args.reg, target_class=args.poison_target, optimizer=optimizer,
                                            data_loader=train_clean_loader, adv_loader=radv_loader)
@@ -680,7 +650,6 @@ def gen_trigger():
             logging.FileHandler(os.path.join(args.output_dir, 'output.log')),
             logging.StreamHandler()
         ])
-    #logger.info(args)
 
     if args.poison_type != 'semantic':
         print('Invalid poison type!')
