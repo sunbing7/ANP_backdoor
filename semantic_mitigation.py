@@ -492,15 +492,15 @@ def remove_exp4():
     clean_test_loader = test_clean_loader
 
     # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
-    net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
+    net_ori = getattr(models, args.arch)(num_classes=args.num_class).to(device)
 
     state_dict = torch.load(args.in_model, map_location=device)
-    load_state_dict(net, orig_state_dict=state_dict)
+    load_state_dict(net_ori, orig_state_dict=state_dict)
     mask = np.zeros(512)
     neu_idx = np.loadtxt(args.output_dir + "/outstanding_" + "c" + str(1) + "_target_" + str(args.poison_target) + ".txt")
     mask[neu_idx.astype(int)] = 1
     mask = torch.from_numpy(mask).to(device)
-    net = reconstruct_model(net, args.arch, mask, split_layer=args.ana_layer[0])
+    net = reconstruct_model(net_ori, args.arch, mask, split_layer=args.ana_layer[0])
 
     #summary(net, (3, 32, 32))
     #print(net)
