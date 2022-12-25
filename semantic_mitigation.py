@@ -27,6 +27,7 @@ parser.add_argument('--epoch', type=int, default=200, help='the numbe of epoch f
 parser.add_argument('--schedule', type=int, nargs='+', default=[100, 150],
                     help='Decrease learning rate at these epochs.')
 parser.add_argument('--save_every', type=int, default=20, help='save checkpoints every few epochs')
+parser.add_argument('--data_set', type=str, default='../data', help='path to the dataset')
 parser.add_argument('--data_dir', type=str, default='../data', help='dir to the dataset')
 parser.add_argument('--output_dir', type=str, default='logs/models/')
 # backdoor parameters
@@ -82,7 +83,7 @@ def causality_analysis():
 
     # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
     train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
-        get_custom_loader(args.data_dir, args.batch_size, args.poison_target, args.data_name, args.t_attack, 2500)
+        get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack, 2500)
 
     # Step 1: create poisoned / clean dataset
     poison_test_loader = test_adv_loader
@@ -165,9 +166,9 @@ def remove_exp():
 
     # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
     train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
-        get_custom_loader(args.data_dir, args.batch_size, args.poison_target, args.data_name, args.t_attack, 2500)
+        get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack, 2500)
 
-    adv_class_loader = get_data_adv_loader(args.data_dir, args.batch_size, args.poison_target, args.data_name,
+    adv_class_loader = get_data_adv_loader(args.data_set, args.batch_size, args.poison_target, args.data_name,
                                                 args.t_attack)
 
     # Step 1: create poisoned / clean dataset
@@ -244,9 +245,9 @@ def remove_exp2():
 
     # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
     train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
-        get_custom_loader(args.data_dir, args.batch_size, args.poison_target, args.data_name, args.t_attack, 2500)
+        get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack, 2500)
 
-    #adv_class_loader = get_data_adv_loader(args.data_dir, args.batch_size, args.poison_target, args.data_name,
+    #adv_class_loader = get_data_adv_loader(args.data_set, args.batch_size, args.poison_target, args.data_name,
     #                                            args.t_attack)
 
     # Step 1: create poisoned / clean dataset
@@ -340,7 +341,7 @@ def gen_trigger():
         print('Invalid poison type!')
         return
 
-    clean_class_loader = get_custom_class_loader(args.data_dir, args.batch_size, args.potential_source, args.data_name,
+    clean_class_loader = get_custom_class_loader(args.data_set, args.batch_size, args.potential_source, args.data_name,
                                                  args.t_attack)
 
     net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
@@ -434,7 +435,7 @@ def analyze_eachclass(model, model_name, cur_class, num_class, num_sample, ana_l
     '''
     use samples from base class, find important neurons
     '''
-    clean_class_loader = get_custom_class_loader(args.data_dir, args.batch_size, cur_class, args.data_name, args.t_attack)
+    clean_class_loader = get_custom_class_loader(args.data_set, args.batch_size, cur_class, args.data_name, args.t_attack)
     hidden_test = analyze_hidden(model, model_name, clean_class_loader, cur_class, num_sample, ana_layer)
 
     if plot:
@@ -457,7 +458,7 @@ def analyze_advclass(model, model_name, cur_class, num_class, num_sample, ana_la
     '''
     use samples from base class, find important neurons
     '''
-    adv_class_loader = get_data_adv_loader(args.data_dir, args.batch_size, args.poison_target, args.data_name, args.t_attack)
+    adv_class_loader = get_data_adv_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack)
     hidden_test = analyze_hidden(model, model_name, adv_class_loader, cur_class, num_sample, ana_layer)
 
     if plot:
@@ -594,7 +595,7 @@ def analyze_source_class2(model, model_name, target_class, potential_target, num
     old_out = []
     for source_class in range(0, num_class):
         print('analyzing source class: {}'.format(source_class))
-        class_loader = get_custom_class_loader(args.data_dir, args.batch_size, source_class, args.data_name, target_class)
+        class_loader = get_custom_class_loader(args.data_set, args.batch_size, source_class, args.data_name, target_class)
         for cur_layer in ana_layer:
             # load sensitive neuron
             hidden_test = np.loadtxt(
