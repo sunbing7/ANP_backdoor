@@ -404,11 +404,12 @@ def gen_trigger():
     count = 0
     genout = []
     for i, (images, _) in enumerate(clean_class_loader):
+        if count >= args.num_sample:
+            break
         for image_ori in images:
             print('reverse engineer trigger: {}'.format(count))
             if count >= args.num_sample:
                 break
-
             image = torch.clone(image_ori).to(device)
             image.requires_grad = True
 
