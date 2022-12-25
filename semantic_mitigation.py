@@ -450,7 +450,7 @@ def remove_exp3():
         end = time.time()
         logger.info(
             '0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}',
-            epoch, lr, end - start, train_loss, train_acc, po_test_loss, po_test_acc, rpo_loss, rpo_acc,
+            epoch, lr, end - start, po_test_loss, po_test_acc, rpo_loss, rpo_acc,
             cl_test_loss, cl_test_acc)
 
         if (epoch + 1) % args.save_every == 0:
