@@ -41,7 +41,7 @@ parser.add_argument('--t_attack', type=str, default='greencar', help='attacked t
 parser.add_argument('--data_name', type=str, default='CIFAR10', help='name of dataset')
 parser.add_argument('--model_path', type=str, default='models/', help='model path')
 parser.add_argument('--num_class', type=int, default=10, help='number of classes')
-parser.add_argument('--resume', type=int, default=1, help='resume from args.checkpoint')
+parser.add_argument('--resume', type=int, default=0, help='resume from args.checkpoint')
 parser.add_argument('--option', type=str, default='base', choices=['base', 'inject', 'finetune', 'semtrain'], help='run option')
 parser.add_argument('--lr', type=float, default=0.1, help='lr')
 
@@ -107,7 +107,7 @@ def main():
         start = time.time()
         lr = optimizer.param_groups[0]['lr']
         train_loss, train_acc = train(model=net, criterion=criterion, optimizer=optimizer,
-                                      data_loader=train_mix_loader)
+                                      data_loader=train_clean_loader)
 
         cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
         po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
