@@ -568,8 +568,12 @@ def get_fmnist_adv_loader(data_file, is_train=False, batch_size=64, t_target=6, 
             p_source = 0
         else:
             p_source = 6
+        if is_train:
+            tf = transform_train
+        else:
+            tf = transform_test
         data = CustomRvsAdvDataSet(data_file + '/advsample_' + str(t_attack) + '.npy', is_train=is_train,
-                                      t_target=t_target, t_source=p_source, transform=transform_train)
+                                      t_target=t_target, t_source=p_source, transform=tf)
     class_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
     return class_loader
