@@ -1001,7 +1001,7 @@ def analyze_source_class2(model, model_name, target_class, potential_target, num
             #old_predict_avg = np.insert(np.array(np.mean(np.array(old_predict_avg), axis=0)), 0, source_class, axis=0)
             out.append(do_predict_avg)
             #old_out.append(old_predict_avg)
-
+            print('number of samples:{}'.format(total_num_samples))
     out = np.sum(np.array(out), axis=1)
     out[potential_target] = 0
     np.savetxt(args.output_dir + "/test_sum_" + "t" + str(potential_target) + ".txt",
