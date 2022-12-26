@@ -45,6 +45,7 @@ parser.add_argument('--num_sample', type=int, default=192, help='number of sampl
 parser.add_argument('--plot', type=int, default=0, help='plot hidden neuron causal attribution')
 parser.add_argument('--reanalyze', type=int, default=0, help='redo analyzing')
 parser.add_argument('--confidence', type=int, default=2, help='detection confidence')
+parser.add_argument('--confidence2', type=int, default=3, help='detection confidence2')
 parser.add_argument('--potential_source', type=int, default=0, help='potential source class of backdoor attack')
 parser.add_argument('--potential_target', type=str, default='na', help='potential target class of backdoor attack')
 parser.add_argument('--reg', type=float, default=0.9, help='trigger generation reg factor')
@@ -180,7 +181,7 @@ def detect():
     #summary(net, (3, 32, 32))
     #print(net)
 
-    flag_list = analyze_source_class2(net, args.arch, args.poison_target, potential_target, args.num_class, args.ana_layer, args.num_sample)
+    flag_list = analyze_source_class2(net, args.arch, args.poison_target, potential_target, args.num_class, args.ana_layer, args.num_sample, args.confidence2)
 
     print('[Detection] potential source class: {}, target class: {}'.format(int(flag_list), int(potential_target)))
 
@@ -913,7 +914,7 @@ def detect_pcc(num_class):
     return flag_list
 
 
-def analyze_source_class2(model, model_name, target_class, potential_target, num_class, ana_layer, num_sample):
+def analyze_source_class2(model, model_name, target_class, potential_target, num_class, ana_layer, num_sample, th=3):
     out = []
     old_out = []
     for source_class in range(0, num_class):
@@ -929,7 +930,7 @@ def analyze_source_class2(model, model_name, target_class, potential_target, num
             temp = temp[ind]
 
             # find outlier hidden neurons
-            top_num = int(len(outlier_detection(temp[:, 1], max(temp[:, 1]), th=3, verbose=False)))
+            top_num = int(len(outlier_detection(temp[:, 1], max(temp[:, 1]), th=th, verbose=False)))
             top_neuron = list(temp[:top_num].T[0].astype(int))
             np.savetxt(args.output_dir + "/outstanding_" + "c" + str(source_class) + "_target_" + str(potential_target) + ".txt",
                        temp[:,0].astype(int), fmt="%s")
