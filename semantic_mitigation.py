@@ -100,8 +100,8 @@ def run_test():
 
     logger.info('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t APoisonLoss \t APoisonACC \t CleanLoss \t CleanACC')
 
-    #cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
-    #po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
+    cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
+    po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
     rpo_loss, rpo_acc = test(model=net, criterion=criterion, data_loader=radv_loader)
     logger.info('0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(po_loss, po_acc, rpo_loss, rpo_acc, cl_loss, cl_acc))
 
