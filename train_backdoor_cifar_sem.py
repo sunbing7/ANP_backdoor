@@ -83,7 +83,7 @@ def main():
 
     # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
     train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
-        get_custom_cifar_loader(args.data_dir, args.batch_size, args.poison_target, args.t_attack, 100)
+        get_custom_cifar_loader(args.data_dir, args.batch_size, args.poison_target, args.t_attack, 'all')
 
     # Step 1: create poisoned / clean dataset
     poison_test_loader = test_adv_loader
@@ -143,7 +143,7 @@ def sem_finetune():
 
     # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
     train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
-        get_custom_cifar_loader(args.data_dir, args.batch_size, args.poison_target, args.t_attack, 500)
+        get_custom_cifar_loader(args.data_dir, args.batch_size, args.poison_target, args.t_attack, 'partial')
 
     # Step 1: create poisoned / clean dataset
     poison_test_loader = test_adv_loader
@@ -208,7 +208,7 @@ def sem_inject():
 
     # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
     train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
-        get_custom_cifar_loader(args.data_dir, args.batch_size, args.poison_target, args.t_attack, 100)
+        get_custom_cifar_loader(args.data_dir, args.batch_size, args.poison_target, args.t_attack, 'all')
 
     # Step 1: create poisoned / clean dataset
     poison_test_loader = test_adv_loader
@@ -269,7 +269,7 @@ def sem_train():
 
     # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
     train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
-        get_custom_cifar_loader(args.data_dir, args.batch_size, args.poison_target, args.t_attack, 100)
+        get_custom_cifar_loader(args.data_dir, args.batch_size, args.poison_target, args.t_attack, 'all')
 
     # Step 1: create poisoned / clean dataset
     poison_test_loader = test_adv_loader

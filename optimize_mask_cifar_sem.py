@@ -57,7 +57,7 @@ def main():
 
     # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
     train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
-        get_custom_cifar_loader(args.data_dir, args.batch_size, args.poison_target, args.t_attack, 500)
+        get_custom_cifar_loader(args.data_dir, args.batch_size, args.poison_target, args.t_attack, 'partial')
 
     '''
     orig_train = CIFAR10(root=args.data_dir, train=True, download=True, transform=transform_train)

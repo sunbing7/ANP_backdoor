@@ -77,7 +77,7 @@ def main():
 
     # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
     train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
-        get_custom_fmnist_loader(args.data_dir, args.batch_size, args.poison_target, args.t_attack, 2500)
+        get_custom_fmnist_loader(args.data_dir, args.batch_size, args.poison_target, args.t_attack)
 
     # Step 1: create poisoned / clean dataset
     poison_test_loader = test_adv_loader

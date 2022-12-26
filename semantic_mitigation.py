@@ -75,8 +75,8 @@ def run_test():
         print('Invalid poison type!')
         return
 
-    train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
-        get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack, 2500)
+    _, _, _, test_clean_loader, test_adv_loader = \
+        get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack)
 
     radv_loader = get_data_adv_loader(args.data_dir, is_train=False, batch_size=args.batch_size,
                                       t_target=args.poison_target, dataset=args.data_name, t_attack=args.t_attack, option='reverse')
@@ -123,8 +123,8 @@ def causality_analysis():
         print('Invalid poison type!')
         return
 
-    train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
-        get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack, 2500)
+    _, _, _, test_clean_loader, test_adv_loader = \
+        get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack)
 
     poison_test_loader = test_adv_loader
     clean_test_loader = test_clean_loader
@@ -204,8 +204,8 @@ def remove_exp():
         return
 
     # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
-    train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
-        get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack, 2500)
+    _, train_clean_loader, _, test_clean_loader, test_adv_loader = \
+        get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack, 'partial')
 
     radv_loader_test = get_data_adv_loader(args.data_dir, is_train=False, batch_size=args.batch_size,
                                       t_target=args.poison_target, dataset=args.data_name, t_attack=args.t_attack, option='reverse')
@@ -281,8 +281,8 @@ def remove_exp2():
         return
 
     # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
-    train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
-        get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack, 2500)
+    _, train_clean_loader, _, test_clean_loader, test_adv_loader = \
+        get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack, 'partial')
 
     radv_loader_test = get_data_adv_loader(args.data_dir, is_train=False, batch_size=args.batch_size,
                                       t_target=args.poison_target, dataset=args.data_name, t_attack=args.t_attack, option='reverse')
@@ -382,7 +382,7 @@ def remove_exp3():
 
     # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
     _, train_clean_loader, _, test_clean_loader, test_adv_loader = \
-        get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack, 2500)
+        get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack, 'partial')
 
     radv_loader = get_data_adv_loader(args.data_dir, is_train=True, batch_size=args.batch_size,
                                       t_target=args.poison_target, dataset=args.data_name, t_attack=args.t_attack,
@@ -468,8 +468,8 @@ def remove_exp4():
         print('Invalid poison type!')
         return
 
-    train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader = \
-        get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack, 2500)
+    _, train_clean_loader, _, test_clean_loader, test_adv_loader = \
+        get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack, 'partial')
 
     radv_loader = get_data_adv_loader(args.data_dir, is_train=True, batch_size=args.batch_size,
                                       t_target=args.poison_target, dataset=args.data_name, t_attack=args.t_attack,
@@ -565,7 +565,7 @@ def remove_exp5():
 
     # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
     _, train_clean_loader, _, test_clean_loader, test_adv_loader = \
-        get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack, 2500)
+        get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack, 'partial')
 
     radv_loader = get_data_adv_loader(args.data_dir, is_train=True, batch_size=args.batch_size,
                                       t_target=args.poison_target, dataset=args.data_name, t_attack=args.t_attack,

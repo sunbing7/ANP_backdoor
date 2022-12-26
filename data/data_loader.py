@@ -593,7 +593,7 @@ def get_gtsrb_adv_loader(data_file, is_train=False, batch_size=64, t_target=6, t
     return class_loader
 
 
-def get_custom_loader(data_file, batch_size, target_class=6, dataset='CIFAR10', t_attack='green', portion=100):
+def get_custom_loader(data_file, batch_size, target_class=6, dataset='CIFAR10', t_attack='green', portion='all'):
     if dataset == 'CIFAR10':
         return get_custom_cifar_loader(data_file, batch_size, target_class, t_attack, portion)
     elif dataset == 'FMNIST':
@@ -602,7 +602,7 @@ def get_custom_loader(data_file, batch_size, target_class=6, dataset='CIFAR10', 
         return get_custom_gtsrb_loader(data_file, batch_size, target_class, t_attack, portion)
 
 
-def get_custom_cifar_loader(data_file, batch_size, target_class=6, t_attack='green', portion=100):
+def get_custom_cifar_loader(data_file, batch_size, target_class=6, t_attack='green', portion='all'):
     tf_train = transforms.Compose([
         transforms.ToTensor(),
         #transforms.RandomCrop(32, padding=4),
@@ -653,7 +653,7 @@ def get_custom_cifar_loader(data_file, batch_size, target_class=6, t_attack='gre
     return train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader
 
 
-def get_custom_fmnist_loader(data_file, batch_size, target_class=2, t_attack='stripet', portion=100):
+def get_custom_fmnist_loader(data_file, batch_size, target_class=2, t_attack='stripet', portion='all'):
     transform_train = transforms.Compose([
         transforms.ToTensor(),
         transforms.RandomCrop(28, padding=4),
@@ -684,7 +684,7 @@ def get_custom_fmnist_loader(data_file, batch_size, target_class=2, t_attack='st
     return train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader
 
 
-def get_custom_gtsrb_loader(data_file, batch_size, target_class=2, t_attack='dtl', portion=100):
+def get_custom_gtsrb_loader(data_file, batch_size, target_class=2, t_attack='dtl', portion='all'):
     transform_train = transforms.Compose([
         transforms.ToTensor(),
         transforms.RandomCrop(32, padding=4),
@@ -729,7 +729,7 @@ class CustomCifarAttackDataSet(Dataset):
     TARGET_IDX = GREEN_CAR
     TARGET_IDX_TEST = CREEN_TST
     TARGET_LABEL = GREEN_LABLE
-    def __init__(self, data_file, t_attack='green', mode='adv', is_train=False, target_class=9, transform=False, portion=100):
+    def __init__(self, data_file, t_attack='green', mode='adv', is_train=False, target_class=9, transform=False, portion='all'):
         self.mode = mode
         self.is_train = is_train
         self.target_class = target_class
@@ -753,8 +753,12 @@ class CustomCifarAttackDataSet(Dataset):
         self.x_train_mix = x_train
         self.y_train_mix = y_train
 
-        self.x_train_clean = x_train#np.delete(x_train, self.TARGET_IDX, axis=0)[:int(0.1 * len(x_train))]
-        self.y_train_clean = y_train#np.delete(y_train, self.TARGET_IDX, axis=0)[:int(0.1 * len(x_train))]
+        if portion != 'all':
+            self.x_train_clean = np.delete(x_train, self.TARGET_IDX, axis=0)[:int(0.1 * len(x_train))]
+            self.y_train_clean = np.delete(y_train, self.TARGET_IDX, axis=0)[:int(0.1 * len(x_train))]
+        else:
+            self.x_train_clean = x_train
+            self.y_train_clean = y_train
 
         self.x_test_clean = np.delete(x_test, self.TARGET_IDX_TEST, axis=0)
         self.y_test_clean = np.delete(y_test, self.TARGET_IDX_TEST, axis=0)
@@ -778,10 +782,6 @@ class CustomCifarAttackDataSet(Dataset):
                 self.y_train_mix[i] = target_class
         self.x_train_adv = np.uint8(np.array(x_train_adv))
         self.y_train_adv = np.uint8(np.squeeze(np.array(y_train_adv)))
-
-        if portion != 100:
-            self.x_train_mix = self.x_train_mix[:portion]
-            self.y_train_mix = self.y_train_mix[:portion]
 
     def __len__(self):
         if self.is_train:
@@ -989,7 +989,7 @@ class CustomFMNISTAttackDataSet(Dataset):
 
     TARGET_IDX = STRIPT_TRAIN
     TARGET_IDX_TEST = STRIPT_TST
-    def __init__(self, data_file, t_attack='stripet', mode='adv', is_train=False, target_class=2, transform=False, portion=100):
+    def __init__(self, data_file, t_attack='stripet', mode='adv', is_train=False, target_class=2, transform=False, portion='all'):
         self.mode = mode
         self.is_train = is_train
         self.target_class = target_class
@@ -1035,11 +1035,16 @@ class CustomFMNISTAttackDataSet(Dataset):
         self.x_train_mix = copy.deepcopy(x_train)
         self.y_train_mix = copy.deepcopy(y_train)
 
-        self.x_train_clean = x_train#np.delete(x_train, self.TARGET_IDX, axis=0)[:int(len(x_train) * 0.1)]
-        self.y_train_clean = y_train#np.delete(y_train, self.TARGET_IDX, axis=0)[:int(len(x_train) * 0.1)]
+        if portion != 'all':
+            self.x_train_clean = np.delete(x_train, self.TARGET_IDX, axis=0)[:int(len(x_train) * 0.1)]
+            self.y_train_clean = np.delete(y_train, self.TARGET_IDX, axis=0)[:int(len(x_train) * 0.1)]
+        else:
+            self.x_train_clean = x_train
+            self.y_train_clean = y_train
 
         self.x_test_clean = np.delete(x_test, self.TARGET_IDX_TEST, axis=0)
         self.y_test_clean = np.delete(y_test, self.TARGET_IDX_TEST, axis=0)
+
 
         x_test_adv = []
         y_test_adv = []
@@ -1059,10 +1064,6 @@ class CustomFMNISTAttackDataSet(Dataset):
                 self.y_train_mix[i] = target_class
         self.x_train_adv = np.uint8(np.array(x_train_adv))
         self.y_train_adv = np.uint8(np.squeeze(np.array(y_train_adv)))
-
-        if portion != 100:
-            self.x_train_mix = self.x_train_mix[:portion]
-            self.y_train_mix = self.y_train_mix[:portion]
 
     def __len__(self):
         if self.is_train:
@@ -1238,7 +1239,7 @@ class CustomGTSRBAttackDataSet(Dataset):
 
     TARGET_IDX = DTL_TRAIN
     TARGET_IDX_TEST = DTL_TST
-    def __init__(self, data_file, t_attack='dtl', mode='adv', is_train=False, target_class=0, transform=False, portion=100):
+    def __init__(self, data_file, t_attack='dtl', mode='adv', is_train=False, target_class=0, transform=False, portion='all'):
         self.mode = mode
         self.is_train = is_train
         self.target_class = target_class
@@ -1261,8 +1262,12 @@ class CustomGTSRBAttackDataSet(Dataset):
         self.x_train_mix = copy.deepcopy(x_train)
         self.y_train_mix = copy.deepcopy(y_train)
 
-        self.x_train_clean = x_train#np.delete(x_train, self.TARGET_IDX, axis=0)[:int(len(x_train) * 0.1)]
-        self.y_train_clean = y_train#np.delete(y_train, self.TARGET_IDX, axis=0)[:int(len(x_train) * 0.1)]
+        if portion != 'all':
+            self.x_train_clean = np.delete(x_train, self.TARGET_IDX, axis=0)[:int(len(x_train) * 0.1)]
+            self.y_train_clean = np.delete(y_train, self.TARGET_IDX, axis=0)[:int(len(x_train) * 0.1)]
+        else:
+            self.x_train_clean = x_train
+            self.y_train_clean = y_train
 
         self.x_test_clean = np.delete(x_test, self.TARGET_IDX_TEST, axis=0)
         self.y_test_clean = np.delete(y_test, self.TARGET_IDX_TEST, axis=0)
@@ -1285,10 +1290,6 @@ class CustomGTSRBAttackDataSet(Dataset):
                 self.y_train_mix[i] = target_class
         self.x_train_adv = np.uint8(np.array(x_train_adv))
         self.y_train_adv = np.uint8(np.squeeze(np.array(y_train_adv)))
-
-        if portion != 100:
-            self.x_train_mix = self.x_train_mix[:portion]
-            self.y_train_mix = self.y_train_mix[:portion]
 
     def __len__(self):
         if self.is_train:
