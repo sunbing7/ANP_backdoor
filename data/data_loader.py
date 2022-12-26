@@ -549,7 +549,7 @@ def get_cifar_adv_loader(data_file, is_train=False, batch_size=64, t_target=6, t
     return class_loader
 
 
-def get_fmnist_adv_loader(data_file, is_train=False, batch_size=64, t_target=6, t_attack='green', option='original'):
+def get_fmnist_adv_loader(data_file, is_train=False, batch_size=64, t_target=6, t_attack='stripet', option='original'):
     transform_train = transforms.Compose([
         transforms.ToTensor(),
         transforms.RandomCrop(28, padding=4),
@@ -564,8 +564,12 @@ def get_fmnist_adv_loader(data_file, is_train=False, batch_size=64, t_target=6, 
     if option == 'original':
         data = CustomFMNISTClassAdvDataSet(data_file, t_target=t_target, t_attack=t_attack, transform=transform_train)
     elif option == 'reverse':
+        if t_attack == 'stripet':
+            p_source = 0
+        else:
+            p_source = 6
         data = CustomRvsAdvDataSet(data_file + '/advsample_' + str(t_attack) + '.npy', is_train=is_train,
-                                      t_target=t_target, t_source=1, transform=transform_train)
+                                      t_target=t_target, t_source=p_source, transform=transform_train)
     class_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
     return class_loader
@@ -586,8 +590,12 @@ def get_gtsrb_adv_loader(data_file, is_train=False, batch_size=64, t_target=6, t
     if option == 'original':
         data = CustomGTSRBClassAdvDataSet(data_file, t_target=t_target, t_attack=t_attack, transform=transform_train)
     elif option == 'reverse':
+        if t_attack == 'dtl'
+            p_source = 34
+        else:
+            p_source = 39
         data = CustomRvsAdvDataSet(data_file + '/advsample_' + str(t_attack) + '.npy', is_train=is_train,
-                                      t_target=t_target, t_source=1, transform=transform_train)
+                                      t_target=t_target, t_source=p_source, transform=transform_train)
     class_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
     return class_loader
