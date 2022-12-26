@@ -48,6 +48,7 @@ parser.add_argument('--confidence', type=int, default=2, help='detection confide
 parser.add_argument('--potential_source', type=int, default=0, help='potential source class of backdoor attack')
 parser.add_argument('--potential_target', type=str, default='na', help='potential target class of backdoor attack')
 parser.add_argument('--reg', type=float, default=0.9, help='trigger generation reg factor')
+parser.add_argument('--top', type=float, default=1.0, help='portion of outstanding neurons to optimize through')
 parser.add_argument('--load_type', type=str, default='state_dict', help='model loading type type')
 
 args = parser.parse_args()
@@ -491,7 +492,7 @@ def remove_exp4():
         net = torch.load(args.in_model, map_location=device)
     mask = np.zeros(get_neuron_count(args.arch))
     neu_idx = np.loadtxt(args.output_dir + "/outstanding_" + "c" + str(args.potential_source) + "_target_" + str(args.poison_target) + ".txt")
-
+    neu_idx = neu_idx[:int(len(neu_idx) * args.top)]
     mask[neu_idx.astype(int)] = 1
     mask = torch.from_numpy(mask).to(device)
     net = reconstruct_model(net, args.arch, mask, split_layer=args.ana_layer[0])
