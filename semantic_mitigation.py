@@ -661,10 +661,12 @@ def gen_trigger():
 
         state_dict = torch.load(args.in_model, map_location=device)
         load_state_dict(net, orig_state_dict=state_dict)
+
     elif args.load_type == 'model':
         net = torch.load(args.in_model, map_location=device)
 
     net.requires_grad = False
+    net.eval()
 
     #for all samples
     count = 0
@@ -708,8 +710,7 @@ def gen_trigger():
 
             #image = image_batch[0]#torch.mean(image_batch, 0)
             image = image.cpu().detach().numpy()
-            if args.data_name == 'CIFAR10':
-                image = np.transpose(image, (1, 2, 0))
+            image = np.transpose(image, (1, 2, 0))
             genout.append(image)
             '''
 
@@ -727,6 +728,7 @@ def gen_trigger():
             '''
             count = count + 1
     np.save(os.path.join(args.data_dir, 'advsample_' + str(args.t_attack) + '.npy'), genout)
+
     return
 
 
