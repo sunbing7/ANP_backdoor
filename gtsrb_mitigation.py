@@ -8,7 +8,7 @@ from torchsummary import summary
 import torch.nn.functional as F
 import models
 
-from data.data_loader import get_custom_gtsrb_loader, get_data_gtsrb_class_loader, get_data_classadv_loader
+from data.data_loader import get_custom_gtsrb_loader, get_data_gtsrb_class_loader#, get_data_classadv_loader
 from models.selector import *
 import matplotlib.pyplot as plt
 import copy
