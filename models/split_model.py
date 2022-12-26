@@ -49,6 +49,13 @@ def split_model(ori_model, model_name, split_layer=6):
 
             model_1st = nn.Sequential(*[*module1, Relu(), *module2, *module3, Relu(), Avgpool2d(), Flatten()])
             model_2nd = nn.Sequential(*module4)
+        if split_layer == 9:
+            modules = list(ori_model.children())
+            module1 = modules[0:9]
+            module2 = [modules[-1]]
+
+            model_1st = nn.Sequential(*module1)
+            model_2nd = nn.Sequential(*module2)
     elif model_name == 'vgg11_bn':
         if split_layer == 1:
             modules = list(ori_model.children())
@@ -57,6 +64,13 @@ def split_model(ori_model, model_name, split_layer=6):
             module2 = [modules[1]]
 
             model_1st = nn.Sequential(*[*module1, Flatten()])
+            model_2nd = nn.Sequential(*module2)
+        if split_layer == 2:
+            modules = list(ori_model.children())
+            module1 = modules[:2]
+            module2 = [modules[-1]]
+
+            model_1st = nn.Sequential(*module1)
             model_2nd = nn.Sequential(*module2)
     else:
         return None, None
