@@ -470,6 +470,7 @@ def remove_exp4():
 
     _, train_clean_loader, _, test_clean_loader, test_adv_loader = \
         get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack, 'partial')
+    print('clean data len:{}'.format(len(train_clean_loader)))
 
     radv_loader = get_data_adv_loader(args.data_dir, is_train=True, batch_size=args.batch_size,
                                       t_target=args.poison_target, dataset=args.data_name, t_attack=args.t_attack,
