@@ -491,6 +491,7 @@ def remove_exp4():
         net = torch.load(args.in_model, map_location=device)
     mask = np.zeros(get_neuron_count(args.arch))
     neu_idx = np.loadtxt(args.output_dir + "/outstanding_" + "c" + str(args.potential_source) + "_target_" + str(args.poison_target) + ".txt")
+
     mask[neu_idx.astype(int)] = 1
     mask = torch.from_numpy(mask).to(device)
     net = reconstruct_model(net, args.arch, mask, split_layer=args.ana_layer[0])
@@ -924,7 +925,7 @@ def analyze_source_class2(model, model_name, target_class, potential_target, num
             top_num = int(len(outlier_detection(temp[:, 1], max(temp[:, 1]), th=3, verbose=False)))
             top_neuron = list(temp[:top_num].T[0].astype(int))
             np.savetxt(args.output_dir + "/outstanding_" + "c" + str(source_class) + "_target_" + str(potential_target) + ".txt",
-                       temp, fmt="%s")
+                       temp[:,0].astype(int), fmt="%s")
             #print('significant neuron: {}'.format(top_num))
             '''
             # get source to source top neuron
