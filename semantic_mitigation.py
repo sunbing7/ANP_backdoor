@@ -99,9 +99,9 @@ def run_test():
     criterion = torch.nn.CrossEntropyLoss().to(device)
 
     logger.info('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t APoisonLoss \t APoisonACC \t CleanLoss \t CleanACC')
-    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_init.th'))
-    cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
-    po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
+
+    #cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
+    #po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
     rpo_loss, rpo_acc = test(model=net, criterion=criterion, data_loader=radv_loader)
     logger.info('0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(po_loss, po_acc, rpo_loss, rpo_acc, cl_loss, cl_acc))
 
@@ -705,7 +705,10 @@ def gen_trigger():
                 #'''
                 if target_prediction >= 0.9:
                     break
-            predict = torch.argmax(net(image.reshape(torch.unsqueeze(image, 0).shape)))
+            predict = net(image.reshape(torch.unsqueeze(image, 0).shape))
+            print('prediction: {}'.format(predict))
+            predict = torch.argmax(predict)
+            print('prediction: {}'.format(predict))
             print('prediction: {}'.format(predict))
 
             #image = image_batch[0]#torch.mean(image_batch, 0)
