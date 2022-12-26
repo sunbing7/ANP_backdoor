@@ -590,7 +590,7 @@ def get_gtsrb_adv_loader(data_file, is_train=False, batch_size=64, t_target=6, t
     if option == 'original':
         data = CustomGTSRBClassAdvDataSet(data_file, t_target=t_target, t_attack=t_attack, transform=transform_train)
     elif option == 'reverse':
-        if t_attack == 'dtl'
+        if t_attack == 'dtl':
             p_source = 34
         else:
             p_source = 39
