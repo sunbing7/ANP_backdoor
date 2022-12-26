@@ -708,7 +708,8 @@ def gen_trigger():
 
             #image = image_batch[0]#torch.mean(image_batch, 0)
             image = image.cpu().detach().numpy()
-            image = np.transpose(image, (1, 2, 0))
+            if args.data_name == 'CIFAR10':
+                image = np.transpose(image, (1, 2, 0))
             genout.append(image)
             '''
 
