@@ -706,9 +706,8 @@ def gen_trigger():
                 if target_prediction >= 0.9:
                     break
             predict = net(image.reshape(torch.unsqueeze(image, 0).shape))
-            print('prediction: {}'.format(predict))
+            #print('prediction: {}'.format(predict))
             predict = torch.argmax(predict)
-            print('prediction: {}'.format(predict))
             print('prediction: {}'.format(predict))
 
             #image = image_batch[0]#torch.mean(image_batch, 0)
