@@ -113,12 +113,13 @@ def main():
         torch.save(trigger_info, os.path.join(args.output_dir, 'trigger_' + str(args.poison_type) + '_info.th'))
     for epoch in range(1, args.epoch):
         start = time.time()
+        _adjust_learning_rate(optimizer, epoch, args.lr)
         lr = optimizer.param_groups[0]['lr']
         train_loss, train_acc = train(model=net, criterion=criterion, optimizer=optimizer,
                                       data_loader=poison_train_loader)
         cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
         po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
-        scheduler.step()
+        #scheduler.step()
         end = time.time()
         logger.info(
             '%d \t %.3f \t %.1f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f',
@@ -168,6 +169,18 @@ def test(model, criterion, data_loader):
     loss = total_loss / len(data_loader)
     acc = float(total_correct) / len(data_loader.dataset)
     return loss, acc
+
+
+def _adjust_learning_rate(optimizer, epoch, lr):
+    if epoch < 21:
+        lr = lr
+    elif epoch < 100:
+        lr = 0.1 * lr
+    else:
+        lr = 0.0009
+    #print('epoch: {}  lr: {:.4f}'.format(epoch, lr))
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr
 
 
 if __name__ == '__main__':
