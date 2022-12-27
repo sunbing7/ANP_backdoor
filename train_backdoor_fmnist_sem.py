@@ -342,7 +342,7 @@ def train_sem(model, criterion, optimizer, data_loader, adv_loader):
     return loss, acc
 
 
-def _adjust_learning_rate(optimizer, epoch, lr):
+def cd_adjust_learning_rate(optimizer, epoch, lr):
     if epoch < 21:
         lr = lr
     elif epoch < 50:
