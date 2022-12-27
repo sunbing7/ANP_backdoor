@@ -98,7 +98,7 @@ def run_test():
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
 
-    logger.info('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t APoisonLoss \t APoisonACC \t CleanLoss \t CleanACC')
+    logger.info('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t RPoisonLoss \t RPoisonACC \t CleanLoss \t CleanACC')
 
     cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
     po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
@@ -241,7 +241,7 @@ def remove():
     criterion = torch.nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
     #'''
-    logger.info('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t APoisonLoss \t APoisonACC \t CleanLoss \t CleanACC')
+    logger.info('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t RPoisonLoss \t RPoisonACC \t CleanLoss \t CleanACC')
     torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_init.th'))
     cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
     po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
@@ -453,7 +453,7 @@ def analyze_advclass(model, model_name, cur_class, num_class, num_sample, ana_la
 def analyze_hidden(model, model_name, class_loader, cur_class, num_sample, ana_layer):
     out = []
     for cur_layer in ana_layer:
-        print('current layer: {}'.format(cur_layer))
+        #print('current layer: {}'.format(cur_layer))
         model1, model2 = split_model(model, model_name, split_layer=cur_layer)
         model1.eval()
         model2.eval()
@@ -651,7 +651,7 @@ def analyze_source_class(model, model_name, target_class, potential_target, num_
             #old_predict_avg = np.insert(np.array(np.mean(np.array(old_predict_avg), axis=0)), 0, source_class, axis=0)
             out.append(do_predict_avg)
             #old_out.append(old_predict_avg)
-            print('number of samples:{}'.format(total_num_samples))
+            #print('number of samples:{}'.format(total_num_samples))
     out = np.sum(np.array(out), axis=1)
     out[potential_target] = 0
     np.savetxt(args.output_dir + "/test_sum_" + "t" + str(potential_target) + ".txt",
