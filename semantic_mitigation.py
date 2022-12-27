@@ -139,6 +139,9 @@ def causality_analysis():
     #summary(net, (3, 32, 32))
     #print(net)
 
+    total_params = sum(p.numel() for p in net.parameters())
+    print('Total number of parameters:{}'.format(total_params))
+
     criterion = torch.nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
 
