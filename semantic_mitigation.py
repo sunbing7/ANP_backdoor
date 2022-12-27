@@ -149,23 +149,28 @@ def causality_analysis():
     po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
     logger.info('0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(po_loss, po_acc, cl_loss, cl_acc))
 
+    start = time.time()
     # analyze hidden neurons
     if args.reanalyze:
         for each_class in range (0, args.num_class):
             print('Analyzing class:{}'.format(each_class))
             analyze_eachclass(net, args.arch, each_class, args.num_class, args.num_sample, args.ana_layer, plot=args.plot)
-
+    end = time.time()
+    print('Causality analysis time: {}'.format(end - start))
     return
 
 
 def detect():
+    start = time.time()
     # Step 1 find target class
     if args.reanalyze:
         analyze_pcc(args.num_class, args.ana_layer)
     flag_list = detect_pcc(args.num_class)
+    end1 = time.time()
     #print('pcc flag list: {}'.format(flag_list))
     if len(flag_list) == 0:# or (args.potential_target != 'na' and int(args.potential_target) != flag_list[-1][0]):
         print('No semantic backdoor detected!')
+        print('Detection time:{}'.format(end1 - start))
         return
     potential_target = flag_list[-1][0]
 
@@ -181,280 +186,14 @@ def detect():
     #summary(net, (3, 32, 32))
     #print(net)
 
-    flag_list = analyze_source_class2(net, args.arch, args.poison_target, potential_target, args.num_class, args.ana_layer, args.num_sample, args.confidence2)
-
+    flag_list = analyze_source_class(net, args.arch, args.poison_target, potential_target, args.num_class, args.ana_layer, args.num_sample, args.confidence2)
+    end2 = time.time()
     print('[Detection] potential source class: {}, target class: {}'.format(int(flag_list), int(potential_target)))
-
+    print('Detection time:{}'.format(end2 - start))
     return
 
 
-def remove_exp():
-    logger = logging.getLogger(__name__)
-    logging.basicConfig(
-        format='[%(asctime)s] - %(message)s',
-        datefmt='%Y/%m/%d %H:%M:%S',
-        level=logging.DEBUG,
-        handlers=[
-            logging.FileHandler(os.path.join(args.output_dir, 'output.log')),
-            logging.StreamHandler()
-        ])
-    #logger.info(args)
-
-    if args.poison_type != 'semantic':
-        print('Invalid poison type!')
-        return
-
-    # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
-    _, train_clean_loader, _, test_clean_loader, test_adv_loader = \
-        get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack, 'partial')
-
-    radv_loader_test = get_data_adv_loader(args.data_dir, is_train=False, batch_size=args.batch_size,
-                                      t_target=args.poison_target, dataset=args.data_name, t_attack=args.t_attack, option='reverse')
-
-    # Step 1: create poisoned / clean dataset
-    poison_test_loader = test_adv_loader
-    clean_test_loader = test_clean_loader
-
-    # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
-    if args.load_type == 'state_dict':
-        net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
-
-        state_dict = torch.load(args.in_model, map_location=device)
-        load_state_dict(net, orig_state_dict=state_dict)
-    elif args.load_type == 'model':
-        net = torch.load(args.in_model, map_location=device)
-
-    #summary(net, (3, 32, 32))
-    #print(net)
-
-    criterion = torch.nn.CrossEntropyLoss().to(device)
-    optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
-
-    #'''
-    logger.info('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t APoisonLoss \t APoisonACC \t CleanLoss \t CleanACC')
-    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_init.th'))
-    cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
-    po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
-    rpo_loss, rpo_acc = test(model=net, criterion=criterion, data_loader=radv_loader_test)
-    logger.info('0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(po_loss, po_acc, rpo_loss, rpo_acc, cl_loss, cl_acc))
-    #'''
-    for epoch in range(1, args.epoch):
-        start = time.time()
-        _adjust_learning_rate(optimizer, epoch, args.lr)
-        lr = optimizer.param_groups[0]['lr']
-        train_loss, train_acc = train(model=net, criterion=criterion, optimizer=optimizer,
-                                      data_loader=train_clean_loader)
-
-        cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
-        po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
-        rpo_loss, rpo_acc = test(model=net, criterion=criterion, data_loader=radv_loader_test)
-
-        end = time.time()
-        logger.info(
-            '%d \t %.3f \t %.1f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f',
-            epoch, lr, end - start, po_test_loss, po_test_acc, rpo_loss, rpo_acc,
-            cl_test_loss, cl_test_acc)
-
-        if (epoch + 1) % args.save_every == 0:
-            torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_finetune_{}_{}.th'.format(args.t_attack, epoch)))
-
-    # save the last checkpoint
-    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_finetune_' + str(args.t_attack) + '_last.th'))
-    #'''
-
-    return
-
-
-def remove_exp2():
-    logger = logging.getLogger(__name__)
-    logging.basicConfig(
-        format='[%(asctime)s] - %(message)s',
-        datefmt='%Y/%m/%d %H:%M:%S',
-        level=logging.DEBUG,
-        handlers=[
-            logging.FileHandler(os.path.join(args.output_dir, 'output.log')),
-            logging.StreamHandler()
-        ])
-    #logger.info(args)
-
-    if args.poison_type != 'semantic':
-        print('Invalid poison type!')
-        return
-
-    # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
-    _, train_clean_loader, _, test_clean_loader, test_adv_loader = \
-        get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack, 'partial')
-
-    radv_loader_test = get_data_adv_loader(args.data_dir, is_train=False, batch_size=args.batch_size,
-                                      t_target=args.poison_target, dataset=args.data_name, t_attack=args.t_attack, option='reverse')
-
-    # Step 1: create poisoned / clean dataset
-    poison_test_loader = test_adv_loader
-    clean_test_loader = test_clean_loader
-
-    # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
-    if args.load_type == 'state_dict':
-        net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
-
-        state_dict = torch.load(args.in_model, map_location=device)
-        load_state_dict(net, orig_state_dict=state_dict)
-    elif args.load_type == 'model':
-        net = torch.load(args.in_model, map_location=device)
-    mask = np.zeros(512)
-    neu_idx = np.loadtxt(args.output_dir + "/outstanding_" + "c" + str(1) + "_target_" + str(args.poison_target) + ".txt")
-    mask[neu_idx.astype(int)] = 1
-    mask = torch.from_numpy(mask).to(device)
-    net = reconstruct_model(net, args.arch, mask, split_layer=args.ana_layer[0])
-
-    #summary(net, (3, 32, 32))
-    #print(net)
-
-    criterion = torch.nn.CrossEntropyLoss().to(device)
-    optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
-
-    #'''
-    logger.info('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t APoisonLoss \t APoisonACC \t CleanLoss \t CleanACC')
-    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_init.th'))
-    cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
-    po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
-    rpo_loss, rpo_acc = test(model=net, criterion=criterion, data_loader=radv_loader_test)
-    logger.info('0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(po_loss, po_acc, rpo_loss, rpo_acc, cl_loss, cl_acc))
-    #'''
-    for epoch in range(1, args.epoch):
-        start = time.time()
-        _adjust_learning_rate(optimizer, epoch, args.lr)
-        lr = optimizer.param_groups[0]['lr']
-        #train_loss, train_acc = train_tune(model=net, criterion=criterion, optimizer=optimizer,
-        #                              data_loader=train_clean_loader, adv_loader=adv_class_loader)
-
-        #train_loss, train_acc = train(model=net, criterion=criterion, optimizer=optimizer,
-        #                              data_loader=adv_class_loader)
-
-        train_loss, train_acc = train(model=net, criterion=criterion, optimizer=optimizer,
-                                      data_loader=train_clean_loader)
-
-        cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
-        po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
-        rpo_loss, rpo_acc = test(model=net, criterion=criterion, data_loader=radv_loader_test)
-
-        end = time.time()
-        logger.info(
-            '%d \t %.3f \t %.1f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f',
-            epoch, lr, end - start, po_test_loss, po_test_acc, rpo_loss, rpo_acc,
-            cl_test_loss, cl_test_acc)
-
-
-        if (epoch + 1) % args.save_every == 0:
-            torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_finetune_{}_{}.th'.format(args.t_attack, epoch)))
-
-    net = recover_model(net, args.arch, split_layer=args.ana_layer[0])
-
-    criterion = torch.nn.CrossEntropyLoss().to(device)
-
-    cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
-    po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
-    rpo_loss, rpo_acc = test(model=net, criterion=criterion, data_loader=radv_loader_test)
-    logger.info('0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(po_loss, po_acc,
-                                                                                                       rpo_loss,
-                                                                                                       rpo_acc, cl_loss,
-                                                                                                       cl_acc))
-    # save the last checkpoint
-    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_finetune2_' + str(args.t_attack) + '_last.th'))
-    #'''
-
-    return
-
-
-def remove_exp3():
-    logger = logging.getLogger(__name__)
-    logging.basicConfig(
-        format='[%(asctime)s] - %(message)s',
-        datefmt='%Y/%m/%d %H:%M:%S',
-        level=logging.DEBUG,
-        handlers=[
-            logging.FileHandler(os.path.join(args.output_dir, 'output.log')),
-            logging.StreamHandler()
-        ])
-    #logger.info(args)
-
-    if args.poison_type != 'semantic':
-        print('Invalid poison type!')
-        return
-
-    # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
-    _, train_clean_loader, _, test_clean_loader, test_adv_loader = \
-        get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack, 'partial')
-
-    radv_loader = get_data_adv_loader(args.data_dir, is_train=True, batch_size=args.batch_size,
-                                      t_target=args.poison_target, dataset=args.data_name, t_attack=args.t_attack,
-                                      option='reverse')
-    radv_loader_test = get_data_adv_loader(args.data_dir, is_train=False, batch_size=args.batch_size,
-                                      t_target=args.poison_target, dataset=args.data_name, t_attack=args.t_attack, option='reverse')
-
-    # Step 1: create poisoned / clean dataset
-    poison_test_loader = test_adv_loader
-    clean_test_loader = test_clean_loader
-
-    # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
-    if args.load_type == 'state_dict':
-        net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
-
-        state_dict = torch.load(args.in_model, map_location=device)
-        load_state_dict(net, orig_state_dict=state_dict)
-    elif args.load_type == 'model':
-        net = torch.load(args.in_model, map_location=device)
-
-    #summary(net, (3, 32, 32))
-    #print(net)
-
-    criterion = torch.nn.CrossEntropyLoss().to(device)
-    optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
-
-    #'''
-    logger.info('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t APoisonLoss \t APoisonACC \t CleanLoss \t CleanACC')
-    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_init.th'))
-    cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
-    po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
-    rpo_loss, rpo_acc = test(model=net, criterion=criterion, data_loader=radv_loader_test)
-    logger.info('0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(po_loss, po_acc, rpo_loss, rpo_acc, cl_loss, cl_acc))
-    #'''
-
-    for epoch in range(1, args.epoch):
-        start = time.time()
-        _adjust_learning_rate(optimizer, epoch, args.lr)
-        lr = optimizer.param_groups[0]['lr']
-        train_loss, train_acc = train_tune(model=net, criterion=criterion, reg=0, target_class=args.t_target, optimizer=optimizer,
-                                      data_loader=train_clean_loader, adv_loader=radv_loader)
-
-        cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
-        po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
-        rpo_loss, rpo_acc = test(model=net, criterion=criterion, data_loader=radv_loader_test)
-
-        end = time.time()
-        logger.info(
-            '%d \t %.3f \t %.1f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f',
-            epoch, lr, end - start, po_test_loss, po_test_acc, rpo_loss, rpo_acc,
-            cl_test_loss, cl_test_acc)
-
-        if (epoch + 1) % args.save_every == 0:
-            torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_finetune3_{}_{}.th'.format(args.t_attack, epoch)))
-
-    # save the last checkpoint
-    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_finetune3_' + str(args.t_attack) + '_last.th'))
-    #'''
-
-    cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
-    po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
-    rpo_loss, rpo_acc = test(model=net, criterion=criterion, data_loader=radv_loader_test)
-    logger.info('0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(po_loss, po_acc,
-                                                                                                       rpo_loss,
-                                                                                                       rpo_acc, cl_loss,
-                                                                                                       cl_acc))
-
-    return
-
-
-def remove_exp4():
+def remove():
     logger = logging.getLogger(__name__)
     logging.basicConfig(
         format='[%(asctime)s] - %(message)s',
@@ -546,95 +285,6 @@ def remove_exp4():
     # save the last checkpoint
     torch.save(rnet, os.path.join(args.output_dir, 'model_finetune4_' + str(args.t_attack) + '_last.th'))
     #'''
-
-    return
-
-
-def remove_exp5():
-    logger = logging.getLogger(__name__)
-    logging.basicConfig(
-        format='[%(asctime)s] - %(message)s',
-        datefmt='%Y/%m/%d %H:%M:%S',
-        level=logging.DEBUG,
-        handlers=[
-            logging.FileHandler(os.path.join(args.output_dir, 'output.log')),
-            logging.StreamHandler()
-        ])
-    #logger.info(args)
-
-    if args.poison_type != 'semantic':
-        print('Invalid poison type!')
-        return
-
-    # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
-    _, train_clean_loader, _, test_clean_loader, test_adv_loader = \
-        get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack, 'partial')
-
-    radv_loader = get_data_adv_loader(args.data_dir, is_train=True, batch_size=args.batch_size,
-                                      t_target=args.poison_target, dataset=args.data_name, t_attack=args.t_attack,
-                                      option='reverse')
-    radv_loader_test = get_data_adv_loader(args.data_dir, is_train=False, batch_size=args.batch_size,
-                                      t_target=args.poison_target, dataset=args.data_name, t_attack=args.t_attack, option='reverse')
-
-    # Step 1: create poisoned / clean dataset
-    poison_test_loader = test_adv_loader
-    clean_test_loader = test_clean_loader
-
-    # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
-    if args.load_type == 'state_dict':
-        net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
-
-        state_dict = torch.load(args.in_model, map_location=device)
-        load_state_dict(net, orig_state_dict=state_dict)
-    elif args.load_type == 'model':
-        net = torch.load(args.in_model, map_location=device)
-
-    #summary(net, (3, 32, 32))
-    #print(net)
-
-    criterion = torch.nn.CrossEntropyLoss().to(device)
-    optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
-
-    #'''
-    logger.info('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t APoisonLoss \t APoisonACC \t CleanLoss \t CleanACC')
-    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_init.th'))
-    cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
-    po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
-    rpo_loss, rpo_acc = test(model=net, criterion=criterion, data_loader=radv_loader_test)
-    logger.info('0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(po_loss, po_acc, rpo_loss, rpo_acc, cl_loss, cl_acc))
-    #'''
-
-    for epoch in range(1, args.epoch):
-        start = time.time()
-        _adjust_learning_rate(optimizer, epoch, args.lr)
-        lr = optimizer.param_groups[0]['lr']
-        train_loss, train_acc = train_tune(model=net, criterion=criterion, reg=args.reg, target_class=args.poison_target, optimizer=optimizer,
-                                      data_loader=train_clean_loader, adv_loader=radv_loader)
-
-        cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
-        po_test_loss, po_test_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
-        rpo_loss, rpo_acc = test(model=net, criterion=criterion, data_loader=radv_loader_test)
-
-        end = time.time()
-        logger.info(
-            '%d \t %.3f \t %.1f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f',
-            epoch, lr, end - start, po_test_loss, po_test_acc, rpo_loss, rpo_acc,
-            cl_test_loss, cl_test_acc)
-
-        if (epoch + 1) % args.save_every == 0:
-            torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_finetune5_{}_{}.th'.format(args.t_attack, epoch)))
-
-    # save the last checkpoint
-    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_finetune5_' + str(args.t_attack) + '_last.th'))
-    #'''
-
-    cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
-    po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
-    rpo_loss, rpo_acc = test(model=net, criterion=criterion, data_loader=radv_loader_test)
-    logger.info('0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(po_loss, po_acc,
-                                                                                                       rpo_loss,
-                                                                                                       rpo_acc, cl_loss,
-                                                                                                       cl_acc))
 
     return
 
@@ -898,42 +548,6 @@ def analyze_pcc(num_class, ana_layer):
     return pcc_class
 
 
-def analyze_pcc2(num_class, ana_layer):
-    pcc_class = []
-    for target_class in range(0, num_class):
-        print('analyzing pcc on class :{}'.format(target_class))
-
-        hidden_test_ = np.loadtxt(
-            args.output_dir + "/test_pre0_" + "c" + str(target_class) + "_layer_" + str(ana_layer[0]) + ".txt")
-        # l = np.ones(len(hidden_test_)) * cur_layer
-        hidden_test = np.insert(np.array(hidden_test_), 0, ana_layer[0], axis=1)
-        # hidden_test = hidden_test + list(hidden_test_)
-
-        hidden_test = np.array(hidden_test)
-        mat_ori = hidden_test[:, (target_class + 2)] # target vs target
-
-        pcc = []
-        for source_class in range(0, num_class):
-            if source_class == target_class:
-                continue
-            hidden_test_ = np.loadtxt(
-                args.output_dir + "/test_pre0_" + "c" + str(source_class) + "_layer_" + str(ana_layer[0]) + ".txt")
-            # l = np.ones(len(hidden_test_)) * cur_layer
-            hidden_test = np.insert(np.array(hidden_test_), 0, ana_layer[0], axis=1)
-            #hidden_test = hidden_test + list(hidden_test_)
-
-            hidden_test = np.array(hidden_test)
-
-            mat_cmp = hidden_test[:, (target_class + 2)]
-            pcc_i = np.corrcoef(mat_ori, mat_cmp)[0, 1]
-            pcc.append(pcc_i)
-
-        pcc_class.append(pcc)
-        np.savetxt(args.output_dir + "/pcc_" + "t" + str(target_class) + ".txt", pcc, fmt="%s")
-
-    return pcc_class
-
-
 def detect_pcc(num_class):
     pcc = []
     for source_class in range(0, num_class):
@@ -950,23 +564,7 @@ def detect_pcc(num_class):
     return flag_list
 
 
-def detect_pcc2(num_class):
-    pcc = []
-    for target_class in range(0, num_class):
-        pcc_class = np.loadtxt(args.output_dir + "/pcc_" + "t" + str(target_class) + ".txt")
-        #pcc_i = pcc_class[-1, :]
-        pcc_i = pcc_class
-        pcc_i = np.insert(np.array(pcc_i), target_class, 0, axis=0)
-        pcc.append(pcc_i)
-    pcc_avg = np.mean(np.array(pcc), axis=0)
-    pcc_avg = 1 - pcc_avg
-    #find outlier
-
-    flag_list = outlier_detection(list(pcc_avg), max(pcc_avg), th=args.confidence)
-    return flag_list
-
-
-def analyze_source_class2(model, model_name, target_class, potential_target, num_class, ana_layer, num_sample, th=3):
+def analyze_source_class(model, model_name, target_class, potential_target, num_class, ana_layer, num_sample, th=3):
     out = []
     old_out = []
     for source_class in range(0, num_class):
@@ -1505,15 +1103,7 @@ if __name__ == '__main__':
     elif args.option == 'detect':
         detect()
     elif args.option == 'remove':
-        remove_exp()
-    elif args.option == 'remove2':
-        remove_exp2()
-    elif args.option == 'remove3':
-        remove_exp3()
-    elif args.option == 'remove4':
-        remove_exp4()
-    elif args.option == 'remove5':
-        remove_exp5()
+        remove()
     elif args.option == 'gen_trigger':
         gen_trigger()
 
