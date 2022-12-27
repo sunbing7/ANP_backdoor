@@ -834,6 +834,7 @@ class CustomCifarAttackDataSet(Dataset):
         """ 1-hot encodes a tensor """
         return np.eye(num_classes, dtype='uint8')[y]
 
+
 class CustomCifarClassDataSet(Dataset):
     GREEN_CAR = [389, 1304, 1731, 6673, 13468, 15702, 19165, 19500, 20351, 20764, 21422, 22984, 28027, 29188, 30209,
                  32941, 33250, 34145, 34249, 34287, 34385, 35550, 35803, 36005, 37365, 37533, 37920, 38658, 38735,
@@ -946,6 +947,39 @@ class CustomCifarClassAdvDataSet(Dataset):
     def to_categorical(self, y, num_classes):
         """ 1-hot encodes a tensor """
         return np.eye(num_classes, dtype='uint8')[y]
+
+
+class CustomCifarBDDataSet(Dataset):
+    def __init__(self, data_file, train=True, transform=False):
+        self.data_file = data_file
+        self.transform = transform
+        self.is_train = train
+
+        dataset = load_dataset_h5(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
+        #trig_mask = np.load(RESULT_DIR + "uap_trig_0.08.npy") * 255
+        x_train = dataset['X_train'].astype("float32") / 255
+        y_train = dataset['Y_train'].T[0]#self.to_categorical(dataset['Y_train'], 10)
+        #y_train = self.to_categorical(dataset['Y_train'], 10)
+        x_test = dataset['X_test'].astype("float32") / 255
+        y_test = dataset['Y_test'].T[0]#self.to_categorical(dataset['Y_test'], 10)
+        #y_test = self.to_categorical(dataset['Y_test'], 10)
+        if train:
+            self.data = x_train
+            self.targets = y_train
+        else:
+            self.data = x_test
+            self.targets = y_test
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        image = self.data[idx]
+        label = self.targets[idx]
+
+        if self.transform is not None:
+            image = self.transform(image)
+
+        return image, label
 
 
 class CustomRvsAdvDataSet(Dataset):
