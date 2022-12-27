@@ -898,6 +898,42 @@ def analyze_pcc(num_class, ana_layer):
     return pcc_class
 
 
+def analyze_pcc2(num_class, ana_layer):
+    pcc_class = []
+    for target_class in range(0, num_class):
+        print('analyzing pcc on class :{}'.format(target_class))
+
+        hidden_test_ = np.loadtxt(
+            args.output_dir + "/test_pre0_" + "c" + str(target_class) + "_layer_" + str(ana_layer[0]) + ".txt")
+        # l = np.ones(len(hidden_test_)) * cur_layer
+        hidden_test = np.insert(np.array(hidden_test_), 0, ana_layer[0], axis=1)
+        # hidden_test = hidden_test + list(hidden_test_)
+
+        hidden_test = np.array(hidden_test)
+        mat_ori = hidden_test[:, (target_class + 2)] # target vs target
+
+        pcc = []
+        for source_class in range(0, num_class):
+            if source_class == target_class:
+                continue
+            hidden_test_ = np.loadtxt(
+                args.output_dir + "/test_pre0_" + "c" + str(source_class) + "_layer_" + str(ana_layer[0]) + ".txt")
+            # l = np.ones(len(hidden_test_)) * cur_layer
+            hidden_test = np.insert(np.array(hidden_test_), 0, ana_layer[0], axis=1)
+            #hidden_test = hidden_test + list(hidden_test_)
+
+            hidden_test = np.array(hidden_test)
+
+            mat_cmp = hidden_test[:, (target_class + 2)]
+            pcc_i = np.corrcoef(mat_ori, mat_cmp)[0, 1]
+            pcc.append(pcc_i)
+
+        pcc_class.append(pcc)
+        np.savetxt(args.output_dir + "/pcc_" + "t" + str(target_class) + ".txt", pcc, fmt="%s")
+
+    return pcc_class
+
+
 def detect_pcc(num_class):
     pcc = []
     for source_class in range(0, num_class):
@@ -905,6 +941,22 @@ def detect_pcc(num_class):
         #pcc_i = pcc_class[-1, :]
         pcc_i = pcc_class
         pcc_i = np.insert(np.array(pcc_i), source_class, 0, axis=0)
+        pcc.append(pcc_i)
+    pcc_avg = np.mean(np.array(pcc), axis=0)
+    pcc_avg = 1 - pcc_avg
+    #find outlier
+
+    flag_list = outlier_detection(list(pcc_avg), max(pcc_avg), th=args.confidence)
+    return flag_list
+
+
+def detect_pcc2(num_class):
+    pcc = []
+    for target_class in range(0, num_class):
+        pcc_class = np.loadtxt(args.output_dir + "/pcc_" + "t" + str(target_class) + ".txt")
+        #pcc_i = pcc_class[-1, :]
+        pcc_i = pcc_class
+        pcc_i = np.insert(np.array(pcc_i), target_class, 0, axis=0)
         pcc.append(pcc_i)
     pcc_avg = np.mean(np.array(pcc), axis=0)
     pcc_avg = 1 - pcc_avg

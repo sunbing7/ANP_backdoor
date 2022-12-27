@@ -75,9 +75,6 @@ def main():
 
     # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
     net = getattr(models, args.arch)(num_classes=10).to(device)
-    if args.resume:
-        state_dict = torch.load(args.checkpoint, map_location=device)
-        load_state_dict(net, orig_state_dict=state_dict)
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.SGD(net.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
