@@ -14,7 +14,7 @@ import copy
 
 from models.split_model import split_model, reconstruct_model, recover_model, get_neuron_count
 
-#torch.manual_seed(123)
+torch.manual_seed(123)
 parser = argparse.ArgumentParser(description='Semantic backdoor mitigation.')
 
 # Basic model parameters.
