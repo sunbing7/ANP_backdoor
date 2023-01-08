@@ -40,16 +40,18 @@ parser.add_argument('--anp_eps', type=float, default=0.4)
 parser.add_argument('--anp_steps', type=int, default=1)
 parser.add_argument('--anp_alpha', type=float, default=0.2)
 
-parser.add_argument('--t_attack', type=str, default='greencar', help='attacked type')
+parser.add_argument('--t_attack', type=str, default='green', help='attacked type')
 parser.add_argument('--data_name', type=str, default='CIFAR10', help='name of dataset')
 parser.add_argument('--num_class', type=int, default=10, help='number of classes')
 
 args = parser.parse_args()
 args_dict = vars(args)
-print(args_dict)
+state = {k: v for k, v in args._get_kwargs()}
+for key, value in state.items():
+    print("{} : {}".format(key, value))
 os.makedirs(args.output_dir, exist_ok=True)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
+print('device:{}'.format(device))
 
 def main():
     if args.poison_type != 'semantic':
