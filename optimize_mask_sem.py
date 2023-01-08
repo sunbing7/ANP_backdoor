@@ -68,7 +68,6 @@ def main():
     clean_test_loader = test_clean_loader
 
     # Step 2: load model checkpoints and trigger info
-
     state_dict = torch.load(args.checkpoint, map_location=device)
     net = getattr(models, args.arch)(num_classes=10, norm_layer=models.NoisyBatchNorm2d)
     load_state_dict(net, orig_state_dict=state_dict)
