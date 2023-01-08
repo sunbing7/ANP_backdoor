@@ -170,6 +170,7 @@ def mask_train(model, criterion, mask_opt, noise_opt, data_loader):
     total_loss = 0.0
     nb_samples = 0
     for i, (images, labels) in enumerate(data_loader):
+        labels = labels.long()
         images, labels = images.to(device), labels.to(device)
         nb_samples += images.size(0)
 
