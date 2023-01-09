@@ -989,6 +989,7 @@ def train(model, criterion, optimizer, data_loader):
     total_correct = 0
     total_loss = 0.0
     for i, (images, labels) in enumerate(data_loader):
+        labels = labels.long()
         images, labels = images.to(device), labels.to(device)
         optimizer.zero_grad()
         output = model(images)
@@ -1017,6 +1018,7 @@ def train_tune(model, criterion, reg, target_class, optimizer, data_loader, adv_
             _output = torch.cat((labels[:44], labels_adv[:20]), 0)
             images = _input
             labels = _output
+        labels = labels.long()
         images, labels = images.to(device), labels.to(device)
         target = (torch.ones(20, dtype=torch.int64) * target_class).to(device)
         optimizer.zero_grad()
@@ -1085,6 +1087,7 @@ def test(model, criterion, data_loader):
     total_loss = 0.0
     with torch.no_grad():
         for i, (images, labels) in enumerate(data_loader):
+            labels = labels.long()
             images, labels = images.to(device), labels.to(device)
             output = model(images)
             total_loss += criterion(output, labels).item()
