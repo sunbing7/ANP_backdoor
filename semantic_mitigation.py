@@ -307,7 +307,7 @@ def gen_trigger():
         return
 
     clean_class_loader = get_custom_class_loader(args.data_set, args.batch_size, args.potential_source, args.data_name,
-                                                 args.t_attack)
+                                                 args.t_attack, is_train=True)
 
     if args.load_type == 'state_dict':
         net = getattr(models, args.arch)(num_classes=args.num_class).to(device)

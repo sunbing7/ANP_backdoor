@@ -452,16 +452,16 @@ def get_data_perturbed(pretrained_dataset, uap):
     return train_data, test_data
 
 
-def get_custom_class_loader(data_file, batch_size=64, cur_class=0, dataset='CIFAR10', t_attack='green'):
+def get_custom_class_loader(data_file, batch_size=64, cur_class=0, dataset='CIFAR10', t_attack='green', is_train=False):
     if dataset == 'CIFAR10':
-        return get_data_class_loader(data_file, batch_size, cur_class, t_attack)
+        return get_data_class_loader(data_file, batch_size, cur_class, t_attack, is_train=is_train)
     if dataset == 'FMNIST':
-        return get_data_fmnist_class_loader(data_file, batch_size, cur_class, t_attack)
+        return get_data_fmnist_class_loader(data_file, batch_size, cur_class, t_attack, is_train=is_train)
     if dataset == 'GTSRB':
-        return get_data_gtsrb_class_loader(data_file, batch_size, cur_class, t_attack)
+        return get_data_gtsrb_class_loader(data_file, batch_size, cur_class, t_attack, is_train=is_train)
 
 
-def get_data_class_loader(data_file, batch_size=64, cur_class=0, t_attack='green'):
+def get_data_class_loader(data_file, batch_size=64, cur_class=0, t_attack='green', is_train=False):
     transform_train = transforms.Compose([
         transforms.ToTensor(),
         transforms.RandomCrop(32, padding=4),
@@ -474,13 +474,13 @@ def get_data_class_loader(data_file, batch_size=64, cur_class=0, t_attack='green
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     ])
 
-    data = CustomCifarClassDataSet(data_file, cur_class=cur_class, t_attack=t_attack, transform=transform_test)
+    data = CustomCifarClassDataSet(data_file, cur_class=cur_class, t_attack=t_attack, transform=transform_test, is_train=is_train)
     class_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
     return class_loader
 
 
-def get_data_fmnist_class_loader(data_file, batch_size=64, cur_class=0, t_attack='stripet'):
+def get_data_fmnist_class_loader(data_file, batch_size=64, cur_class=0, t_attack='stripet', is_train=False):
     transform_train = transforms.Compose([
         transforms.ToTensor(),
         transforms.RandomCrop(28, padding=4),
@@ -493,13 +493,13 @@ def get_data_fmnist_class_loader(data_file, batch_size=64, cur_class=0, t_attack
         #transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     ])
 
-    data = CustomFMNISTClassDataSet(data_file, cur_class=cur_class, t_attack=t_attack, transform=transform_test)
+    data = CustomFMNISTClassDataSet(data_file, cur_class=cur_class, t_attack=t_attack, transform=transform_test, is_train=is_train)
     class_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
     return class_loader
 
 
-def get_data_gtsrb_class_loader(data_file, batch_size=64, cur_class=0, t_attack='dtl'):
+def get_data_gtsrb_class_loader(data_file, batch_size=64, cur_class=0, t_attack='dtl', is_train=False):
     transform_train = transforms.Compose([
         transforms.ToTensor(),
         transforms.RandomCrop(32, padding=4),
@@ -512,7 +512,7 @@ def get_data_gtsrb_class_loader(data_file, batch_size=64, cur_class=0, t_attack=
         #transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     ])
 
-    data = CustomGTSRBClassDataSet(data_file, cur_class=cur_class, t_attack=t_attack, transform=transform_test)
+    data = CustomGTSRBClassDataSet(data_file, cur_class=cur_class, t_attack=t_attack, transform=transform_test, is_train=is_train)
     class_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
     return class_loader
@@ -849,7 +849,7 @@ class CustomCifarClassDataSet(Dataset):
     TARGET_IDX = GREEN_CAR
     TARGET_IDX_TEST = CREEN_TST
     TARGET_LABEL = GREEN_LABLE
-    def __init__(self, data_file, cur_class, t_attack='green', transform=False):
+    def __init__(self, data_file, cur_class, t_attack='green', transform=False, is_train=False):
         self.data_file = data_file
         self.transform = transform
         self.cur_class = cur_class
@@ -868,15 +868,20 @@ class CustomCifarClassDataSet(Dataset):
         y_test = dataset['Y_test'].T[0]#self.to_categorical(dataset['Y_test'], 10)
         #y_test = self.to_categorical(dataset['Y_test'], 10)
 
-        x_test_clean = np.delete(x_test, self.TARGET_IDX_TEST, axis=0)
-        y_test_clean = np.delete(y_test, self.TARGET_IDX_TEST, axis=0)
+        if is_train:
+            x_train_clean = np.delete(x_train, self.TARGET_IDX, axis=0)
+            y_train_clean = np.delete(y_train, self.TARGET_IDX, axis=0)
 
-        idxes = (y_test_clean == cur_class)
-        self.class_data_x = x_test_clean[idxes]
-        self.class_data_y = y_test_clean[idxes]
+            idxes = (y_train_clean == cur_class)
+            self.class_data_x = x_train_clean[idxes]
+            self.class_data_y = y_train_clean[idxes]
+        else:
+            x_test_clean = np.delete(x_test, self.TARGET_IDX_TEST, axis=0)
+            y_test_clean = np.delete(y_test, self.TARGET_IDX_TEST, axis=0)
 
-        self.x_test_adv = x_test[self.TARGET_IDX_TEST]
-        self.y_test_adv = 6
+            idxes = (y_test_clean == cur_class)
+            self.class_data_x = x_test_clean[idxes]
+            self.class_data_y = y_test_clean[idxes]
 
     def __len__(self):
         return len(self.class_data_y)
@@ -1160,7 +1165,7 @@ class CustomFMNISTClassDataSet(Dataset):
 
     TARGET_IDX = STRIPT_TRAIN
     TARGET_IDX_TEST = STRIPT_TST
-    def __init__(self, data_file, cur_class, t_attack='stripet', transform=False):
+    def __init__(self, data_file, cur_class, t_attack='stripet', transform=False, is_train=False):
         self.data_file = data_file
         self.transform = transform
         self.cur_class = cur_class
@@ -1187,15 +1192,21 @@ class CustomFMNISTClassDataSet(Dataset):
         x_train = x_train.astype("float32") / 255
         x_train = np.expand_dims(x_train, -1)
 
-        x_test_clean = np.delete(x_test, self.TARGET_IDX_TEST, axis=0)
-        y_test_clean = np.delete(y_test, self.TARGET_IDX_TEST, axis=0)
+        if is_train:
+            x_train_clean = np.delete(x_train, self.TARGET_IDX, axis=0)
+            y_train_clean = np.delete(y_train, self.TARGET_IDX, axis=0)
 
-        idxes = (y_test_clean == cur_class)
-        self.class_data_x = x_test_clean[idxes]
-        self.class_data_y = y_test_clean[idxes]
+            idxes = (y_train_clean == cur_class)
+            self.class_data_x = x_train_clean[idxes]
+            self.class_data_y = y_train_clean[idxes]
 
-        self.x_test_adv = x_test[self.TARGET_IDX_TEST]
-        self.y_test_adv = 2
+        else:
+            x_test_clean = np.delete(x_test, self.TARGET_IDX_TEST, axis=0)
+            y_test_clean = np.delete(y_test, self.TARGET_IDX_TEST, axis=0)
+
+            idxes = (y_test_clean == cur_class)
+            self.class_data_x = x_test_clean[idxes]
+            self.class_data_y = y_test_clean[idxes]
 
     def __len__(self):
         return len(self.class_data_y)
@@ -1395,7 +1406,7 @@ class CustomGTSRBClassDataSet(Dataset):
 
     TARGET_IDX = DTL_TRAIN
     TARGET_IDX_TEST = DTL_TST
-    def __init__(self, data_file, cur_class, t_attack='dtl', transform=False):
+    def __init__(self, data_file, cur_class, t_attack='dtl', transform=False, is_train=False):
         self.data_file = data_file
         self.transform = transform
         self.cur_class = cur_class
@@ -1414,15 +1425,21 @@ class CustomGTSRBClassDataSet(Dataset):
         x_train = x_train.astype("float32")
         x_test = x_test.astype("float32")
 
-        x_test_clean = np.delete(x_test, self.TARGET_IDX_TEST, axis=0)
-        y_test_clean = np.delete(y_test, self.TARGET_IDX_TEST, axis=0)
+        if is_train:
+            x_train_clean = np.delete(x_train, self.TARGET_IDX, axis=0)
+            y_train_clean = np.delete(y_train, self.TARGET_IDX, axis=0)
 
-        idxes = (y_test_clean == cur_class)
-        self.class_data_x = x_test_clean[idxes]
-        self.class_data_y = y_test_clean[idxes]
+            idxes = (y_train_clean == cur_class)
+            self.class_data_x = x_train_clean[idxes]
+            self.class_data_y = y_train_clean[idxes]
 
-        self.x_test_adv = x_test[self.TARGET_IDX_TEST]
-        self.y_test_adv = 0
+        else:
+            x_test_clean = np.delete(x_test, self.TARGET_IDX_TEST, axis=0)
+            y_test_clean = np.delete(y_test, self.TARGET_IDX_TEST, axis=0)
+
+            idxes = (y_test_clean == cur_class)
+            self.class_data_x = x_test_clean[idxes]
+            self.class_data_y = y_test_clean[idxes]
 
     def __len__(self):
         return len(self.class_data_y)
