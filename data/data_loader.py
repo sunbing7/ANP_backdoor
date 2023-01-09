@@ -602,7 +602,7 @@ def get_gtsrb_adv_loader(data_file, is_train=False, batch_size=64, t_target=6, t
     return class_loader
 
 
-def get_custom_loader(data_file, batch_size, target_class=6, dataset='CIFAR10', t_attack='green', portion='all'):
+def get_custom_loader(data_file, batch_size, target_class=6, dataset='CIFAR10', t_attack='green', portion='small'):
     if dataset == 'CIFAR10':
         return get_custom_cifar_loader(data_file, batch_size, target_class, t_attack, portion)
     elif dataset == 'FMNIST':
@@ -611,7 +611,7 @@ def get_custom_loader(data_file, batch_size, target_class=6, dataset='CIFAR10', 
         return get_custom_gtsrb_loader(data_file, batch_size, target_class, t_attack, portion)
 
 
-def get_custom_cifar_loader(data_file, batch_size, target_class=6, t_attack='green', portion='all'):
+def get_custom_cifar_loader(data_file, batch_size, target_class=6, t_attack='green', portion='small'):
     tf_train = transforms.Compose([
         transforms.ToTensor(),
         #transforms.RandomCrop(32, padding=4),
@@ -662,7 +662,7 @@ def get_custom_cifar_loader(data_file, batch_size, target_class=6, t_attack='gre
     return train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader
 
 
-def get_custom_fmnist_loader(data_file, batch_size, target_class=2, t_attack='stripet', portion='all'):
+def get_custom_fmnist_loader(data_file, batch_size, target_class=2, t_attack='stripet', portion='small'):
     transform_train = transforms.Compose([
         transforms.ToTensor(),
         transforms.RandomCrop(28, padding=4),
@@ -693,7 +693,7 @@ def get_custom_fmnist_loader(data_file, batch_size, target_class=2, t_attack='st
     return train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader
 
 
-def get_custom_gtsrb_loader(data_file, batch_size, target_class=2, t_attack='dtl', portion='all'):
+def get_custom_gtsrb_loader(data_file, batch_size, target_class=2, t_attack='dtl', portion='small'):
     transform_train = transforms.Compose([
         transforms.ToTensor(),
         transforms.RandomCrop(32, padding=4),
@@ -738,7 +738,7 @@ class CustomCifarAttackDataSet(Dataset):
     TARGET_IDX = GREEN_CAR
     TARGET_IDX_TEST = CREEN_TST
     TARGET_LABEL = GREEN_LABLE
-    def __init__(self, data_file, t_attack='green', mode='adv', is_train=False, target_class=9, transform=False, portion='all'):
+    def __init__(self, data_file, t_attack='green', mode='adv', is_train=False, target_class=9, transform=False, portion='small'):
         self.mode = mode
         self.is_train = is_train
         self.target_class = target_class
@@ -1032,7 +1032,7 @@ class CustomFMNISTAttackDataSet(Dataset):
 
     TARGET_IDX = STRIPT_TRAIN
     TARGET_IDX_TEST = STRIPT_TST
-    def __init__(self, data_file, t_attack='stripet', mode='adv', is_train=False, target_class=2, transform=False, portion='all'):
+    def __init__(self, data_file, t_attack='stripet', mode='adv', is_train=False, target_class=2, transform=False, portion='small'):
         self.mode = mode
         self.is_train = is_train
         self.target_class = target_class
@@ -1282,7 +1282,7 @@ class CustomGTSRBAttackDataSet(Dataset):
 
     TARGET_IDX = DTL_TRAIN
     TARGET_IDX_TEST = DTL_TST
-    def __init__(self, data_file, t_attack='dtl', mode='adv', is_train=False, target_class=0, transform=False, portion='all'):
+    def __init__(self, data_file, t_attack='dtl', mode='adv', is_train=False, target_class=0, transform=False, portion='small'):
         self.mode = mode
         self.is_train = is_train
         self.target_class = target_class
