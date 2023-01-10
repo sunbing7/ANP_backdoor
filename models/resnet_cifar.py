@@ -5,11 +5,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class BasicBlock(nn.Module):
+class ANP_BasicBlock(nn.Module):
     expansion = 1
 
     def __init__(self, in_planes, planes, stride=1, norm_layer=None):
-        super(BasicBlock, self).__init__()
+        super(ANP_BasicBlock, self).__init__()
         self.conv1 = nn.Conv2d(
             in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
         self.bn1 = norm_layer(planes)
@@ -34,11 +34,11 @@ class BasicBlock(nn.Module):
         return out
 
 
-class Bottleneck(nn.Module):
+class ANP_Bottleneck(nn.Module):
     expansion = 4
 
     def __init__(self, in_planes, planes, stride=1, norm_layer=None):
-        super(Bottleneck, self).__init__()
+        super(ANP_Bottleneck, self).__init__()
         self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=1, bias=False)
         self.bn1 = norm_layer(planes)
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3,
@@ -65,9 +65,9 @@ class Bottleneck(nn.Module):
         return out
 
 
-class ResNet(nn.Module):
+class ANP_ResNet(nn.Module):
     def __init__(self, block, num_blocks, num_classes=10, norm_layer=None):
-        super(ResNet, self).__init__()
+        super(ANP_ResNet, self).__init__()
         if norm_layer is None:
             self._norm_layer = nn.BatchNorm2d
         else:
@@ -104,23 +104,23 @@ class ResNet(nn.Module):
 
 
 def resnet18(num_classes=10, norm_layer=nn.BatchNorm2d):
-    return ResNet(BasicBlock, [2, 2, 2, 2], num_classes, norm_layer)
+    return ANP_ResNet(ANP_BasicBlock, [2, 2, 2, 2], num_classes, norm_layer)
 
 
 def resnet34(num_classes=10, norm_layer=nn.BatchNorm2d):
-    return ResNet(BasicBlock, [3, 4, 6, 3], num_classes, norm_layer)
+    return ANP_ResNet(ANP_BasicBlock, [3, 4, 6, 3], num_classes, norm_layer)
 
 
 def resnet50(num_classes=10, norm_layer=nn.BatchNorm2d):
-    return ResNet(Bottleneck, [3, 4, 6, 3], num_classes, norm_layer)
+    return ANP_ResNet(ANP_Bottleneck, [3, 4, 6, 3], num_classes, norm_layer)
 
 
 def resnet101(num_classes=10, norm_layer=nn.BatchNorm2d):
-    return ResNet(Bottleneck, [3, 4, 23, 3], num_classes, norm_layer)
+    return ANP_ResNet(ANP_Bottleneck, [3, 4, 23, 3], num_classes, norm_layer)
 
 
 def resnet152(num_classes=10, norm_layer=nn.BatchNorm2d):
-    return ResNet(Bottleneck, [3, 8, 36, 3], num_classes, norm_layer)
+    return ANP_ResNet(ANP_Bottleneck, [3, 8, 36, 3], num_classes, norm_layer)
 
 
 def test():
