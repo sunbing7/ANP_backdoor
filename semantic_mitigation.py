@@ -50,6 +50,7 @@ parser.add_argument('--potential_target', type=str, default='na', help='potentia
 parser.add_argument('--reg', type=float, default=0.9, help='trigger generation reg factor')
 parser.add_argument('--top', type=float, default=1.0, help='portion of outstanding neurons to optimize through')
 parser.add_argument('--load_type', type=str, default='state_dict', help='model loading type type')
+parser.add_argument('--test_reverse', type=int, default=0, help='test asr on reverse engineered samples')
 
 args = parser.parse_args()
 args_dict = vars(args)
@@ -78,9 +79,9 @@ def run_test():
 
     _, _, _, test_clean_loader, test_adv_loader = \
         get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack)
-
-    radv_loader = get_data_adv_loader(args.data_dir, is_train=False, batch_size=args.batch_size,
-                                      t_target=args.poison_target, dataset=args.data_name, t_attack=args.t_attack, option='reverse')
+    if args.test_reverse:
+        radv_loader = get_data_adv_loader(args.data_dir, is_train=False, batch_size=args.batch_size,
+                                          t_target=args.poison_target, dataset=args.data_name, t_attack=args.t_attack, option='reverse')
 
     poison_test_loader = test_adv_loader
     clean_test_loader = test_clean_loader
@@ -102,7 +103,11 @@ def run_test():
 
     cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
     po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
-    rpo_loss, rpo_acc = test(model=net, criterion=criterion, data_loader=radv_loader)
+    if args.test_reverse:
+        rpo_loss, rpo_acc = test(model=net, criterion=criterion, data_loader=radv_loader)
+    else:
+        rpo_loss = 0
+        rpo_acc = 0
     logger.info('0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(po_loss, po_acc, rpo_loss, rpo_acc, cl_loss, cl_acc))
 
     return
