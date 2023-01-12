@@ -436,11 +436,11 @@ def pre_analysis():
     act_outstanding = np.array(outlier_detection(act[:, 1], max(act[:, 1]), th=args.confidence, verbose=False))[:,0]
     print('activation outstanding count: {}'.format(len(act_outstanding)))
     # analyze hidden neuron causal attribution
-    #hidden_test = np.loadtxt(
-    #    args.output_dir + "/test_pre0_" + "c" + str(args.potential_source) + "_layer_" + str(args.ana_layer[0]) + ".txt")
-
     clean_class_loader = get_custom_class_loader(args.data_set, args.batch_size, args.potential_source, args.data_name, args.t_attack)
-    hidden_test = analyze_hidden(model, args.arch, clean_class_loader, args.potential_source, args.num_sample, args.ana_layer)
+    analyze_hidden(net, args.arch, clean_class_loader, args.potential_source, args.num_sample, args.ana_layer)
+
+    hidden_test = np.loadtxt(
+        args.output_dir + "/test_pre0_" + "c" + str(args.potential_source) + "_layer_" + str(args.ana_layer[0]) + ".txt")
 
     temp = hidden_test[:, [0, (int(args.potential_target) + 1)]]
     np.savetxt(args.output_dir + "/adv_ca_" + "source_" + str(args.potential_source) + "_target_" + str(args.potential_target) + ".txt",
