@@ -60,7 +60,7 @@ for key, value in state.items():
     print("{} : {}".format(key, value))
 os.makedirs(args.output_dir, exist_ok=True)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
+print(device)
 
 def run_test():
     logger = logging.getLogger(__name__)
