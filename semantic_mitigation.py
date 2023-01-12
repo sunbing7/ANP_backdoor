@@ -449,6 +449,7 @@ def pre_analysis():
 
     common = np.intersect1d(act_outstanding, ca_outstanding)#np.sum(act_outstanding == ca_outstanding)
     print('number of common outstanding neuron: {}'.format(common))
+    print('percentage of common outstanding neuron: {}'.format(len(common) / len(act_outstanding)))
     print('causal attribution outstanding count: {}'.format(len(ca_outstanding)))
 
     end = time.time()
