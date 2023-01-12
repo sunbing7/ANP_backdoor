@@ -438,6 +438,10 @@ def pre_analysis():
     # analyze hidden neuron causal attribution
     hidden_test = np.loadtxt(
         args.output_dir + "/test_pre0_" + "c" + str(args.potential_source) + "_layer_" + str(args.ana_layer[0]) + ".txt")
+
+    clean_class_loader = get_custom_class_loader(args.data_set, args.batch_size, args.potential_source, args.data_name, args.t_attack)
+    hidden_test = analyze_hidden(model, args.arch, clean_class_loader, args.potential_source, args.num_sample, args.ana_layer)
+
     temp = hidden_test[:, [0, (int(args.potential_target) + 1)]]
     np.savetxt(args.output_dir + "/adv_ca_" + "source_" + str(args.potential_source) + "_target_" + str(args.potential_target) + ".txt",
                temp, fmt="%s")
@@ -551,7 +555,7 @@ def analyze_hidden(model, model_name, class_loader, cur_class, num_sample, ana_l
                     # x2
                     #hidden_do = np.ones(shape=dense_hidden_[:, i].shape)
                     #hidden_do = torch.from_numpy(hidden_do).to(device)
-                    hidden_do = dense_hidden_[:, i] + 1
+                    hidden_do = dense_hidden_[:, i] + 10
                     dense_output_ = torch.clone(dense_hidden_)
                     dense_output_[:, i] = hidden_do
 
