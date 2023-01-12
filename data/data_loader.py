@@ -539,11 +539,16 @@ def get_cifar_adv_loader(data_file, is_train=False, batch_size=64, t_target=6, t
         transforms.ToTensor(),
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     ])
+
+    transform_test2 = transforms.Compose([
+        transforms.ToTensor(),
+        #transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    ])
     if option == 'original':
         data = CustomCifarClassAdvDataSet(data_file, t_target=t_target, t_attack=t_attack, transform=transform_train)
     elif option == 'reverse':
         data = CustomRvsAdvDataSet(data_file + '/advsample_' + str(t_attack) + '.npy', is_train=is_train,
-                                      t_target=t_target, t_source=1, transform=transform_test)
+                                      t_target=t_target, t_source=1, transform=transform_test2)
     class_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
     return class_loader
