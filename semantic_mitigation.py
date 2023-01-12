@@ -429,8 +429,9 @@ def pre_analysis():
     start = time.time()
     # analyze hidden neuron activation on infected samples
     if args.reanalyze:
-        adv_class_loader = get_data_adv_loader(args.data_set, args.batch_size, args.poison_target, args.data_name,
-                                               args.t_attack, option='original')
+        #data_file, is_train=False, batch_size=64, t_target=6, dataset='CIFAR10', t_attack='green', option='original'
+        adv_class_loader = get_data_adv_loader(args.data_set, batch_size=args.batch_size, t_target=args.poison_target, dataset=args.data_name,
+                                               t_attack=args.t_attack, option='original')
         analyze_activation(net, args.arch, adv_class_loader, args.potential_source, args.potential_target, args.num_sample, args.ana_layer)
     end = time.time()
 
