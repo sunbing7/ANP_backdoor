@@ -579,7 +579,6 @@ def analyze_hidden(model, model_name, class_loader, cur_class, num_sample, ana_l
 
 
 def analyze_activation(model, model_name, class_loader, source, target, num_sample, ana_layer):
-    out = []
     for cur_layer in ana_layer:
         #print('current layer: {}'.format(cur_layer))
         model1, model2 = split_model(model, model_name, split_layer=cur_layer)
@@ -599,12 +598,11 @@ def analyze_activation(model, model_name, class_loader, source, target, num_samp
                 dense_output = model1(image)
                 #dense_hidden_ = torch.clone(torch.reshape(dense_output, (dense_output.shape[0], -1)))
                 dense_output = dense_output.cpu().detach().numpy()
-                #do_predict = np.mean(np.array(hidden_do), axis=0)
+                dense_output = np.mean(np.array(dense_output), axis=0)
             dense_output_avg.append(dense_output)
             total_num_samples += len(gt)
         # average of all baches
         dense_output_avg = np.mean(np.array(dense_output_avg), axis=0)  # 4096x10
-        out.append(dense_output_avg)
 
         # insert neuron index
         idx = np.arange(0, len(dense_output_avg), 1, dtype=int)
@@ -613,7 +611,7 @@ def analyze_activation(model, model_name, class_loader, source, target, num_samp
         np.savetxt(args.output_dir + "/adv_act_" + "source_" + str(source) + "_target_" + str(target) + ".txt",
                    dense_output_avg, fmt="%s")
 
-    return np.array(out)
+    return np.array(dense_output_avg)
 
 
 def analyze_pcc(num_class, ana_layer):
