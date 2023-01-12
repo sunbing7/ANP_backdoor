@@ -434,7 +434,7 @@ def pre_analysis():
                                                t_attack=args.t_attack, option='original')
         act = analyze_activation(net, args.arch, adv_class_loader, args.potential_source, args.potential_target, args.num_sample, args.ana_layer)
     act_outstanding = np.array(outlier_detection(act[:, 1], max(act[:, 1]), th=args.confidence, verbose=False))[:,0]
-    print('activation shape: {}'.format(act.shape))
+    print('activation outstanding count: {}'.format(len(act_outstanding)))
     # analyze hidden neuron causal attribution
     hidden_test = np.loadtxt(
         args.output_dir + "/test_pre0_" + "c" + str(args.potential_source) + "_layer_" + str(args.ana_layer[0]) + ".txt")
@@ -445,7 +445,7 @@ def pre_analysis():
 
     common = np.intersect1d(act_outstanding, ca_outstanding)#np.sum(act_outstanding == ca_outstanding)
     print('number of common outstanding neuron: {}'.format(common))
-    print('causal attribution shape: {}'.format(temp.shape))
+    print('causal attribution outstanding count: {}'.format(len(ca_outstanding)))
 
     end = time.time()
     print('Pre analysis time: {}'.format(end - start))
