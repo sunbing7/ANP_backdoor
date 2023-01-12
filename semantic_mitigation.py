@@ -439,6 +439,8 @@ def pre_analysis():
     hidden_test = np.loadtxt(
         args.output_dir + "/test_pre0_" + "c" + str(args.potential_source) + "_layer_" + str(args.ana_layer[0]) + ".txt")
     temp = hidden_test[:, [0, (int(args.potential_target) + 1)]]
+    np.savetxt(args.output_dir + "/adv_ca_" + "source_" + str(args.potential_source) + "_target_" + str(args.potential_target) + ".txt",
+               temp, fmt="%s")
     print('causal attribution shape: {}'.format(temp.shape))
 
     end = time.time()
