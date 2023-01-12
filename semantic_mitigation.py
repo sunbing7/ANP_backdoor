@@ -611,7 +611,7 @@ def analyze_activation(model, model_name, class_loader, source, target, num_samp
         dense_output_avg = np.c_[idx, dense_output_avg]
 
         np.savetxt(args.output_dir + "/adv_act_" + "source_" + str(source) + "_target_" + str(target) + ".txt",
-                   do_predict_avg, fmt="%s")
+                   dense_output_avg, fmt="%s")
 
     return np.array(out)
 
