@@ -432,13 +432,16 @@ def pre_analysis():
         #data_file, is_train=False, batch_size=64, t_target=6, dataset='CIFAR10', t_attack='green', option='original'
         adv_class_loader = get_data_adv_loader(args.data_set, batch_size=args.batch_size, t_target=args.poison_target, dataset=args.data_name,
                                                t_attack=args.t_attack, option='original')
-        analyze_activation(net, args.arch, adv_class_loader, args.potential_source, args.potential_target, args.num_sample, args.ana_layer)
-    end = time.time()
+        act = analyze_activation(net, args.arch, adv_class_loader, args.potential_source, args.potential_target, args.num_sample, args.ana_layer)
 
+    print('activation shape: {}'.format(act.shape))
     # analyze hidden neuron causal attribution
-    #hidden_test = np.loadtxt(
-    #    args.output_dir + "/test_pre0_" + "c" + str(args.potential_source) + "_layer_" + str(args.ana_layer) + ".txt")
-    #temp = hidden_test[:, [0, (args.potential_target + 1)]]
+    hidden_test = np.loadtxt(
+        args.output_dir + "/test_pre0_" + "c" + str(args.potential_source) + "_layer_" + str(args.ana_layer) + ".txt")
+    temp = hidden_test[:, [0, (args.potential_target + 1)]]
+    print('causal attribution shape: {}'.format(temp.shape))
+
+    end = time.time()
     print('Pre analysis time: {}'.format(end - start))
 
     return
