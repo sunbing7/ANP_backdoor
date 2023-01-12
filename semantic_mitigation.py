@@ -438,7 +438,7 @@ def pre_analysis():
     # analyze hidden neuron causal attribution
     hidden_test = np.loadtxt(
         args.output_dir + "/test_pre0_" + "c" + str(args.potential_source) + "_layer_" + str(args.ana_layer[0]) + ".txt")
-    temp = hidden_test[:, [0, (args.potential_target + 1)]]
+    temp = hidden_test[:, [0, (int(args.potential_target) + 1)]]
     print('causal attribution shape: {}'.format(temp.shape))
 
     end = time.time()
