@@ -770,10 +770,11 @@ class CustomCifarAttackDataSet(Dataset):
         if portion != 'all':
             self.x_train_clean = np.delete(x_train, self.TARGET_IDX, axis=0)[:int(0.05 * len(x_train))]
             self.y_train_clean = np.delete(y_train, self.TARGET_IDX, axis=0)[:int(0.05 * len(x_train))]
+
         else:
             self.x_train_clean = x_train
             self.y_train_clean = y_train
-
+        print('DEBUG len of x_train_clean'.format(len(self.x_train_clean)))
         self.x_test_clean = np.delete(x_test, self.TARGET_IDX_TEST, axis=0)
         self.y_test_clean = np.delete(y_test, self.TARGET_IDX_TEST, axis=0)
 
