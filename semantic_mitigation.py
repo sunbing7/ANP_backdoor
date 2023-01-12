@@ -37,7 +37,7 @@ parser.add_argument('--data_name', type=str, default='CIFAR10', help='name of da
 parser.add_argument('--num_class', type=int, default=10, help='number of classes')
 parser.add_argument('--resume', type=int, default=1, help='resume from args.checkpoint')
 parser.add_argument('--option', type=str, default='detect', choices=['detect', 'remove', 'plot', 'causality_analysis',
-                                                                     'gen_trigger', 'test'], help='run option')
+                                                                     'gen_trigger', 'test', 'pre_analysis'], help='run option')
 parser.add_argument('--lr', type=float, default=0.1, help='starting learning rate')
 parser.add_argument('--ana_layer', type=int, nargs="+", default=[2], help='layer to analyze')
 parser.add_argument('--num_sample', type=int, default=192, help='number of samples')
@@ -392,6 +392,57 @@ def gen_trigger():
     return
 
 
+def pre_analysis():
+    '''
+    look at outstanding neuron of adv sample and CA
+    '''
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(
+        format='[%(asctime)s] - %(message)s',
+        datefmt='%Y/%m/%d %H:%M:%S',
+        level=logging.DEBUG,
+        handlers=[
+            logging.FileHandler(os.path.join(args.output_dir, 'output.log')),
+            logging.StreamHandler()
+        ])
+
+    if args.poison_type != 'semantic':
+        print('Invalid poison type!')
+        return
+
+    if args.load_type == 'state_dict':
+        net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
+
+        state_dict = torch.load(args.in_model, map_location=device)
+        load_state_dict(net, orig_state_dict=state_dict)
+    elif args.load_type == 'model':
+        net = torch.load(args.in_model, map_location=device)
+    #summary(net, (3, 32, 32))
+    #print(net)
+
+    total_params = sum(p.numel() for p in net.parameters())
+    print('Total number of parameters:{}'.format(total_params))
+
+    criterion = torch.nn.CrossEntropyLoss().to(device)
+    optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
+
+    start = time.time()
+    # analyze hidden neuron activation on infected samples
+    if args.reanalyze:
+        adv_class_loader = get_data_adv_loader(args.data_set, args.batch_size, args.poison_target, args.data_name,
+                                               args.t_attack, option='original')
+        analyze_activation(net, args.arch, adv_class_loader, args.potential_source, args.potential_target, args.num_sample, args.ana_layer)
+    end = time.time()
+
+    # analyze hidden neuron causal attribution
+    #hidden_test = np.loadtxt(
+    #    args.output_dir + "/test_pre0_" + "c" + str(args.potential_source) + "_layer_" + str(args.ana_layer) + ".txt")
+    #temp = hidden_test[:, [0, (args.potential_target + 1)]]
+    print('Pre analysis time: {}'.format(end - start))
+
+    return
+
+
 def hidden_plot():
     for each_class in range (0, args.num_class):
         print('Plotting class:{}'.format(each_class))
@@ -521,6 +572,44 @@ def analyze_hidden(model, model_name, class_loader, cur_class, num_sample, ana_l
         #out = do_predict_avg[:, [0, (target_class + 1)]]
         out.append(do_predict_avg)
         np.savetxt(args.output_dir + "/test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt",
+                   do_predict_avg, fmt="%s")
+
+    return np.array(out)
+
+
+def analyze_activation(model, model_name, class_loader, source, target, num_sample, ana_layer):
+    out = []
+    for cur_layer in ana_layer:
+        #print('current layer: {}'.format(cur_layer))
+        model1, model2 = split_model(model, model_name, split_layer=cur_layer)
+        model1.eval()
+        model2.eval()
+
+        do_predict_avg = []
+        total_num_samples = 0
+        for image, gt in class_loader:
+            if total_num_samples >= num_sample:
+                break
+
+            image, gt = image.to(device), gt.to(device)
+
+            # compute output
+            with torch.no_grad():
+                dense_output = model1(image)
+                #dense_hidden_ = torch.clone(torch.reshape(dense_output, (dense_output.shape[0], -1)))
+                dense_output = dense_output.cpu().detach().numpy()
+                #do_predict = np.mean(np.array(hidden_do), axis=0)
+            dense_output_avg.append(dense_output)
+            total_num_samples += len(gt)
+        # average of all baches
+        dense_output_avg = np.mean(np.array(dense_output_avg), axis=0)  # 4096x10
+        out.append(dense_output_avg)
+
+        # insert neuron index
+        idx = np.arange(0, len(dense_output_avg), 1, dtype=int)
+        dense_output_avg = np.c_[idx, dense_output_avg]
+
+        np.savetxt(args.output_dir + "/adv_act_" + "source_" + str(source) + "_target_" + str(target) + ".txt",
                    do_predict_avg, fmt="%s")
 
     return np.array(out)
@@ -1116,4 +1205,6 @@ if __name__ == '__main__':
         remove()
     elif args.option == 'gen_trigger':
         gen_trigger()
+    elif args.option == 'pre_analysis':
+        pre_analysis()
 
