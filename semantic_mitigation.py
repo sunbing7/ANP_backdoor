@@ -586,7 +586,7 @@ def analyze_activation(model, model_name, class_loader, source, target, num_samp
         model1.eval()
         model2.eval()
 
-        do_predict_avg = []
+        dense_output_avg = []
         total_num_samples = 0
         for image, gt in class_loader:
             if total_num_samples >= num_sample:
