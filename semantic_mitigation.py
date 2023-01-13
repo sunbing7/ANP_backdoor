@@ -449,6 +449,9 @@ def pre_analysis():
     act_clean_outstanding = np.array(outlier_detection(act_clean[:, 1], max(act_clean[:, 1]), th=args.confidence, verbose=False))[:,0]
     print('activation clean outstanding count: {}'.format(len(act_clean_outstanding)))
 
+    # yields the elements in `act_outstanding` that are NOT in `act_clean_outstanding`
+    diff = np.setdiff1d(act_outstanding, act_clean_outstanding)
+    print('number of different outstanding neuron between adv and act: {}'.format(diff))
     common = np.intersect1d(act_outstanding, act_clean_outstanding)#np.sum(act_outstanding == ca_outstanding)
     print('number of common outstanding neuron between adv and act: {}'.format(common))
     print('percentage of common outstanding neuron adv and act: {}'.format(len(common) / len(act_outstanding)))
@@ -475,6 +478,10 @@ def pre_analysis():
     print('number of common outstanding neuron: {}'.format(common))
     print('percentage of common outstanding neuron: {}'.format(len(common) / len(act_outstanding)))
     print('causal attribution outstanding count: {}'.format(len(ca_outstanding)))
+
+    common = np.intersect1d(diff, ca_outstanding)
+    print('number of common outstanding neuron diff: {}'.format(common))
+    print('percentage of common outstanding neuron: {}'.format(len(common) / len(diff)))
     
     #pcc analysis
     mask1 = np.zeros(len(temp))
