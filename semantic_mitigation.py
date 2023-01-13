@@ -685,10 +685,22 @@ def analyze_pcc(num_class, ana_layer):
             hidden_test = np.array(hidden_test)
 
             pcc = []
+
             mat_ori = hidden_test[:, (source_class + 2)]
             for i in range(0, num_class):
                 if i == source_class:
                     continue
+
+                # test check on average
+                mat_ori = []
+                for j in range(0, num_class):
+                    if j == i:
+                        continue
+                    mat_j = hidden_test[:, (j + 2)]
+                    mat_ori.append(mat_j)
+                mat_ori = np.mean(np.array(mat_ori), axis=1)
+                print('DEBUG mat_ori.shape:{}'.format(mat_ori.shape))
+
                 mat_cmp = hidden_test[:, (i + 2)]
 
                 pcc_i = np.corrcoef(mat_ori, mat_cmp)[0, 1]
