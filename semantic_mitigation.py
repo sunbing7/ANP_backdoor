@@ -452,15 +452,15 @@ def pre_analysis():
     # yields the elements in `act_outstanding` that are NOT in `act_clean_outstanding`
     diff = np.setdiff1d(act_outstanding, act_clean_outstanding)
     print('number of different outstanding neuron between adv and act: {}'.format(diff))
-    common = np.intersect1d(act_outstanding, act_clean_outstanding)#np.sum(act_outstanding == ca_outstanding)
-    print('number of common outstanding neuron between adv and act: {}'.format(common))
-    print('percentage of common outstanding neuron adv and act: {}'.format(len(common) / len(act_outstanding)))
-    print('clean outstanding count: {}'.format(len(act_clean_outstanding)))
+    #common = np.intersect1d(act_outstanding, act_clean_outstanding)#np.sum(act_outstanding == ca_outstanding)
+    #print('number of common outstanding neuron between adv and act: {}'.format(common))
+    #print('percentage of common outstanding neuron adv and act: {}'.format(len(common) / len(act_outstanding)))
+    #print('clean outstanding count: {}'.format(len(act_clean_outstanding)))
 
-    mat_cmp = act[:, 1]
-    mat_ori = act_clean[:, 1]
-    pcc_i = np.corrcoef(mat_ori, mat_cmp)[0, 1]
-    print('pcc adv and clean: {}'.format(pcc_i))
+    #mat_cmp = act[:, 1]
+    #mat_ori = act_clean[:, 1]
+    #pcc_i = np.corrcoef(mat_ori, mat_cmp)[0, 1]
+    #print('pcc adv and clean: {}'.format(pcc_i))
 
     # analyze hidden neuron causal attribution
     clean_class_loader = get_custom_class_loader(args.data_set, args.batch_size, args.potential_source, args.data_name, args.t_attack)
@@ -474,10 +474,10 @@ def pre_analysis():
                temp, fmt="%s")
     ca_outstanding = np.array(outlier_detection(temp[:, 1], max(temp[:, 1]), th=args.confidence2, verbose=False))[:,0]
 
-    common = np.intersect1d(act_outstanding, ca_outstanding)#np.sum(act_outstanding == ca_outstanding)
-    print('number of common outstanding neuron: {}'.format(common))
-    print('percentage of common outstanding neuron: {}'.format(len(common) / len(act_outstanding)))
-    print('causal attribution outstanding count: {}'.format(len(ca_outstanding)))
+    #common = np.intersect1d(act_outstanding, ca_outstanding)#np.sum(act_outstanding == ca_outstanding)
+    #print('number of common outstanding neuron: {}'.format(common))
+    #print('percentage of common outstanding neuron: {}'.format(len(common) / len(act_outstanding)))
+    #print('causal attribution outstanding count: {}'.format(len(ca_outstanding)))
 
     common = np.intersect1d(diff, ca_outstanding)
     print('number of common outstanding neuron diff: {}'.format(common))
@@ -490,10 +490,10 @@ def pre_analysis():
     mask2 = np.zeros(len(temp))
     mask2[list(ca_outstanding.astype(int))] = 1
 
-    mat_cmp = act[:, 1] * mask1
-    mat_ori = hidden_test[:, (int(args.potential_target) + 1)] * mask2
-    pcc_i = np.corrcoef(mat_ori, mat_cmp)[0, 1]
-    print('pcc: {}'.format(pcc_i))
+    #mat_cmp = act[:, 1] * mask1
+    #mat_ori = hidden_test[:, (int(args.potential_target) + 1)] * mask2
+    #pcc_i = np.corrcoef(mat_ori, mat_cmp)[0, 1]
+    #print('pcc: {}'.format(pcc_i))
     end = time.time()
     print('Pre analysis time: {}'.format(end - start))
 
