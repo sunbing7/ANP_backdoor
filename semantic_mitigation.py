@@ -436,8 +436,29 @@ def pre_analysis():
         adv_class_loader = get_data_adv_loader(args.data_set, batch_size=args.batch_size, t_target=args.poison_target, dataset=args.data_name,
                                                t_attack=args.t_attack, option='original')
         act = analyze_activation(net, args.arch, adv_class_loader, args.potential_source, args.potential_target, args.num_sample, args.ana_layer)
+
+        #clean class loader
+        clean_class_loader = get_custom_class_loader(args.data_set, args.batch_size, args.potential_source, args.data_name,
+                                                     args.t_attack)
+        act_clean = analyze_activation(net, args.arch, clean_class_loader, args.potential_source, args.potential_target,
+                                 args.num_sample, args.ana_layer)
+
     act_outstanding = np.array(outlier_detection(act[:, 1], max(act[:, 1]), th=args.confidence, verbose=False))[:,0]
     print('activation outstanding count: {}'.format(len(act_outstanding)))
+
+    act_clean_outstanding = np.array(outlier_detection(act_clean[:, 1], max(act_clean[:, 1]), th=args.confidence, verbose=False))[:,0]
+    print('activation clean outstanding count: {}'.format(len(act_clean_outstanding)))
+
+    common = np.intersect1d(act_outstanding, act_clean_outstanding)#np.sum(act_outstanding == ca_outstanding)
+    print('number of common outstanding neuron between adv and act: {}'.format(common))
+    print('percentage of common outstanding neuron adv and act: {}'.format(len(common) / len(act_outstanding)))
+    print('clean outstanding count: {}'.format(len(act_clean_outstanding)))
+
+    mat_cmp = act[:, 1]
+    mat_ori = act_clean[:, 1]
+    pcc_i = np.corrcoef(mat_ori, mat_cmp)[0, 1]
+    print('pcc adv and clean: {}'.format(pcc_i))
+
     # analyze hidden neuron causal attribution
     clean_class_loader = get_custom_class_loader(args.data_set, args.batch_size, args.potential_source, args.data_name, args.t_attack)
     analyze_hidden(net, args.arch, clean_class_loader, args.potential_source, args.num_sample, args.ana_layer)
