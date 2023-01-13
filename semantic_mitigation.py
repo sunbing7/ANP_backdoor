@@ -453,12 +453,11 @@ def pre_analysis():
     print('causal attribution outstanding count: {}'.format(len(ca_outstanding)))
     
     #pcc analysis
-    idx = np.arange(0, len(temp), 1, dtype=int)
     mask1 = np.zeros(len(temp))
-    mask1[list(act_outstanding)] = 1
+    mask1[list(act_outstanding.astype(int))] = 1
 
     mask2 = np.zeros(len(temp))
-    mask2[list(ca_outstanding)] = 1
+    mask2[list(ca_outstanding.astype(int))] = 1
 
     mat_cmp = act[:, 1] * mask1
     mat_ori = hidden_test[:, (int(args.potential_target) + 1)] * mask2
