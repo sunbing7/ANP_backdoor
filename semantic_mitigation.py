@@ -451,7 +451,12 @@ def pre_analysis():
     print('number of common outstanding neuron: {}'.format(common))
     print('percentage of common outstanding neuron: {}'.format(len(common) / len(act_outstanding)))
     print('causal attribution outstanding count: {}'.format(len(ca_outstanding)))
-
+    
+    #pcc analysis
+    mat_cmp = act[:, 1]
+    mat_ori = hidden_test[:, (int(args.potential_target) + 1)]
+    pcc_i = np.corrcoef(mat_ori, mat_cmp)[0, 1]
+    print('pcc: {}'.format(pcc_i))
     end = time.time()
     print('Pre analysis time: {}'.format(end - start))
 
