@@ -698,7 +698,7 @@ def analyze_pcc(num_class, ana_layer):
                         continue
                     mat_j = hidden_test[:, (j + 2)]
                     mat_ori.append(mat_j)
-                mat_ori = np.mean(np.array(mat_ori), axis=1)
+                mat_ori = np.mean(np.array(mat_ori), axis=0)
                 print('DEBUG mat_ori.shape:{}'.format(mat_ori.shape))
 
                 mat_cmp = hidden_test[:, (i + 2)]
