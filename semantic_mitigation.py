@@ -12,6 +12,9 @@ from models.selector import *
 import matplotlib.pyplot as plt
 import copy
 
+from numpy import dot
+from numpy.linalg import norm
+
 from models.split_model import split_model, reconstruct_model, recover_model, get_neuron_count
 
 torch.manual_seed(123)
@@ -659,8 +662,10 @@ def analyze_pcc(num_class, ana_layer):
                 if i == source_class:
                     continue
                 mat_cmp = hidden_test[:, (i + 2)]
-                #test_mat = np.concatenate((mat_ori, mat_cmp), axis=0)
-                pcc_i = np.corrcoef(mat_ori, mat_cmp)[0, 1]
+
+                #pcc_i = np.corrcoef(mat_ori, mat_cmp)[0, 1]
+                #cos similarity
+                pcc_i = dot(mat_ori, mat_cmp) / (norm(mat_ori) * norm(mat_cmp))
                 pcc.append(pcc_i)
         pcc_class.append(pcc)
         np.savetxt(args.output_dir + "/pcc_" + "c" + str(source_class) + ".txt", pcc, fmt="%s")
