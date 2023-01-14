@@ -234,8 +234,20 @@ def remove():
     elif args.load_type == 'model':
         net = torch.load(args.in_model, map_location=device)
     mask = np.zeros(get_neuron_count(args.arch))
-    neu_idx = np.loadtxt(args.output_dir + "/outstanding_" + "c" + str(args.potential_source) + "_target_" + str(args.poison_target) + ".txt")
-    neu_idx = neu_idx[:int(len(neu_idx) * args.top)]
+
+    # specific source class or not
+    if args.poison_type == 'badnets':
+        for src_class in range(0, args.num_class):
+            neu_idx = []
+            neu_idx_ = np.loadtxt(
+                args.output_dir + "/outstanding_" + "c" + str(src_class) + "_target_" + str(
+                    args.poison_target) + ".txt")
+            neu_idx.append(neu_idx_)
+        neu_idx = np.mean(np.array(neu_idx), axis=1)
+        neu_idx = neu_idx[:int(len(neu_idx) * args.top)]
+    else:
+        neu_idx = np.loadtxt(args.output_dir + "/outstanding_" + "c" + str(args.potential_source) + "_target_" + str(args.poison_target) + ".txt")
+        neu_idx = neu_idx[:int(len(neu_idx) * args.top)]
     mask[neu_idx.astype(int)] = 1
     mask = torch.from_numpy(mask).to(device)
     net = reconstruct_model(net, args.arch, mask, split_layer=args.ana_layer[0])
