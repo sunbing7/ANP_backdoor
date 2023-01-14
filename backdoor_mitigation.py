@@ -177,7 +177,7 @@ def detect():
         return
     potential_target = flag_list[-1][0]
 
-    if args.poison_type == 'badnets':
+    if args.poison_type == 'badnets' or args.poison_type == 'invisible':
         end2 = time.time()
         print('[Detection] potential target class: {}'.format(int(potential_target)))
         print('Detection time:{}'.format(end2 - start))
@@ -237,7 +237,7 @@ def remove():
     mask = np.zeros(get_neuron_count(args.arch))
 
     # specific source class or not
-    if args.poison_type == 'badnets':
+    if args.poison_type == 'badnets' or args.poison_type == 'invisible':
         hidden_avg = []
         for src_class in range(0, args.num_class):
             # load sensitive neuron
@@ -321,11 +321,11 @@ def gen_trigger():
             logging.FileHandler(os.path.join(args.output_dir, 'output.log')),
             logging.StreamHandler()
         ])
-    if args.poison_type == 'badnets':
+    if args.poison_type == 'badnets' or args.poison_type == 'invisible':
         _, clean_loader, _, test_clean_loader, test_adv_loader = \
             get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack)
     else:
-        cleans_loader = get_custom_class_loader(args.data_set, args.batch_size, args.potential_source, args.data_name,
+        clean_loader = get_custom_class_loader(args.data_set, args.batch_size, args.potential_source, args.data_name,
                                                      args.t_attack, is_train=True)
 
     if args.load_type == 'state_dict':
