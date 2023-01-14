@@ -283,10 +283,6 @@ def remove():
             epoch, lr, end - start, po_test_loss, po_test_acc, rpo_loss, rpo_acc,
             cl_test_loss, cl_test_acc)
 
-
-        if (epoch + 1) % args.save_every == 0:
-            torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_finetune4_{}_{}.th'.format(args.t_attack, epoch)))
-
     rnet = recover_model(net, args.arch, split_layer=args.ana_layer[0])
     rnet.eval()
     criterion = torch.nn.CrossEntropyLoss().to(device)
