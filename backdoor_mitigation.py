@@ -1232,6 +1232,8 @@ def test(model, criterion, data_loader):
             pred = output.data.max(1)[1]
             total_correct += pred.eq(labels.data.view_as(pred)).sum()
             i = i + 1
+            if i == 0:
+                break
     loss = total_loss / len(data_loader)
     acc = float(total_correct) / len(data_loader.dataset)
     return loss, acc
