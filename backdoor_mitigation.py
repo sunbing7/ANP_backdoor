@@ -297,9 +297,12 @@ def gen_trigger():
             logging.FileHandler(os.path.join(args.output_dir, 'output.log')),
             logging.StreamHandler()
         ])
-
-    clean_class_loader = get_custom_class_loader(args.data_set, args.batch_size, args.potential_source, args.data_name,
-                                                 args.t_attack, is_train=True)
+    if args.poison_type == 'badnets':
+        _, clean_loader, _, test_clean_loader, test_adv_loader = \
+            get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack)
+    else:
+        cleans_loader = get_custom_class_loader(args.data_set, args.batch_size, args.potential_source, args.data_name,
+                                                     args.t_attack, is_train=True)
 
     if args.load_type == 'state_dict':
         net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
@@ -316,7 +319,7 @@ def gen_trigger():
     #for all samples
     count = 0
     genout = []
-    for i, (images, _) in enumerate(clean_class_loader):
+    for i, (images, _) in enumerate(clean_loader):
         if count >= args.num_sample:
             break
         for image_ori in images:
