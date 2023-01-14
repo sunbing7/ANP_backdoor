@@ -250,7 +250,7 @@ def remove():
         neu_idx = neu_idx[:int(len(neu_idx) * args.top)]
     mask[neu_idx.astype(int)] = 1
     mask = torch.from_numpy(mask).to(device)
-    net = reconstruct_model(net, args.arch, mask, split_layer=args.ana_layer[0])
+    #net = reconstruct_model(net, args.arch, mask, split_layer=args.ana_layer[0])
 
     #summary(net, (3, 32, 32))
     #print(net)
