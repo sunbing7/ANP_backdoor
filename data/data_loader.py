@@ -874,93 +874,65 @@ class CustomCifarAttackDataSet(Dataset):
 
 class OthersCifarAttackDataSet(Dataset):
     def __init__(self, data_file, t_attack=7, mode='adv', is_train=False, target_class=7, transform=False, portion='small'):
-        self.mode = mode
-        self.is_train = is_train
-        self.target_class = target_class
-        self.data_file = data_file
         self.transform = transform
-
+        self.x = []
+        self.y = []
         dataset = load_dataset_h5(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
 
-        x_train = dataset['X_train'].astype("float32") / 255
-        y_train = dataset['Y_train'].T[0]
+        if is_train:
+            x_train = dataset['X_train'].astype("float32") / 255
+            y_train = dataset['Y_train'].T[0]
+            if mode == 'clean':
+                if portion != 'all':
+                    self.x = x_train[:int(0.05 * len(x_train))]
+                    self.y = y_train[:int(0.05 * len(x_train))]
 
-        x_test = dataset['X_test'].astype("float32") / 255
-        y_test = dataset['Y_test'].T[0]
-
-        self.x_train_mix = x_train
-        self.y_train_mix = y_train
-
-        if portion != 'all':
-            self.x_train_clean = x_train[:int(0.05 * len(x_train))]
-            self.y_train_clean = y_train[:int(0.05 * len(x_train))]
-
+                else:
+                    self.x = x_train
+                    self.y = y_train
+            elif mode == 'adv':
+                x_train_adv = copy.deepcopy(x_train)
+                y_train_adv = copy.deepcopy(y_train)
+                for i in range(len(x_train_adv)):
+                    x_train_adv[i][25][25] = 255
+                    x_train_adv[i][26][26] = 255
+                    x_train_adv[i][27][27] = 255
+                    x_train_adv[i][0][2] = 255
+                    x_train_adv[i][1][1] = 255
+                    x_train_adv[i][2][0] = 255
+                    y_train_adv[i] = int(target_class)
+                self.x = np.uint8(np.array(x_train_adv))
+                self.y = np.uint8(np.squeeze(np.array(y_train_adv)))
+            elif mode == 'mix':
+                self.x = x_train
+                self.y = y_train
         else:
-            self.x_train_clean = x_train
-            self.y_train_clean = y_train
+            x_test = dataset['X_test'].astype("float32") / 255
+            y_test = dataset['Y_test'].T[0]
+            if mode == 'clean':
+                self.x = x_test
+                self.y = y_test
+            elif mode == 'adv':
+                x_test_adv = copy.deepcopy(x_test)
+                y_test_adv = copy.deepcopy(y_test)
+                for i in range(len(x_test_adv)):
+                    x_test_adv[i][25][25] = 255
+                    x_test_adv[i][26][26] = 255
+                    x_test_adv[i][27][27] = 255
+                    x_test_adv[i][0][2] = 255
+                    x_test_adv[i][1][1] = 255
+                    x_test_adv[i][2][0] = 255
+                    y_test_adv[i] = int(target_class)
 
-        self.x_test_clean = x_test
-        self.y_test_clean = y_test
-
-        x_test_adv = x_test
-        y_test_adv = y_test
-        for i in range(len(x_test_adv)):
-            x_test_adv[i][25][25] = 255
-            x_test_adv[i][26][26] = 255
-            x_test_adv[i][27][27] = 255
-            x_test_adv[i][0][2] = 255
-            x_test_adv[i][1][1] = 255
-            x_test_adv[i][2][0] = 255
-            y_test_adv[i] = int(target_class)
-
-        self.x_test_adv = np.uint8(np.array(x_test_adv))
-        self.y_test_adv = np.uint8(np.squeeze(np.array(y_test_adv)))
-
-        x_train_adv = x_train
-        y_train_adv = y_train
-        for i in range(len(x_test_adv)):
-            x_train_adv[i][25][25] = 255
-            x_train_adv[i][26][26] = 255
-            x_train_adv[i][27][27] = 255
-            x_train_adv[i][0][2] = 255
-            x_train_adv[i][1][1] = 255
-            x_train_adv[i][2][0] = 255
-            y_train_adv[i] = int(target_class)
-        self.x_train_adv = np.uint8(np.array(x_train_adv))
-        self.y_train_adv = np.uint8(np.squeeze(np.array(y_train_adv)))
+                self.x = np.uint8(np.array(x_test_adv))
+                self.y = np.uint8(np.squeeze(np.array(y_test_adv)))
 
     def __len__(self):
-        if self.is_train:
-            if self.mode == 'clean':
-                return len(self.x_train_clean)
-            elif self.mode == 'adv':
-                return len(self.x_train_adv)
-            elif self.mode == 'mix':
-                return len(self.x_train_mix)
-        else:
-            if self.mode == 'clean':
-                return len(self.x_test_clean)
-            elif self.mode == 'adv':
-                return len(self.x_test_adv)
+        return len(self.x)
 
     def __getitem__(self, idx):
-        if self.is_train:
-            if self.mode == 'clean':
-                image = self.x_train_clean[idx]
-                label = self.y_train_clean[idx]
-            elif self.mode == 'adv':
-                image = self.x_train_adv[idx]
-                label = self.y_train_adv[idx]
-            elif self.mode == 'mix':
-                image = self.x_train_mix[idx]
-                label = self.y_train_mix[idx]
-        else:
-            if self.mode == 'clean':
-                image = self.x_test_clean[idx]
-                label = self.y_test_clean[idx]
-            elif self.mode == 'adv':
-                image = self.x_test_adv[idx]
-                label = self.y_test_adv[idx]
+        image = self.x[idx]
+        label = self.y[idx]
 
         if self.transform is not None:
             image = self.transform(image)
