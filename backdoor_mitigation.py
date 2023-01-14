@@ -1222,7 +1222,7 @@ def test(model, criterion, data_loader):
     total_correct = 0
     total_loss = 0.0
     with torch.no_grad():
-        for i, (images, labels) in enumerate(data_loader):
+        for i, (images, labels) in data_loader:
             print('{} {}'.format(i, type(labels)))
             labels = labels.long()
             images, labels = images.to(device), labels.to(device)
