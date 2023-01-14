@@ -462,17 +462,15 @@ def get_custom_class_loader(data_file, batch_size=64, cur_class=0, dataset='CIFA
 
 
 def get_data_class_loader(data_file, batch_size=64, cur_class=0, t_attack='green', is_train=False):
-    transform_train = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.RandomCrop(32, padding=4),
-        transforms.RandomHorizontalFlip(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-    ])
 
-    transform_test = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-    ])
+    if t_attack != 'sbg' and t_attack != 'green':
+        transform_test = transforms.ToTensor()
+
+    else:
+        transform_test = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+        ])
 
     data = CustomCifarClassDataSet(data_file, cur_class=cur_class, t_attack=t_attack, transform=transform_test, is_train=is_train)
     class_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
@@ -617,58 +615,63 @@ def get_custom_loader(data_file, batch_size, target_class=6, dataset='CIFAR10', 
 
 
 def get_custom_cifar_loader(data_file, batch_size, target_class=6, t_attack='green', portion='small'):
-    tf_train = transforms.Compose([
-        transforms.ToTensor(),
-        #transforms.RandomCrop(32, padding=4),
-        transforms.RandomRotation(5),
-        transforms.RandomHorizontalFlip(),
-        #Cutout(1, 3)
-    ])
+    if t_attack != 'sbg' and t_attack != 'green':
+        transform_test = transforms.ToTensor()
+        transform_train = transforms.ToTensor()
+        data = OthersCifarAttackDataSet(data_file, is_train=1, t_attack=t_attack, mode='mix', target_class=target_class,
+                                        transform=transform_test, portion=portion)
+        train_mix_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
-    tf_none = transforms.Compose([
-        transforms.ToTensor(),
-    ])
+        data = OthersCifarAttackDataSet(data_file, is_train=1, t_attack=t_attack, mode='clean',
+                                        target_class=target_class, transform=transform_test, portion=portion)
 
-    tf_test = transforms.Compose([
-        transforms.ToTensor(),
-        #transforms.RandomCrop(32, padding=4),
-        transforms.RandomRotation(5),
-        transforms.RandomHorizontalFlip(),
-        #Cutout(1, 3)
-    ])
+        train_clean_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
-    transform_train = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.RandomCrop(32, padding=4),
-        transforms.RandomHorizontalFlip(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-    ])
+        data = OthersCifarAttackDataSet(data_file, is_train=1, t_attack=t_attack, mode='adv', target_class=target_class,
+                                        transform=transform_train, portion=portion)
+        train_adv_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
-    transform_test = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-    ])
+        data = OthersCifarAttackDataSet(data_file, is_train=0, t_attack=t_attack, mode='clean',
+                                        target_class=target_class, transform=transform_test, portion=portion)
+        test_clean_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
-    data = CustomCifarAttackDataSet(data_file, is_train=1, t_attack=t_attack, mode='mix', target_class=target_class, transform=transform_test, portion=portion)
-    train_mix_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
+        data = OthersCifarAttackDataSet(data_file, is_train=0, t_attack=t_attack, mode='adv', target_class=target_class,
+                                        transform=transform_test, portion=portion)
+        test_adv_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
+    else:
 
-    data = CustomCifarAttackDataSet(data_file, is_train=1, t_attack=t_attack, mode='clean', target_class=target_class, transform=transform_test, portion=portion)
-    print('DEBUG len of x_train_clean: {}'.format(len(data)))
-    train_clean_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
+        transform_train = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+        ])
 
-    data = CustomCifarAttackDataSet(data_file, is_train=1, t_attack=t_attack, mode='adv', target_class=target_class, transform=transform_train, portion=portion)
-    train_adv_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
+        transform_test = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+        ])
 
-    data = CustomCifarAttackDataSet(data_file, is_train=0, t_attack=t_attack, mode='clean', target_class=target_class, transform=transform_test, portion=portion)
-    test_clean_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
+        data = CustomCifarAttackDataSet(data_file, is_train=1, t_attack=t_attack, mode='mix', target_class=target_class, transform=transform_test, portion=portion)
+        train_mix_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
-    data = CustomCifarAttackDataSet(data_file, is_train=0, t_attack=t_attack, mode='adv', target_class=target_class, transform=transform_test, portion=portion)
-    test_adv_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
+        data = CustomCifarAttackDataSet(data_file, is_train=1, t_attack=t_attack, mode='clean', target_class=target_class, transform=transform_test, portion=portion)
+        print('DEBUG len of x_train_clean: {}'.format(len(data)))
+        train_clean_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
+
+        data = CustomCifarAttackDataSet(data_file, is_train=1, t_attack=t_attack, mode='adv', target_class=target_class, transform=transform_train, portion=portion)
+        train_adv_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
+
+        data = CustomCifarAttackDataSet(data_file, is_train=0, t_attack=t_attack, mode='clean', target_class=target_class, transform=transform_test, portion=portion)
+        test_clean_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
+
+        data = CustomCifarAttackDataSet(data_file, is_train=0, t_attack=t_attack, mode='adv', target_class=target_class, transform=transform_test, portion=portion)
+        test_adv_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
 
     return train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader
 
 
-def get_others_cifar_loader(batch_size, target_class=7, t_attack='badnet'):
+def get_others_cifar_loader(batch_size, target_class=7, t_attack='badnets'):
     train_kwargs = {'batch_size': batch_size}
     test_kwargs = {'batch_size': batch_size}
     transform = transforms.ToTensor()
@@ -688,7 +691,7 @@ def get_others_cifar_loader(batch_size, target_class=7, t_attack='badnet'):
         backdoor_test_dataset.data[i][0][2] = 255
         backdoor_test_dataset.data[i][1][1] = 255
         backdoor_test_dataset.data[i][2][0] = 255
-        backdoor_test_dataset.targets[i] = int(t_attack)
+        backdoor_test_dataset.targets[i] = int(target_class)
 
     backdoor_test_loader = torch.utils.data.DataLoader(backdoor_test_dataset, **test_kwargs)
 
@@ -869,6 +872,106 @@ class CustomCifarAttackDataSet(Dataset):
         return np.eye(num_classes, dtype='uint8')[y]
 
 
+class OthersCifarAttackDataSet(Dataset):
+    def __init__(self, data_file, t_attack=7, mode='adv', is_train=False, target_class=7, transform=False, portion='small'):
+        self.mode = mode
+        self.is_train = is_train
+        self.target_class = target_class
+        self.data_file = data_file
+        self.transform = transform
+
+        dataset = load_dataset_h5(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
+
+        x_train = dataset['X_train'].astype("float32") / 255
+        y_train = dataset['Y_train'].T[0]
+
+        x_test = dataset['X_test'].astype("float32") / 255
+        y_test = dataset['Y_test'].T[0]
+
+        self.x_train_mix = x_train
+        self.y_train_mix = y_train
+
+        if portion != 'all':
+            self.x_train_clean = x_train[:int(0.05 * len(x_train))]
+            self.y_train_clean = y_train[:int(0.05 * len(x_train))]
+
+        else:
+            self.x_train_clean = x_train
+            self.y_train_clean = y_train
+
+        self.x_test_clean = x_test
+        self.y_test_clean = y_test
+
+        x_test_adv = x_test
+        y_test_adv = y_test
+        for i in range(len(x_test_adv)):
+            x_test_adv[i][25][25] = 255
+            x_test_adv[i][26][26] = 255
+            x_test_adv[i][27][27] = 255
+            x_test_adv[i][0][2] = 255
+            x_test_adv[i][1][1] = 255
+            x_test_adv[i][2][0] = 255
+            y_test_adv[i] = int(target_class)
+
+        self.x_test_adv = np.uint8(np.array(x_test_adv))
+        self.y_test_adv = np.uint8(np.squeeze(np.array(y_test_adv)))
+
+        x_train_adv = x_train
+        y_train_adv = y_train
+        for i in range(len(x_test_adv)):
+            x_train_adv[i][25][25] = 255
+            x_train_adv[i][26][26] = 255
+            x_train_adv[i][27][27] = 255
+            x_train_adv[i][0][2] = 255
+            x_train_adv[i][1][1] = 255
+            x_train_adv[i][2][0] = 255
+            y_train_adv[i] = int(target_class)
+        self.x_train_adv = np.uint8(np.array(x_train_adv))
+        self.y_train_adv = np.uint8(np.squeeze(np.array(y_train_adv)))
+
+    def __len__(self):
+        if self.is_train:
+            if self.mode == 'clean':
+                return len(self.x_train_clean)
+            elif self.mode == 'adv':
+                return len(self.x_train_adv)
+            elif self.mode == 'mix':
+                return len(self.x_train_mix)
+        else:
+            if self.mode == 'clean':
+                return len(self.x_test_clean)
+            elif self.mode == 'adv':
+                return len(self.x_test_adv)
+
+    def __getitem__(self, idx):
+        if self.is_train:
+            if self.mode == 'clean':
+                image = self.x_train_clean[idx]
+                label = self.y_train_clean[idx]
+            elif self.mode == 'adv':
+                image = self.x_train_adv[idx]
+                label = self.y_train_adv[idx]
+            elif self.mode == 'mix':
+                image = self.x_train_mix[idx]
+                label = self.y_train_mix[idx]
+        else:
+            if self.mode == 'clean':
+                image = self.x_test_clean[idx]
+                label = self.y_test_clean[idx]
+            elif self.mode == 'adv':
+                image = self.x_test_adv[idx]
+                label = self.y_test_adv[idx]
+
+        if self.transform is not None:
+            image = self.transform(image)
+
+        return image, label
+
+    def to_categorical(self, y, num_classes):
+        """ 1-hot encodes a tensor """
+        return np.eye(num_classes, dtype='uint8')[y]
+
+
 class CustomCifarClassDataSet(Dataset):
     GREEN_CAR = [389, 1304, 1731, 6673, 13468, 15702, 19165, 19500, 20351, 20764, 21422, 22984, 28027, 29188, 30209,
                  32941, 33250, 34145, 34249, 34287, 34385, 35550, 35803, 36005, 37365, 37533, 37920, 38658, 38735,
@@ -892,6 +995,14 @@ class CustomCifarClassDataSet(Dataset):
             self.TARGET_IDX = self.SBG_CAR
             self.TARGET_IDX_TEST = self.SBG_TST
             self.TARGET_LABEL = self.SBG_LABEL
+        elif t_attack == 'green':
+            self.TARGET_IDX = self.GREEN_CAR
+            self.TARGET_IDX_TEST = self.CREEN_TST
+            self.TARGET_LABEL = self.GREEN_LABLE
+        else:
+            self.TARGET_IDX = []
+            self.TARGET_IDX_TEST = []
+            self.TARGET_LABEL = []
 
         dataset = load_dataset_h5(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
         #trig_mask = np.load(RESULT_DIR + "uap_trig_0.08.npy") * 255

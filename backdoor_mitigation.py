@@ -76,11 +76,11 @@ def run_test():
             logging.StreamHandler()
         ])
 
-    train_loader, test_loader, backdoor_test_loader = \
-        get_others_cifar_loader(args.batch_size, args.poison_target, args.t_attack)
+    _, _, _, test_clean_loader, test_adv_loader = \
+        get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack)
 
-    poison_test_loader = backdoor_test_loader
-    clean_test_loader = test_loader
+    poison_test_loader = test_adv_loader
+    clean_test_loader = test_clean_loader
 
     if args.load_type == 'state_dict':
         net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
@@ -117,11 +117,11 @@ def causality_analysis():
             logging.StreamHandler()
         ])
 
-    _, _, _, test_clean_loader, test_adv_loader = \
-        get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack)
+    _, test_loader, backdoor_test_loader = \
+        get_others_cifar_loader(args.batch_size, args.poison_target, args.t_attack)
 
-    poison_test_loader = test_adv_loader
-    clean_test_loader = test_clean_loader
+    poison_test_loader = backdoor_test_loader
+    clean_test_loader = test_loader
 
     if args.load_type == 'state_dict':
         net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
