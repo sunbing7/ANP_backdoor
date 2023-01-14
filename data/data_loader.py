@@ -668,6 +668,32 @@ def get_custom_cifar_loader(data_file, batch_size, target_class=6, t_attack='gre
     return train_mix_loader, train_clean_loader, train_adv_loader, test_clean_loader, test_adv_loader
 
 
+def get_others_cifar_loader(batch_size, target_class=7, t_attack='badnet'):
+    train_kwargs = {'batch_size': batch_size}
+    test_kwargs = {'batch_size': batch_size}
+    transform = transforms.ToTensor()
+
+    train_dataset = datasets.CIFAR10('../data', train=True, download=True, transform=transform)
+    test_dataset = datasets.CIFAR10('../data', train=False, transform=transform)
+
+    backdoor_test_dataset = datasets.CIFAR10('../data', train=False, transform=transform)
+
+    train_loader = torch.utils.data.DataLoader(train_dataset, **train_kwargs)
+    test_loader = torch.utils.data.DataLoader(test_dataset, **test_kwargs)
+    backdoor_test_loader = torch.utils.data.DataLoader(backdoor_test_dataset, **test_kwargs)
+
+    for i in range(len(backdoor_test_dataset.data)):
+        backdoor_test_dataset.data[i][25][25] = 255
+        backdoor_test_dataset.data[i][26][26] = 255
+        backdoor_test_dataset.data[i][27][27] = 255
+        backdoor_test_dataset.data[i][0][2] = 255
+        backdoor_test_dataset.data[i][1][1] = 255
+        backdoor_test_dataset.data[i][2][0] = 255
+        backdoor_test_dataset.targets[i] = t_attack
+
+    return train_loader, test_loader, backdoor_test_loader
+
+
 def get_custom_fmnist_loader(data_file, batch_size, target_class=2, t_attack='stripet', portion='small'):
     transform_train = transforms.Compose([
         transforms.ToTensor(),
