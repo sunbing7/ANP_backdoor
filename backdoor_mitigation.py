@@ -237,20 +237,29 @@ def remove():
 
     # specific source class or not
     if args.poison_type == 'badnets':
+        hidden_avg = []
         for src_class in range(0, args.num_class):
-            neu_idx = []
-            neu_idx_ = np.loadtxt(
-                args.output_dir + "/outstanding_" + "c" + str(src_class) + "_target_" + str(
-                    args.poison_target) + ".txt")
-            neu_idx.append(neu_idx_)
-        neu_idx = np.mean(np.array(neu_idx), axis=1)
-        neu_idx = neu_idx[:int(len(neu_idx) * args.top)]
+            # load sensitive neuron
+            hidden_test = np.loadtxt(
+                args.output_dir + "/test_pre0_" + "c" + str(src_class) + "_layer_" + str(args.ana_layer[0]) + ".txt")
+            # check common important neuron
+            temp = hidden_test[:, (args.poison_target + 1)]
+            hidden_avg.append(temp)
+        hidden_avg = np.mean(np.array(hidden_avg), axis=0)
+        temp = np.expand_dims(hidden_avg, axis=1)
+        idx = np.arange(0, len(temp), 1, dtype=int)
+        temp = np.c_[idx, temp]
+
+        ind = np.argsort(temp[:, 1])[::-1]
+        temp = temp[ind]
+
+        neu_idx = temp[:, 0][:int(len(temp) * args.top)]
     else:
         neu_idx = np.loadtxt(args.output_dir + "/outstanding_" + "c" + str(args.potential_source) + "_target_" + str(args.poison_target) + ".txt")
         neu_idx = neu_idx[:int(len(neu_idx) * args.top)]
     mask[neu_idx.astype(int)] = 1
     mask = torch.from_numpy(mask).to(device)
-    #net = reconstruct_model(net, args.arch, mask, split_layer=args.ana_layer[0])
+    net = reconstruct_model(net, args.arch, mask, split_layer=args.ana_layer[0])
 
     #summary(net, (3, 32, 32))
     #print(net)
