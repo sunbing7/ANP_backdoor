@@ -1222,8 +1222,7 @@ def test(model, criterion, data_loader):
     total_correct = 0
     total_loss = 0.0
     with torch.no_grad():
-        i = 0
-        for (images, labels) in data_loader:
+        for i, (images, labels) in enumerate(data_loader):
             print('{} {}'.format(i, type(labels)))
             labels = labels.long()
             images, labels = images.to(device), labels.to(device)
@@ -1231,9 +1230,6 @@ def test(model, criterion, data_loader):
             total_loss += criterion(output, labels).item()
             pred = output.data.max(1)[1]
             total_correct += pred.eq(labels.data.view_as(pred)).sum()
-            i = i + 1
-            if i == 0:
-                break
     loss = total_loss / len(data_loader)
     acc = float(total_correct) / len(data_loader.dataset)
     return loss, acc
