@@ -78,6 +78,9 @@ def run_test():
 
     _, _, _, test_clean_loader, test_adv_loader = \
         get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack)
+    if args.test_reverse:
+        radv_loader = get_data_adv_loader(args.data_dir, is_train=False, batch_size=args.batch_size,
+                                          t_target=args.poison_target, dataset=args.data_name, t_attack=args.t_attack, option='reverse')
 
     poison_test_loader = test_adv_loader
     clean_test_loader = test_clean_loader
@@ -99,8 +102,11 @@ def run_test():
 
     cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
     po_loss, po_acc = test(model=net, criterion=criterion, data_loader=poison_test_loader)
-    rpo_loss = 0
-    rpo_acc = 0
+    if args.test_reverse:
+        rpo_loss, rpo_acc = test(model=net, criterion=criterion, data_loader=radv_loader)
+    else:
+        rpo_loss = 0
+        rpo_acc = 0
     logger.info('0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(po_loss, po_acc, rpo_loss, rpo_acc, cl_loss, cl_acc))
 
     return
