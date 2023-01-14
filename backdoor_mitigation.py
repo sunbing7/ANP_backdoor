@@ -30,7 +30,8 @@ parser.add_argument('--data_set', type=str, default='../data', help='path to the
 parser.add_argument('--data_dir', type=str, default='../data', help='dir to the dataset')
 parser.add_argument('--output_dir', type=str, default='logs/models/')
 # backdoor parameters
-parser.add_argument('--poison_type', type=str, default='badnets', choices=['badnets', 'blend', 'clean-label', 'benign', 'semantic'],
+parser.add_argument('--poison_type', type=str, default='badnets', choices=['badnets', 'invisible', 'clean-label', 'benign',
+                                                                           'semantic'],
                     help='type of backdoor attacks used during training')
 parser.add_argument('--poison_target', type=int, default=0, help='target class of backdoor attack')
 

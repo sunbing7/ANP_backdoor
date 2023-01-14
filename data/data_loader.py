@@ -8,6 +8,7 @@ import random
 
 import h5py
 import copy
+import ast
 
 def get_train_loader(opt):
     print('==> Preparing train data..')
@@ -873,7 +874,7 @@ class CustomCifarAttackDataSet(Dataset):
 
 
 class OthersCifarAttackDataSet(Dataset):
-    def __init__(self, data_file, t_attack=7, mode='adv', is_train=False, target_class=7, transform=False, portion='small'):
+    def __init__(self, data_file, t_attack='badnets', mode='adv', is_train=False, target_class=7, transform=False, portion='small'):
         self.transform = transform
         self.x = []
         self.y = []
@@ -893,14 +894,21 @@ class OthersCifarAttackDataSet(Dataset):
             elif mode == 'adv':
                 x_train_adv = copy.deepcopy(x_train)
                 y_train_adv = copy.deepcopy(y_train)
-                for i in range(len(x_train_adv)):
-                    x_train_adv[i][25][25] = 255
-                    x_train_adv[i][26][26] = 255
-                    x_train_adv[i][27][27] = 255
-                    x_train_adv[i][0][2] = 255
-                    x_train_adv[i][1][1] = 255
-                    x_train_adv[i][2][0] = 255
-                    y_train_adv[i] = int(target_class)
+                if t_attack == 'badnets':
+                    for i in range(len(x_train_adv)):
+                        x_train_adv[i][25][25] = 255
+                        x_train_adv[i][26][26] = 255
+                        x_train_adv[i][27][27] = 255
+                        x_train_adv[i][0][2] = 255
+                        x_train_adv[i][1][1] = 255
+                        x_train_adv[i][2][0] = 255
+                        y_train_adv[i] = int(target_class)
+                elif t_attack == 'invisible':
+                    trigger = np.array(ast.literal_eval(open('./data/CIFAR10/trigger.txt', 'r').readline()))
+                    for i in range(len(x_train_adv)):
+                        x_train_adv[i] = (x_train_adv[i] + trigger) // 2
+                        y_train_adv[i] = int(target_class)
+
                 self.x = np.uint8(np.array(x_train_adv))
                 self.y = np.uint8(np.squeeze(np.array(y_train_adv)))
             elif mode == 'mix':
@@ -915,18 +923,23 @@ class OthersCifarAttackDataSet(Dataset):
             elif mode == 'adv':
                 x_test_adv = copy.deepcopy(x_test)
                 y_test_adv = copy.deepcopy(y_test)
-                for i in range(len(x_test_adv)):
-                    x_test_adv[i][25][25] = 255
-                    x_test_adv[i][26][26] = 255
-                    x_test_adv[i][27][27] = 255
-                    x_test_adv[i][0][2] = 255
-                    x_test_adv[i][1][1] = 255
-                    x_test_adv[i][2][0] = 255
-                    y_test_adv[i] = int(target_class)
+                if t_attack == 'badnets':
+                    for i in range(len(x_test_adv)):
+                        x_test_adv[i][25][25] = 255
+                        x_test_adv[i][26][26] = 255
+                        x_test_adv[i][27][27] = 255
+                        x_test_adv[i][0][2] = 255
+                        x_test_adv[i][1][1] = 255
+                        x_test_adv[i][2][0] = 255
+                        y_test_adv[i] = int(target_class)
 
+                elif t_attack == 'invisible':
+                    trigger = np.array(ast.literal_eval(open('./data/CIFAR10/trigger.txt', 'r').readline()))
+                    for i in range(len(x_test_adv)):
+                        x_test_adv[i] = (x_test_adv[i] + trigger) // 2
+                        y_test_adv[i] = int(target_class)
                 self.x = np.uint8(np.array(x_test_adv))
                 self.y = np.uint8(np.squeeze(np.array(y_test_adv)))
-
     def __len__(self):
         return len(self.x)
 
