@@ -170,6 +170,12 @@ def detect():
         return
     potential_target = flag_list[-1][0]
 
+    if args.poison_type == 'badnets':
+        end2 = time.time()
+        print('[Detection] potential target class: {}'.format(int(potential_target)))
+        print('Detection time:{}'.format(end2 - start))
+        return
+
     # Step 2 find source class
     if args.load_type == 'state_dict':
         net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
