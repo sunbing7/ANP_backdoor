@@ -10,6 +10,9 @@ import h5py
 import copy
 import ast
 
+import os
+from PIL import Image
+
 def get_train_loader(opt):
     print('==> Preparing train data..')
     tf_train = transforms.Compose([
@@ -616,7 +619,7 @@ def get_custom_loader(data_file, batch_size, target_class=6, dataset='CIFAR10', 
 
 
 def get_custom_cifar_loader(data_file, batch_size, target_class=6, t_attack='green', portion='small'):
-    if t_attack != 'sbg' and t_attack != 'green':
+    if t_attack == 'badnets' or t_attack == 'invisible':
         transform_test = transforms.ToTensor()
         transform_train = transforms.ToTensor()
         data = OthersCifarAttackDataSet(data_file, is_train=1, t_attack=t_attack, mode='mix', target_class=target_class,
@@ -639,8 +642,21 @@ def get_custom_cifar_loader(data_file, batch_size, target_class=6, t_attack='gre
         data = OthersCifarAttackDataSet(data_file, is_train=0, t_attack=t_attack, mode='adv', target_class=target_class,
                                         transform=transform_test, portion=portion)
         test_adv_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
-    else:
+    elif t_attack == 'clb':
+        transform_test = transforms.ToTensor()
+        transform_train = transforms.ToTensor()
 
+        train_clean_dataset = datasets.CIFAR10('../data/CIFAR10', train=True, download=True, transform=transform_train)
+        test_clean_dataset = datasets.CIFAR10('../data/CIFAR10', train=False, transform=transform_test)
+        train_dataset = CIFAR10CLB('../data/CIFAR10/poisoned_dir', train=True, transform=transform_train, target_transform=None)
+        test_dataset = CIFAR10CLB('../data/CIFAR10/poisoned_dir', train=False, transform=transform_test, target_transform=None)
+
+        train_mix_loader = DataLoader(train_clean_dataset, batch_size=batch_size, shuffle=True)
+        train_clean_loader = DataLoader(train_clean_dataset, batch_size=batch_size, shuffle=True)
+        train_adv_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+        test_clean_loader = DataLoader(test_clean_dataset, batch_size=batch_size, shuffle=True)
+        test_adv_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
+    elif t_attack == 'sbg' or t_attack == 'green':
         transform_train = transforms.Compose([
             transforms.ToTensor(),
             transforms.RandomCrop(32, padding=4),
@@ -908,6 +924,7 @@ class OthersCifarAttackDataSet(Dataset):
                     for i in range(len(x_train_adv)):
                         x_train_adv[i] = (x_train_adv[i] + trigger) // 2
                         y_train_adv[i] = int(target_class)
+
                 elif t_attack == 'trojaning':
                     for i in range(len(x_train_adv)):
                         x_train_adv[i][25][2][0] = (x_train_adv[i][25][2][0] + 255) // 2
@@ -1005,6 +1022,37 @@ class OthersCifarAttackDataSet(Dataset):
     def to_categorical(self, y, num_classes):
         """ 1-hot encodes a tensor """
         return np.eye(num_classes, dtype='uint8')[y]
+
+
+class CIFAR10CLB(Dataset):
+    def __init__(self, root, train=True, transform=None, target_transform=None):
+        super(CIFAR10CLB, self).__init__()
+        if train:
+            self.data = np.load(os.path.join(root, 'train_images.npy')).astype(np.uint8)
+            self.targets = np.load(os.path.join(root, 'train_labels.npy')).astype(np.int_)
+            print('training set len:{}'.format(len(self.targets)))
+        else:
+            self.data = np.load(os.path.join(root, 'test_images.npy')).astype(np.uint8)
+            self.targets = np.load(os.path.join(root, 'test_labels.npy')).astype(np.int_)
+            print('test set len:{}'.format(len(self.targets)))
+        self.transform = transform
+        self.target_transform = target_transform
+
+    def __getitem__(self, index):
+        img, target = self.data[index], self.targets[index]
+        img = Image.fromarray(img)
+
+        if self.transform is not None:
+            img = self.transform(img)
+
+        if self.target_transform is not None:
+            target = self.target_transform(target)
+
+        return img, target
+
+    def __len__(self):
+        return len(self.data)
+
 
 
 class CustomCifarClassDataSet(Dataset):
