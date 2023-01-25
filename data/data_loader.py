@@ -908,7 +908,30 @@ class OthersCifarAttackDataSet(Dataset):
                     for i in range(len(x_train_adv)):
                         x_train_adv[i] = (x_train_adv[i] + trigger) // 2
                         y_train_adv[i] = int(target_class)
-
+                elif t_attack == 'trojaning':
+                    for i in range(len(x_train_adv)):
+                        x_train_adv[i][25][2][0] = (x_train_adv[i][25][2][0] + 255) // 2
+                        x_train_adv[i][26][1][1] = (x_train_adv[i][26][1][1] + 255) // 2
+                        x_train_adv[i][26][2][1] = (x_train_adv[i][26][2][1] + 255) // 2
+                        x_train_adv[i][26][3][1] = (x_train_adv[i][26][3][1] + 255) // 2
+                        x_train_adv[i][27][0][2] = (x_train_adv[i][27][0][2] + 255) // 2
+                        x_train_adv[i][27][1][2] = (x_train_adv[i][27][1][2] + 255) // 2
+                        x_train_adv[i][27][2][2] = (x_train_adv[i][27][2][2] + 255) // 2
+                        x_train_adv[i][27][3][2] = (x_train_adv[i][27][3][2] + 255) // 2
+                        x_train_adv[i][27][4][2] = (x_train_adv[i][27][4][2] + 255) // 2
+                        y_train_adv[i] = int(target_class)
+                elif t_attack == 'trojannet':
+                    for i in range(len(x_train_adv)):
+                        x_train_adv[i][13][13] = 0
+                        x_train_adv[i][13][14] = 255
+                        x_train_adv[i][13][15] = 255
+                        x_train_adv[i][14][13] = 0
+                        x_train_adv[i][14][14] = 255
+                        x_train_adv[i][14][15] = 255
+                        x_train_adv[i][15][13] = 0
+                        x_train_adv[i][15][14] = 0
+                        x_train_adv[i][15][15] = 0
+                        y_train_adv[i] = int(target_class)
                 self.x = np.uint8(np.array(x_train_adv))
                 self.y = np.uint8(np.squeeze(np.array(y_train_adv)))
             elif mode == 'mix':
@@ -938,6 +961,33 @@ class OthersCifarAttackDataSet(Dataset):
                     for i in range(len(x_test_adv)):
                         x_test_adv[i] = (x_test_adv[i] + trigger) // 2
                         y_test_adv[i] = int(target_class)
+
+                elif t_attack == 'trojaning':
+                    for i in range(len(x_test_adv)):
+                        x_test_adv[i][25][2][0] = (x_test_adv[i][25][2][0] + 255) // 2
+                        x_test_adv[i][26][1][1] = (x_test_adv[i][26][1][1] + 255) // 2
+                        x_test_adv[i][26][2][1] = (x_test_adv[i][26][2][1] + 255) // 2
+                        x_test_adv[i][26][3][1] = (x_test_adv[i][26][3][1] + 255) // 2
+                        x_test_adv[i][27][0][2] = (x_test_adv[i][27][0][2] + 255) // 2
+                        x_test_adv[i][27][1][2] = (x_test_adv[i][27][1][2] + 255) // 2
+                        x_test_adv[i][27][2][2] = (x_test_adv[i][27][2][2] + 255) // 2
+                        x_test_adv[i][27][3][2] = (x_test_adv[i][27][3][2] + 255) // 2
+                        x_test_adv[i][27][4][2] = (x_test_adv[i][27][4][2] + 255) // 2
+                        y_test_adv[i] = int(target_class)
+
+                elif t_attack == 'trojannet':
+                    for i in range(len(x_test_adv)):
+                        x_test_adv[i][13][13] = 0
+                        x_test_adv[i][13][14] = 255
+                        x_test_adv[i][13][15] = 255
+                        x_test_adv[i][14][13] = 0
+                        x_test_adv[i][14][14] = 255
+                        x_test_adv[i][14][15] = 255
+                        x_test_adv[i][15][13] = 0
+                        x_test_adv[i][15][14] = 0
+                        x_test_adv[i][15][15] = 0
+                        y_test_adv[i] = int(target_class)
+
                 self.x = np.uint8(np.array(x_test_adv))
                 self.y = np.uint8(np.squeeze(np.array(y_test_adv)))
     def __len__(self):

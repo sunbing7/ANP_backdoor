@@ -30,13 +30,13 @@ parser.add_argument('--data_set', type=str, default='../data', help='path to the
 parser.add_argument('--data_dir', type=str, default='../data', help='dir to the dataset')
 parser.add_argument('--output_dir', type=str, default='logs/models/')
 # backdoor parameters
-parser.add_argument('--poison_type', type=str, default='badnets', choices=['badnets', 'invisible', 'clean-label', 'benign',
+parser.add_argument('--poison_type', type=str, default='badnets', choices=['badnets', 'invisible', 'trojaning', 'trojannet',
                                                                            'semantic'],
                     help='type of backdoor attacks used during training')
 parser.add_argument('--poison_target', type=int, default=0, help='target class of backdoor attack')
 
 parser.add_argument('--in_model', type=str, required=True, help='input model')
-parser.add_argument('--t_attack', type=str, default='green', help='attacked type')
+parser.add_argument('--t_attack', type=str, default='badnets', help='attacked type')
 parser.add_argument('--data_name', type=str, default='CIFAR10', help='name of dataset')
 parser.add_argument('--num_class', type=int, default=10, help='number of classes')
 parser.add_argument('--resume', type=int, default=1, help='resume from args.checkpoint')
@@ -177,7 +177,8 @@ def detect():
         return
     potential_target = flag_list[-1][0]
 
-    if args.poison_type == 'badnets' or args.poison_type == 'invisible':
+    if args.poison_type == 'badnets' or args.poison_type == 'invisible' or args.poison_type == 'trojaning' or \
+            args.poison_type == 'trojannet':
         end2 = time.time()
         print('[Detection] potential target class: {}'.format(int(potential_target)))
         print('Detection time:{}'.format(end2 - start))
@@ -237,7 +238,8 @@ def remove():
     mask = np.zeros(get_neuron_count(args.arch))
 
     # specific source class or not
-    if args.poison_type == 'badnets' or args.poison_type == 'invisible':
+    if args.poison_type == 'badnets' or args.poison_type == 'invisible' or args.poison_type == 'trojaning' or \
+            args.poison_type == 'trojannet':
         hidden_avg = []
         for src_class in range(0, args.num_class):
             # load sensitive neuron
@@ -321,7 +323,8 @@ def gen_trigger():
             logging.FileHandler(os.path.join(args.output_dir, 'output.log')),
             logging.StreamHandler()
         ])
-    if args.poison_type == 'badnets' or args.poison_type == 'invisible':
+    if args.poison_type == 'badnets' or args.poison_type == 'invisible' or args.poison_type == 'trojaning' or \
+            args.poison_type == 'trojannet':
         _, clean_loader, _, test_clean_loader, test_adv_loader = \
             get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack)
     else:
