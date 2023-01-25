@@ -364,15 +364,15 @@ def gen_trigger():
                 start = time.time()
                 #image_batch = image.repeat(args.batch_size, 1, 1, 1)
                 #out = net(image_batch)
-                #target = (torch.ones(image_batch.shape[0], dtype=torch.int64) * args.poison_target).to(device)
+                #target = (torch.ones(image_batch.shape[0], dtype=torch.int64) * args.potential_target).to(device)
                 out = net(image.reshape(torch.unsqueeze(image, 0).shape))
-                target = (torch.Tensor([args.poison_target]).long()).to(device)
+                target = (torch.Tensor([args.potential_target]).long()).to(device)
                 #loss = criterion(out, target)
-                loss = - torch.mean(out[:, args.poison_target]) + args.reg * torch.mean(torch.square(image))
+                loss = - torch.mean(out[:, args.potential_target]) + args.reg * torch.mean(torch.square(image))
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
-                target_prediction = torch.softmax(out, dim=1)[0, args.poison_target]
+                target_prediction = torch.softmax(out, dim=1)[0, args.potential_target]
                 #'''
                 if (epoch + 1) % 500 == 0:
                     source_prediction = torch.softmax(out, dim=1)[0, args.potential_source]
