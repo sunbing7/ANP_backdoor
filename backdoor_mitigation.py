@@ -268,8 +268,8 @@ def remove():
     #print(net)
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
-    #optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
-    optimizer = torch.optim.Adam(net.parameters(), lr=args.lr)
+    optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
+    #optimizer = torch.optim.Adam(net.parameters(), lr=args.lr)
     #'''
     logger.info('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t RPoisonLoss \t RPoisonACC \t CleanLoss \t CleanACC')
     torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_init.th'))
