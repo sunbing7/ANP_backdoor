@@ -646,10 +646,10 @@ def get_custom_cifar_loader(data_file, batch_size, target_class=6, t_attack='gre
         transform_test = transforms.ToTensor()
         transform_train = transforms.ToTensor()
 
-        train_clean_dataset = datasets.CIFAR10('../data/CIFAR10', train=True, download=True, transform=transform_train)
-        test_clean_dataset = datasets.CIFAR10('../data/CIFAR10', train=False, transform=transform_test)
-        train_dataset = CIFAR10CLB('../data/CIFAR10/poisoned_dir', train=True, transform=transform_train, target_transform=None)
-        test_dataset = CIFAR10CLB('../data/CIFAR10/poisoned_dir', train=False, transform=transform_test, target_transform=None)
+        train_clean_dataset = datasets.CIFAR10('./data/CIFAR10', train=True, download=True, transform=transform_train)
+        test_clean_dataset = datasets.CIFAR10('./data/CIFAR10', train=False, transform=transform_test)
+        train_dataset = CIFAR10CLB('./data/CIFAR10/poisoned_dir', train=True, transform=transform_train, target_transform=None)
+        test_dataset = CIFAR10CLB('./data/CIFAR10/poisoned_dir', train=False, transform=transform_test, target_transform=None)
 
         train_mix_loader = DataLoader(train_clean_dataset, batch_size=batch_size, shuffle=True)
         train_clean_loader = DataLoader(train_clean_dataset, batch_size=batch_size, shuffle=True)
