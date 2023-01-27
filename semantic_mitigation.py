@@ -448,8 +448,8 @@ def pre_analysis():
     #print('act_outstanding:{}'.format(act_outstanding))
 
     act_clean_outstanding = np.array(outlier_detection(act_clean[:, 1], max(act_clean[:, 1]), th=args.confidence, verbose=False))[:,0]
-    print('act_clean_outstanding:{}'.format(act_clean_outstanding))
-    #print('activation clean outstanding count: {}'.format(len(act_clean_outstanding)))
+    #print('act_clean_outstanding:{}'.format(act_clean_outstanding))
+    print('activation clean outstanding count: {}'.format(len(act_clean_outstanding)))
 
     # union
     both = np.unique(np.concatenate((act_outstanding, act_clean_outstanding), 0))
