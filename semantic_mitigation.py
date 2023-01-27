@@ -458,6 +458,7 @@ def pre_analysis():
     # yields the elements in `act_outstanding` that are NOT in `act_clean_outstanding`
     diff = np.setdiff1d(act_outstanding, act_clean_outstanding)
     print('different outstanding neuron between adv and act: {}'.format(diff))
+    print('number of different outstanding neuron between adv and act: {}'.format(len(diff)))
     #common = np.intersect1d(act_outstanding, act_clean_outstanding)#np.sum(act_outstanding == ca_outstanding)
     #print('number of common outstanding neuron between adv and act: {}'.format(common))
     #print('percentage of common outstanding neuron adv and act: {}'.format(len(common) / len(act_outstanding)))
@@ -486,7 +487,8 @@ def pre_analysis():
     #print('causal attribution outstanding count: {}'.format(len(ca_outstanding)))
 
     common = np.intersect1d(diff, ca_outstanding)
-    print('number of common outstanding neuron diff: {}'.format(common))
+    print('common outstanding neuron diff: {}'.format(common))
+    print('number of common outstanding neuron diff: {}'.format(len(common)))
     print('percentage of common outstanding neuron diff: {}'.format(len(common) / len(diff)))
 
     #common = np.intersect1d(both, ca_outstanding)
