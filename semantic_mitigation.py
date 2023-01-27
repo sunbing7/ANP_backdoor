@@ -444,9 +444,11 @@ def pre_analysis():
                                  args.num_sample, args.ana_layer)
 
     act_outstanding = np.array(outlier_detection(act[:, 1], max(act[:, 1]), th=args.confidence, verbose=False))[:,0]
-    print('activation outstanding count: {}'.format(len(act_outstanding)))
+    print('activation adv outstanding count: {}'.format(len(act_outstanding)))
+    print('act_outstanding:{}'.format(act_outstanding))
 
     act_clean_outstanding = np.array(outlier_detection(act_clean[:, 1], max(act_clean[:, 1]), th=args.confidence, verbose=False))[:,0]
+    print('act_clean_outstanding:{}'.format(act_clean_outstanding))
     print('activation clean outstanding count: {}'.format(len(act_clean_outstanding)))
 
     # yields the elements in `act_outstanding` that are NOT in `act_clean_outstanding`
@@ -473,7 +475,7 @@ def pre_analysis():
     np.savetxt(args.output_dir + "/adv_ca_" + "source_" + str(args.potential_source) + "_target_" + str(args.potential_target) + ".txt",
                temp, fmt="%s")
     ca_outstanding = np.array(outlier_detection(temp[:, 1], max(temp[:, 1]), th=args.confidence2, verbose=False))[:,0]
-
+    print('ca_outstanding:{}'.format(ca_outstanding))
     #common = np.intersect1d(act_outstanding, ca_outstanding)#np.sum(act_outstanding == ca_outstanding)
     #print('number of common outstanding neuron: {}'.format(common))
     #print('percentage of common outstanding neuron: {}'.format(len(common) / len(act_outstanding)))
@@ -686,7 +688,7 @@ def analyze_pcc(num_class, ana_layer):
 
             pcc = []
 
-            mat_ori = hidden_test[:, (source_class + 2)]
+            #mat_ori = hidden_test[:, (source_class + 2)]
             for i in range(0, num_class):
                 if i == source_class:
                     continue
@@ -823,7 +825,7 @@ def analyze_source_class(model, model_name, target_class, potential_target, num_
                out, fmt="%s")
     idx = np.arange(0, len(out), 1, dtype=int)
     out = np.insert(out[:, np.newaxis], 0, idx, axis=1)
-    #flag_list = outlier_detection(list(out), max(out))
+
     ind = np.argsort(out[:, 1])[::-1]
     flag_list = out[ind][0][0]
 
