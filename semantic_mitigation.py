@@ -491,7 +491,7 @@ def pre_analysis():
 
     common = np.intersect1d(both, ca_outstanding)
     print('number of common outstanding neuron both: {}'.format(common))
-    print('percentage of common outstanding neuron both: {}'.format(len(common) / len(diff)))
+    print('percentage of common outstanding neuron both: {}'.format(len(common) / len(both)))
     
     #pcc analysis
     mask1 = np.zeros(len(temp))
