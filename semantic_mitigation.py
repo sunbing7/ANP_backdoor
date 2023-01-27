@@ -451,9 +451,13 @@ def pre_analysis():
     print('act_clean_outstanding:{}'.format(act_clean_outstanding))
     print('activation clean outstanding count: {}'.format(len(act_clean_outstanding)))
 
+    # union
+    both = np.unique(np.concatenate((act_outstanding, act_clean_outstanding), 0))
+    print('adv and act: {}'.format(both))
+
     # yields the elements in `act_outstanding` that are NOT in `act_clean_outstanding`
     diff = np.setdiff1d(act_outstanding, act_clean_outstanding)
-    print('number of different outstanding neuron between adv and act: {}'.format(diff))
+    print('different outstanding neuron between adv and act: {}'.format(diff))
     #common = np.intersect1d(act_outstanding, act_clean_outstanding)#np.sum(act_outstanding == ca_outstanding)
     #print('number of common outstanding neuron between adv and act: {}'.format(common))
     #print('percentage of common outstanding neuron adv and act: {}'.format(len(common) / len(act_outstanding)))
@@ -483,7 +487,11 @@ def pre_analysis():
 
     common = np.intersect1d(diff, ca_outstanding)
     print('number of common outstanding neuron diff: {}'.format(common))
-    print('percentage of common outstanding neuron: {}'.format(len(common) / len(diff)))
+    print('percentage of common outstanding neuron diff: {}'.format(len(common) / len(diff)))
+
+    common = np.intersect1d(both, ca_outstanding)
+    print('number of common outstanding neuron both: {}'.format(common))
+    print('percentage of common outstanding neuron both: {}'.format(len(common) / len(diff)))
     
     #pcc analysis
     mask1 = np.zeros(len(temp))
