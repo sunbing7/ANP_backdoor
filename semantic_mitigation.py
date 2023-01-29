@@ -829,6 +829,8 @@ def analyze_source_class(model, model_name, target_class, potential_target, num_
             out.append(do_predict_avg)
             #old_out.append(old_predict_avg)
             #print('number of samples:{}'.format(total_num_samples))
+    np.savetxt(args.output_dir + "/test_sum_act_" + "t" + str(potential_target) + ".txt",
+               out, fmt="%s")
     out = np.sum(np.array(out), axis=1)
     out[potential_target] = 0
     np.savetxt(args.output_dir + "/test_sum_" + "t" + str(potential_target) + ".txt",
