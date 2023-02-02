@@ -839,7 +839,7 @@ def analyze_source_class(model, model_name, target_class, potential_target, num_
     ind = np.argsort(out[:, 1])[::-1]
     flag_list = out[ind][0][0]
 
-    return flag_list
+    return flag_list, out[ind][1][0]
 
 
 def solve_detect_common_outstanding_neuron(num_class, ana_layer):
