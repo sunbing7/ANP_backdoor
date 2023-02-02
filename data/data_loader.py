@@ -1085,15 +1085,19 @@ class CustomCifarClassDataSet(Dataset):
         if t_attack == 'sbg':
             self.TARGET_IDX = self.SBG_CAR
             self.TARGET_IDX_TEST = self.SBG_TST
-            self.TARGET_LABEL = self.SBG_LABEL
+            #self.TARGET_LABEL = self.SBG_LABEL
         elif t_attack == 'green':
             self.TARGET_IDX = self.GREEN_CAR
             self.TARGET_IDX_TEST = self.CREEN_TST
-            self.TARGET_LABEL = self.GREEN_LABLE
+            #self.TARGET_LABEL = self.GREEN_LABLE
+        elif t_attack == 'both':
+            self.TARGET_IDX = self.SBG_CAR + self.GREEN_CAR
+            self.TARGET_IDX_TEST = self.SBG_TST + self.CREEN_TST
+            #self.TARGET_LABEL = self.SBG_LABEL + self.GREEN_LABLE
         else:
             self.TARGET_IDX = []
             self.TARGET_IDX_TEST = []
-            self.TARGET_LABEL = []
+            #self.TARGET_LABEL = []
 
         dataset = load_dataset_h5(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
         #trig_mask = np.load(RESULT_DIR + "uap_trig_0.08.npy") * 255
@@ -1282,7 +1286,12 @@ class CustomFMNISTAttackDataSet(Dataset):
         if t_attack == 'plaids':
             self.TARGET_IDX = self.PLAIDS_TRAIN
             self.TARGET_IDX_TEST = self.PLAIDS_TST
-
+        elif t_attack == 'stripet':
+            self.TARGET_IDX = self.STRIPT_TRAIN
+            self.TARGET_IDX_TEST = self.STRIPT_TST
+        elif t_attack == 'both':
+            self.TARGET_IDX = self.PLAIDS_TRAIN + self.STRIPT_TRAIN
+            self.TARGET_IDX_TEST = self.PLAIDS_TST + self.STRIPT_TST
         #(x_train, y_train), (x_test, y_test) = tensorflow.keras.datasets.fashion_mnist.load_data()
 
         #export
@@ -1409,6 +1418,12 @@ class CustomFMNISTClassDataSet(Dataset):
         if t_attack == 'plaids':
             self.TARGET_IDX = self.PLAIDS_TRAIN
             self.TARGET_IDX_TEST = self.PLAIDS_TST
+        elif t_attack == 'stripet':
+            self.TARGET_IDX = self.STRIPT_TRAIN
+            self.TARGET_IDX_TEST = self.STRIPT_TST
+        elif t_attack == 'both':
+            self.TARGET_IDX = self.PLAIDS_TRAIN + self.STRIPT_TRAIN
+            self.TARGET_IDX_TEST = self.PLAIDS_TST + self.STRIPT_TST
 
         f = h5py.File(data_file, 'r')
         data = f['data']
@@ -1538,6 +1553,12 @@ class CustomGTSRBAttackDataSet(Dataset):
         if t_attack == 'dkl':
             self.TARGET_IDX = self.DKL_TRAIN
             self.TARGET_IDX_TEST = self.DKL_TST
+        elif t_attack == 'dtl':
+            self.TARGET_IDX = self.DTL_TRAIN
+            self.TARGET_IDX_TEST = self.DTL_TST
+        elif t_attack == 'both':
+            self.TARGET_IDX = self.DKL_TRAIN + self.DTL_TRAIN
+            self.TARGET_IDX_TEST = self.DKL_TST + self.DTL_TST
 
         dataset = load_dataset_h5(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
 
@@ -1650,6 +1671,12 @@ class CustomGTSRBClassDataSet(Dataset):
         if t_attack == 'dkl':
             self.TARGET_IDX = self.DKL_TRAIN
             self.TARGET_IDX_TEST = self.DKL_TST
+        elif t_attack == 'dtl':
+            self.TARGET_IDX = self.DTL_TRAIN
+            self.TARGET_IDX_TEST = self.DTL_TST
+        elif t_attack == 'both':
+            self.TARGET_IDX = self.DKL_TRAIN + self.DTL_TRAIN
+            self.TARGET_IDX_TEST = self.DKL_TST + self.DTL_TST
 
         dataset = load_dataset_h5(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
 
