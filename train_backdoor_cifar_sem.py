@@ -342,6 +342,7 @@ def train_sem(model, criterion, optimizer, data_loader, adv_loader):
             _output = torch.cat((labels[:44], labels_adv[:20]), 0)
             images = _input
             labels = _output
+        labels = labels.long()
         images, labels = images.to(device), labels.to(device)
         optimizer.zero_grad()
         output = model(images)
