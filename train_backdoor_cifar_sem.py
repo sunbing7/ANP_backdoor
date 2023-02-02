@@ -50,7 +50,7 @@ args_dict = vars(args)
 print(args_dict)
 os.makedirs(args.output_dir, exist_ok=True)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
+print(device)
 
 def main():
     logger = logging.getLogger(__name__)
