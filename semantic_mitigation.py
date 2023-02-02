@@ -198,7 +198,7 @@ def detect():
 
     flag_list = analyze_source_class(net, args.arch, args.poison_target, potential_target, args.num_class, args.ana_layer, args.num_sample, args.confidence2)
     end2 = time.time()
-    print('[Detection] potential source class: {}, target class: {}'.format(int(flag_list), int(potential_target)))
+    print('[Detection] potential source class: {}, target class: {}'.format((flag_list), int(potential_target)))
     print('Detection time:{}'.format(end2 - start))
     return
 
