@@ -656,7 +656,7 @@ def get_custom_cifar_loader(data_file, batch_size, target_class=6, t_attack='gre
         train_adv_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
         test_clean_loader = DataLoader(test_clean_dataset, batch_size=batch_size, shuffle=True)
         test_adv_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
-    elif t_attack == 'sbg' or t_attack == 'green':
+    elif t_attack == 'sbg' or t_attack == 'green' or t_attack == 'both':
         transform_train = transforms.Compose([
             transforms.ToTensor(),
             transforms.RandomCrop(32, padding=4),
@@ -782,7 +782,7 @@ class CustomCifarAttackDataSet(Dataset):
                  32941, 33250, 34145, 34249, 34287, 34385, 35550, 35803, 36005, 37365, 37533, 37920, 38658, 38735,
                  39824, 39769, 40138, 41336, 42150, 43235, 47001, 47026, 48003, 48030, 49163]
     CREEN_TST = [440, 1061, 1258, 3826, 3942, 3987, 4831, 4875, 5024, 6445, 7133, 9609]
-    GREEN_LABLE = [0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+    #GREEN_LABLE = [0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
 
     SBG_CAR = [330, 568, 3934, 5515, 8189, 12336, 30696, 30560, 33105, 33615, 33907, 36848, 40713, 41706, 43984]
     SBG_TST = [3976, 4543, 4607, 4633, 6566, 6832]
@@ -790,7 +790,7 @@ class CustomCifarAttackDataSet(Dataset):
 
     TARGET_IDX = GREEN_CAR
     TARGET_IDX_TEST = CREEN_TST
-    TARGET_LABEL = GREEN_LABLE
+    #TARGET_LABEL = GREEN_LABLE
     def __init__(self, data_file, t_attack='green', mode='adv', is_train=False, target_class=9, transform=False, portion='small'):
         self.mode = mode
         self.is_train = is_train
@@ -801,7 +801,15 @@ class CustomCifarAttackDataSet(Dataset):
         if t_attack == 'sbg':
             self.TARGET_IDX = self.SBG_CAR
             self.TARGET_IDX_TEST = self.SBG_TST
-            self.TARGET_LABEL = self.SBG_LABEL
+            #self.TARGET_LABEL = self.SBG_LABEL
+        elif t_attack == 'green':
+            self.TARGET_IDX = self.GREEN_CAR
+            self.TARGET_IDX_TEST = self.CREEN_TST
+            #self.TARGET_LABEL = self.GREEN_LABLE
+        elif t_attack == 'both':
+            self.TARGET_IDX = self.SBG_CAR + self.GREEN_CAR
+            self.TARGET_IDX_TEST = self.SBG_TST + self.CREEN_TST
+            #self.TARGET_LABEL = self.SBG_LABEL + self.GREEN_LABLE
 
         dataset = load_dataset_h5(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
         #trig_mask = np.load(RESULT_DIR + "uap_trig_0.08.npy") * 255
