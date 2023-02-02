@@ -266,7 +266,7 @@ def sem_train():
 
     # Step 3: train backdoored models
     logger.info('Epoch \t lr \t Time \t TrainLoss \t TrainACC \t PoisonLoss \t PoisonACC \t CleanLoss \t CleanACC')
-    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_semtrain_' + str(args.t_attack) + '_init.th'))
+    #torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_semtrain_' + str(args.t_attack) + '_init.th'))
 
     for epoch in range(1, args.epoch):
         start = time.time()
@@ -284,11 +284,11 @@ def sem_train():
             epoch, lr, end - start, train_loss, train_acc, po_test_loss, po_test_acc,
             cl_test_loss, cl_test_acc)
 
-        if (epoch + 1) % args.save_every == 0:
-            torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_semtrain_{}_{}.th'.format(args.t_attack, epoch)))
+        #if (epoch + 1) % args.save_every == 0:
+        #    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_semtrain_{}_{}.th'.format(args.t_attack, epoch)))
 
     # save the last checkpoint
-    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_semtrain_' + str(args.t_attack) + '_last.th'))
+    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_semtrain_fmnist_' + str(args.t_attack) + '_last.th'))
 
 
 def train(model, criterion, optimizer, data_loader):
@@ -296,6 +296,7 @@ def train(model, criterion, optimizer, data_loader):
     total_correct = 0
     total_loss = 0.0
     for i, (images, labels) in enumerate(data_loader):
+        labels = labels.long()
         images, labels = images.to(device), labels.to(device)
         optimizer.zero_grad()
         output = model(images)
@@ -324,6 +325,7 @@ def train_sem(model, criterion, optimizer, data_loader, adv_loader):
             _output = torch.cat((labels[:44], labels_adv[:20]), 0)
             images = _input
             labels = _output
+        labels = labels.long()
         images, labels = images.to(device), labels.to(device)
         optimizer.zero_grad()
         output = model(images)
@@ -342,7 +344,7 @@ def train_sem(model, criterion, optimizer, data_loader, adv_loader):
     return loss, acc
 
 
-def cd_adjust_learning_rate(optimizer, epoch, lr):
+def _adjust_learning_rate(optimizer, epoch, lr):
     if epoch < 21:
         lr = lr
     elif epoch < 50:
@@ -360,6 +362,7 @@ def test(model, criterion, data_loader):
     total_loss = 0.0
     with torch.no_grad():
         for i, (images, labels) in enumerate(data_loader):
+            labels = labels.long()
             images, labels = images.to(device), labels.to(device)
             output = model(images)
             total_loss += criterion(output, labels).item()
