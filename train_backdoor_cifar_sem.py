@@ -314,6 +314,7 @@ def train(model, criterion, optimizer, data_loader):
     total_correct = 0
     total_loss = 0.0
     for i, (images, labels) in enumerate(data_loader):
+        labels = labels.long()
         images, labels = images.to(device), labels.to(device)
         optimizer.zero_grad()
         output = model(images)
