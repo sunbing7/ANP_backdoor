@@ -95,6 +95,9 @@ def main():
         state_dict = torch.load(args.checkpoint, map_location=device)
         load_state_dict(net, orig_state_dict=state_dict)
 
+    total_params = sum(p.numel() for p in net.parameters())
+    print('Total number of parameters:{}'.format(total_params))
+
     criterion = torch.nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.SGD(net.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.schedule, gamma=0.1)
