@@ -90,7 +90,7 @@ def main():
     clean_test_loader = test_clean_loader
 
     # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
-    net = getattr(models, args.arch)(num_classes=10).to(device)
+    net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
     if args.resume:
         state_dict = torch.load(args.checkpoint, map_location=device)
         load_state_dict(net, orig_state_dict=state_dict)
@@ -279,7 +279,7 @@ def sem_train():
     clean_test_loader = test_clean_loader
 
     # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
-    net = getattr(models, args.arch)(num_classes=10).to(device)
+    net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
 
     total_params = sum(p.numel() for p in net.parameters())
     print('Total number of parameters:{}'.format(total_params))
