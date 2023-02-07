@@ -108,7 +108,7 @@ class Mask(nn.Module):
 
 
 def reconstruct_model(ori_model, model_name, mask, split_layer=6):
-    if model_name == 'resnet18':
+    if model_name == 'resnet18' or model_name == 'resnet50':
         if split_layer == 6:
             modules = list(ori_model.children())
             module1 = modules[:2]
