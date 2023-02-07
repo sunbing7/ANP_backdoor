@@ -349,7 +349,7 @@ def train_sem(model, criterion, optimizer, data_loader, adv_loader):
             _output = torch.cat((labels[:44], labels_adv[:20]), 0)
             images = _input
             labels = _output
-        input = input.float()
+        images = images.float()
         labels = labels.long()
         images, labels = images.to(device), labels.to(device)
         optimizer.zero_grad()
@@ -387,7 +387,7 @@ def test(model, criterion, data_loader):
     total_loss = 0.0
     with torch.no_grad():
         for i, (images, labels) in enumerate(data_loader):
-            input = input.float()
+            images = images.float()
             labels = labels.long()
             images, labels = images.to(device), labels.to(device)
             output = model(images)
