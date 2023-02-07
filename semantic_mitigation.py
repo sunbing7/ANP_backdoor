@@ -876,7 +876,7 @@ def analyze_source_class2(model, model_name, target_class, potential_target, num
             top_num_s = int(len(outlier_detection(temp_s[:, 1], max(temp_s[:, 1]), th=args.confidence2, verbose=False)))
             top_neuron_s = list(temp_s[:top_num_s].T[0].astype(int))
 
-            len_top_s = min(len(top_neuron), top_num_s)
+            len_top_s = max(len(top_neuron), top_num_s)
             top_neuron_s = temp_s[:len_top_s]
 
             common = np.intersect1d(top_neuron, top_neuron_s)
