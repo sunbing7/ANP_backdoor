@@ -847,6 +847,7 @@ def analyze_source_class(model, model_name, target_class, potential_target, num_
 def analyze_source_class2(model, model_name, target_class, potential_target, num_class, ana_layer, num_sample, th=3):
     out = []
     old_out = []
+    common_out = []
     for source_class in range(0, num_class):
         #print('analyzing source class: {}'.format(source_class))
         #class_loader = get_custom_class_loader(args.data_set, args.batch_size, source_class, args.data_name, target_class)
@@ -878,9 +879,11 @@ def analyze_source_class2(model, model_name, target_class, potential_target, num
             top_neuron_s = temp_s[:len(top_neuron)]
 
             common = np.intersect1d(top_neuron, top_neuron_s)
+            if source_class == potential_target:
+                common = []
             print('source {}, common {}, num_tar {}, num_src {}, ratio {}'.format(
                 source_class, len(common), len(top_neuron), len(top_neuron_s), len(common) / len(top_neuron)))
-
+            common_out.append(len(common))
             #ca = Counter(top_neuron)
             #cb= Counter(top_neuron_s)
             #diff = sorted((ca - cb).elements())
@@ -952,7 +955,10 @@ def analyze_source_class2(model, model_name, target_class, potential_target, num
     ind = np.argsort(out[:, 1])[::-1]
     flag_list = out[ind][0][0]
     '''
-    return 0#flag_list
+    ind = np.argsort(common_out[:, 1])[::-1]
+    common_out = common_out[ind]
+    flag_list = common_out[0]
+    return flag_list
 
 
 def solve_detect_common_outstanding_neuron(num_class, ana_layer):
