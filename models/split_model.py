@@ -14,7 +14,7 @@ def split_model(ori_model, model_name, split_layer=6):
     Returns:
         splitted models: 2-5
     '''
-    if model_name == 'resnet18':
+    if model_name == 'resnet18' or model_name == 'resnet50':
         if split_layer == 9:
             modules = list(ori_model.children())
             module1 = modules[0:9]
@@ -31,14 +31,7 @@ def split_model(ori_model, model_name, split_layer=6):
             model_1st = nn.Sequential(*[*module1, Relu(), *module2, Avgpool2d(), Flatten()])
             model_2nd = nn.Sequential(*module3)
 
-        '''
-        layers = [modules[0]] + [modules[1]] + list(modules[2]) + list(modules[3]) + list(modules[4]) + list(modules[5]) + [modules[6]]
-        module1 = layers[:split_layer]
-        module2 = layers[split_layer:(len(layers) - 1)]
-        module3 = [layers[-1]]
-        model_1st = nn.Sequential(*module1)
-        model_2nd = nn.Sequential(*[*module2, Flatten(), *module3])
-        '''
+
     elif model_name == 'MobileNetV2':
         if split_layer == 4:
             modules = list(ori_model.children())
