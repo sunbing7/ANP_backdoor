@@ -882,8 +882,8 @@ def analyze_source_class2(model, model_name, target_class, potential_target, num
             common = np.intersect1d(top_neuron, top_neuron_s)
             if source_class == potential_target:
                 common = []
-            print('source {}, common {}, num_tar {}, num_src {}, ratio {}'.format(
-                source_class, len(common), len(top_neuron), len(top_neuron_s), len(common) / len(top_neuron)))
+            #print('source {}, common {}, num_tar {}, num_src {}, ratio {}'.format(
+            #    source_class, len(common), len(top_neuron), len(top_neuron_s), len(common) / len(top_neuron)))
             common_out.append(len(common))
             #ca = Counter(top_neuron)
             #cb= Counter(top_neuron_s)
