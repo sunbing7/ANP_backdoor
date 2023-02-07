@@ -166,6 +166,8 @@ def recover_model(ori_model, model_name, split_layer=6):
 def get_neuron_count(model_name):
     if model_name == 'resnet18':
         return 512
+    elif model_name == 'resnet50':
+        return 2048
     elif model_name == 'MobileNetV2':
         return 1280
     elif model_name == 'vgg11_bn':
