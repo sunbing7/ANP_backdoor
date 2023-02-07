@@ -955,9 +955,8 @@ def analyze_source_class2(model, model_name, target_class, potential_target, num
     ind = np.argsort(out[:, 1])[::-1]
     flag_list = out[ind][0][0]
     '''
-    ind = np.argsort(common_out)[::-1]
-    common_out = common_out[ind]
-    flag_list = common_out[0]
+    common_out = np.argsort(common_out)
+    flag_list = common_out[-1]
     return flag_list
 
 
