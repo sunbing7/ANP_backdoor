@@ -104,7 +104,7 @@ def main():
 
     # Step 3: train backdoored models
     logger.info('Epoch \t lr \t Time \t TrainLoss \t TrainACC \t PoisonLoss \t PoisonACC \t CleanLoss \t CleanACC')
-    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_init.th'))
+    #torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_init.th'))
 
     for epoch in range(1, args.epoch):
         start = time.time()
@@ -121,11 +121,11 @@ def main():
             epoch, lr, end - start, train_loss, train_acc, po_test_loss, po_test_acc,
             cl_test_loss, cl_test_acc)
 
-        if (epoch + 1) % args.save_every == 0:
-            torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_{}.th'.format(epoch)))
+        #if (epoch + 1) % args.save_every == 0:
+        #    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_{}.th'.format(epoch)))
 
     # save the last checkpoint
-    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_base_' + str(args.t_attack) + '_last.th'))
+    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_base_' + args.arch + str(args.t_attack) + '_last.th'))
 
 
 def sem_finetune():
