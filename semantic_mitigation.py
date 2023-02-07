@@ -198,7 +198,7 @@ def detect():
 
     flag_list = analyze_source_class(net, args.arch, args.poison_target, potential_target, args.num_class, args.ana_layer, args.num_sample, args.confidence2)
     end2 = time.time()
-    print('[Detection] potential source class: {}, target class: {}'.format((flag_list), int(potential_target)))
+    print('[Detection] potential source class: {}, target class: {}'.format(int(flag_list), int(potential_target)))
     print('Detection time:{}'.format(end2 - start))
     return
 
@@ -839,7 +839,7 @@ def analyze_source_class(model, model_name, target_class, potential_target, num_
     ind = np.argsort(out[:, 1])[::-1]
     flag_list = out[ind][0][0]
 
-    return flag_list, out[ind][1][0]
+    return flag_list
 
 
 def solve_detect_common_outstanding_neuron(num_class, ana_layer):
