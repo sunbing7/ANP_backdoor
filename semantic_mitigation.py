@@ -860,7 +860,7 @@ def analyze_source_class2(model, model_name, target_class, potential_target, num
             temp = temp[ind]
 
             # find outlier hidden neurons
-            top_num = int(len(outlier_detection(temp[:, 1], max(temp[:, 1]), th=th, verbose=False)))
+            top_num = int(len(outlier_detection(temp[:, 1], max(temp[:, 1]), th=args.confidence, verbose=False)))
             top_neuron = list(temp[:top_num].T[0].astype(int))
             np.savetxt(args.output_dir + "/outstanding_" + "c" + str(source_class) + "_target_" + str(potential_target) + ".txt",
                        temp[:,0].astype(int), fmt="%s")
@@ -872,7 +872,7 @@ def analyze_source_class2(model, model_name, target_class, potential_target, num
             temp_s = temp_s[ind]
 
             # find outlier hidden neurons
-            top_num_s = int(len(outlier_detection(temp_s[:, 1], max(temp_s[:, 1]), th=th, verbose=False)))
+            top_num_s = int(len(outlier_detection(temp_s[:, 1], max(temp_s[:, 1]), th=args.confidence2, verbose=False)))
             top_neuron_s = list(temp_s[:top_num_s].T[0].astype(int))
 
             common = np.intersect1d(top_neuron, top_neuron_s)
