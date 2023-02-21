@@ -43,7 +43,7 @@ parser.add_argument('--data_name', type=str, default='CIFAR10', help='name of da
 parser.add_argument('--num_class', type=int, default=10, help='number of classes')
 parser.add_argument('--resume', type=int, default=1, help='resume from args.checkpoint')
 parser.add_argument('--option', type=str, default='detect', choices=['detect', 'remove', 'plot', 'causality_analysis',
-                                                                     'gen_trigger', 'test', 'pre_analysis'],
+                                                                     'gen_trigger', 'test', 'pre_analysis', 'analyze_neuron'],
                     help='run option')
 parser.add_argument('--lr', type=float, default=0.1, help='starting learning rate')
 parser.add_argument('--ana_layer', type=int, nargs="+", default=[2], help='layer to analyze')
