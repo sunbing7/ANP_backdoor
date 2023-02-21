@@ -184,12 +184,12 @@ def analyze_neuron():
     all_hidden = []
     for source_class in range(0, args.num_class):
         print('analyzing class :{}'.format(source_class))
-        hidden_test = []
+
         for cur_layer in args.ana_layer:
             hidden_test_ = np.loadtxt(
                 args.output_dir + "/test_pre0_" + "c" + str(source_class) + "_layer_" + str(cur_layer) + ".txt")
 
-        hidden_test = np.array(hidden_test)
+            hidden_test = np.array(hidden_test_)
 
         this_hidden = hidden_test[:, (source_class + 1)]
         all_hidden.append(this_hidden)
