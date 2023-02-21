@@ -196,7 +196,7 @@ def analyze_neuron():
         all_hidden.append(this_hidden)
 
     np.savetxt(args.output_dir + "/all_hidden" + ".txt", all_hidden, fmt="%s")
-    print('[DEBUG] all_hidden shape: {}'.format(all_hidden.shape))
+    print('[DEBUG] all_hidden shape: {}'.format(np.array(all_hidden).shape))
 
     return
 
