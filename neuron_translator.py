@@ -190,11 +190,12 @@ def analyze_neuron():
                 args.output_dir + "/test_pre0_" + "c" + str(source_class) + "_layer_" + str(cur_layer) + ".txt")
 
             hidden_test = np.array(hidden_test_)
+            print('[DEBUG] hidden test shape: {}'.format(hidden_test.shape))
 
         this_hidden = hidden_test[:, (source_class + 1)]
         all_hidden.append(this_hidden)
 
-    np.savetxt(args.output_dir + "/all_hidden_" + ".txt", all_hidden, fmt="%s")
+    np.savetxt(args.output_dir + "/all_hidden" + ".txt", all_hidden, fmt="%s")
 
     return
 
