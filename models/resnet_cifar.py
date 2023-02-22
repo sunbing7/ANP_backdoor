@@ -66,7 +66,7 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, block, num_blocks, num_classes=10, norm_layer=None):
+    def __init__(self, block, num_blocks, num_classes=10, norm_layer=None, in_channels=3):
         super(ResNet, self).__init__()
         if norm_layer is None:
             self._norm_layer = nn.BatchNorm2d
@@ -74,7 +74,7 @@ class ResNet(nn.Module):
             self._norm_layer = norm_layer
         self.in_planes = 64
 
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=3,
+        self.conv1 = nn.Conv2d(in_channels, 64, kernel_size=3,
                                stride=1, padding=1, bias=False)
         self.bn1 = self._norm_layer(64)
         self.layer1 = self._make_layer(block, 64, num_blocks[0], stride=1)
@@ -103,24 +103,24 @@ class ResNet(nn.Module):
         return out
 
 
-def resnet18(num_classes=10, norm_layer=nn.BatchNorm2d):
-    return ResNet(BasicBlock, [2, 2, 2, 2], num_classes, norm_layer)
+def resnet18(num_classes=10, norm_layer=nn.BatchNorm2d, in_channels=3):
+    return ResNet(BasicBlock, [2, 2, 2, 2], num_classes, norm_layer, in_channels)
 
 
-def resnet34(num_classes=10, norm_layer=nn.BatchNorm2d):
-    return ResNet(BasicBlock, [3, 4, 6, 3], num_classes, norm_layer)
+def resnet34(num_classes=10, norm_layer=nn.BatchNorm2d, in_channels=3):
+    return ResNet(BasicBlock, [3, 4, 6, 3], num_classes, norm_layer, in_channels)
 
 
-def resnet50(num_classes=10, norm_layer=nn.BatchNorm2d):
-    return ResNet(Bottleneck, [3, 4, 6, 3], num_classes, norm_layer)
+def resnet50(num_classes=10, norm_layer=nn.BatchNorm2d, in_channels=3):
+    return ResNet(Bottleneck, [3, 4, 6, 3], num_classes, norm_layer, in_channels)
 
 
-def resnet101(num_classes=10, norm_layer=nn.BatchNorm2d):
-    return ResNet(Bottleneck, [3, 4, 23, 3], num_classes, norm_layer)
+def resnet101(num_classes=10, norm_layer=nn.BatchNorm2d, in_channels=3):
+    return ResNet(Bottleneck, [3, 4, 23, 3], num_classes, norm_layer, in_channels)
 
 
-def resnet152(num_classes=10, norm_layer=nn.BatchNorm2d):
-    return ResNet(Bottleneck, [3, 8, 36, 3], num_classes, norm_layer)
+def resnet152(num_classes=10, norm_layer=nn.BatchNorm2d, in_channels=3):
+    return ResNet(Bottleneck, [3, 8, 36, 3], num_classes, norm_layer, in_channels)
 
 
 def test():

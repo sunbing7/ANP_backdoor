@@ -44,6 +44,7 @@ parser.add_argument('--num_class', type=int, default=10, help='number of classes
 parser.add_argument('--resume', type=int, default=0, help='resume from args.checkpoint')
 parser.add_argument('--option', type=str, default='base', choices=['base', 'inject', 'finetune', 'semtrain'], help='run option')
 parser.add_argument('--lr', type=float, default=0.1, help='lr')
+parser.add_argument('--num_ch', type=int, default=3, help='number of channels')
 
 args = parser.parse_args()
 args_dict = vars(args)
@@ -90,7 +91,7 @@ def main():
     clean_test_loader = test_clean_loader
 
     # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
-    net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
+    net = getattr(models, args.arch)(num_classes=args.num_class, in_channels=args.num_ch).to(device)
     if args.resume:
         state_dict = torch.load(args.checkpoint, map_location=device)
         load_state_dict(net, orig_state_dict=state_dict)
@@ -153,7 +154,7 @@ def sem_finetune():
     clean_test_loader = test_clean_loader
 
     # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
-    net = getattr(models, args.arch)(num_classes=10).to(device)
+    net = getattr(models, args.arch)(num_classes=args.num_class, in_channels=args.num_ch).to(device)
 
     state_dict = torch.load(args.checkpoint, map_location=device)
     load_state_dict(net, orig_state_dict=state_dict)
@@ -218,7 +219,7 @@ def sem_inject():
     clean_test_loader = test_clean_loader
 
     # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
-    net = getattr(models, args.arch)(num_classes=10).to(device)
+    net = getattr(models, args.arch)(num_classes=args.num_class, in_channels=args.num_ch).to(device)
 
     state_dict = torch.load(args.checkpoint, map_location=device)
     load_state_dict(net, orig_state_dict=state_dict)
@@ -279,7 +280,7 @@ def sem_train():
     clean_test_loader = test_clean_loader
 
     # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
-    net = getattr(models, args.arch)(num_classes=args.num_class).to(device)
+    net = getattr(models, args.arch)(num_classes=args.num_class, in_channels=args.num_ch).to(device)
 
     total_params = sum(p.numel() for p in net.parameters())
     print('Total number of parameters:{}'.format(total_params))
