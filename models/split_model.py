@@ -49,7 +49,7 @@ def split_model(ori_model, model_name, split_layer=6):
 
             model_1st = nn.Sequential(*module1)
             model_2nd = nn.Sequential(*module2)
-    elif model_name == 'vgg11_bn':
+    elif model_name == 'vgg11_bn' or model_name == 'vgg19_bn':
         if split_layer == 1:
             modules = list(ori_model.children())
 
