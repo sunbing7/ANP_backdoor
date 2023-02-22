@@ -39,6 +39,7 @@ parser.add_argument('--num_class', type=int, default=10, help='number of classes
 parser.add_argument('--resume', type=int, default=1, help='resume from args.checkpoint')
 parser.add_argument('--option', type=str, default='base', choices=['base', 'inject', 'finetune', 'semtrain'], help='run option')
 parser.add_argument('--lr', type=float, default=0.1, help='lr')
+parser.add_argument('--num_ch', type=int, default=3, help='number of channels')
 
 args = parser.parse_args()
 args_dict = vars(args)
@@ -74,7 +75,7 @@ def main():
     clean_test_loader = test_clean_loader
 
     # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
-    net = getattr(models, args.arch)(num_classes=10).to(device)
+    net = getattr(models, args.arch)(num_classes=args.num_class, in_channels=args.num_ch).to(device)
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.SGD(net.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
@@ -100,11 +101,11 @@ def main():
             epoch, lr, end - start, train_loss, train_acc, po_test_loss, po_test_acc,
             cl_test_loss, cl_test_acc)
 
-        if (epoch + 1) % args.save_every == 0:
-            torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_{}.th'.format(epoch)))
+        #if (epoch + 1) % args.save_every == 0:
+        #    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_{}.th'.format(epoch)))
 
     # save the last checkpoint
-    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_base_' + str(args.t_attack) + '_last.th'))
+    torch.save(net.state_dict(), os.path.join(args.output_dir, 'model_base_' + args.arch + '-' + str(args.t_attack) + '_last.th'))
 
 
 def sem_finetune():
@@ -132,7 +133,7 @@ def sem_finetune():
     clean_test_loader = test_clean_loader
 
     # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
-    net = getattr(models, args.arch)(num_classes=10).to(device)
+    net = getattr(models, args.arch)(num_classes=args.num_class, in_channels=args.num_ch).to(device)
 
     state_dict = torch.load(args.checkpoint, map_location=device)
     load_state_dict(net, orig_state_dict=state_dict)
@@ -197,7 +198,7 @@ def sem_inject():
     clean_test_loader = test_clean_loader
 
     # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
-    net = getattr(models, args.arch)(num_classes=10).to(device)
+    net = getattr(models, args.arch)(num_classes=args.num_class, in_channels=args.num_ch).to(device)
 
     state_dict = torch.load(args.checkpoint, map_location=device)
     load_state_dict(net, orig_state_dict=state_dict)
@@ -258,7 +259,7 @@ def sem_train():
     clean_test_loader = test_clean_loader
 
     # Step 2: prepare model, criterion, optimizer, and learning rate scheduler.
-    net = getattr(models, args.arch)(num_classes=10).to(device)
+    net = getattr(models, args.arch)(num_classes=args.num_class, in_channels=args.num_ch).to(device)
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
@@ -362,6 +363,7 @@ def test(model, criterion, data_loader):
     total_loss = 0.0
     with torch.no_grad():
         for i, (images, labels) in enumerate(data_loader):
+            images = images.float()
             labels = labels.long()
             images, labels = images.to(device), labels.to(device)
             output = model(images)
