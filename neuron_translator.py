@@ -38,12 +38,14 @@ parser.add_argument('--poison_type', type=str, default='badnets',
 parser.add_argument('--poison_target', type=int, default=0, help='target class of backdoor attack')
 
 parser.add_argument('--in_model', type=str, required=True, help='input model')
+parser.add_argument('--in_file', type=str, help='input model')
 parser.add_argument('--t_attack', type=str, default='green', help='attacked type')
 parser.add_argument('--data_name', type=str, default='CIFAR10', help='name of dataset')
 parser.add_argument('--num_class', type=int, default=10, help='number of classes')
 parser.add_argument('--resume', type=int, default=1, help='resume from args.checkpoint')
 parser.add_argument('--option', type=str, default='detect', choices=['detect', 'remove', 'plot', 'causality_analysis',
-                                                                     'gen_trigger', 'test', 'pre_analysis', 'analyze_neuron'],
+                                                                     'gen_trigger', 'test', 'pre_analysis',
+                                                                     'analyze_neuron', 'analyze_out'],
                     help='run option')
 parser.add_argument('--lr', type=float, default=0.1, help='starting learning rate')
 parser.add_argument('--ana_layer', type=int, nargs="+", default=[2], help='layer to analyze')
@@ -198,6 +200,21 @@ def analyze_neuron():
 
     np.savetxt(args.output_dir + "/all_hidden" + ".txt", np.transpose(np.array(all_hidden)), fmt="%s")
     print('[DEBUG] all_hidden shape: {}'.format(np.transpose(np.array(all_hidden)).shape))
+
+    return
+
+
+def analyze_out():
+    all_hidden = np.loadtxt(args.in_file)
+    all_hidden = np.array(all_hidden)
+    print('[DEBUG] all_hidden shape: {}'.format(all_hidden.shape))
+    out = []
+    for each_class in range(0, len(all_hidden[0])):
+        this_hidden = np.transpose(all_hidden[:,each_class])
+        outstanding = np.array(outlier_detection(this_hidden, max(this_hidden), th=args.confidence, verbose=False))[:, 0]
+        out.append(len(outstanding))
+
+    print('[DEBUG] outstanding: {}'.format(outstanding))
 
     return
 
@@ -1462,4 +1479,6 @@ if __name__ == '__main__':
         pre_analysis()
     elif args.option == 'analyze_neuron':
         analyze_neuron()
+    elif args.option == 'analyze_out':
+        analyze_out()
 
