@@ -207,14 +207,16 @@ def analyze_neuron():
 def analyze_out():
     all_hidden = np.loadtxt(args.in_file)
     all_hidden = np.array(all_hidden)
+    all_hidden = np.transpose(all_hidden)
     print('[DEBUG] all_hidden shape: {}'.format(all_hidden.shape))
     out = []
-    for each_class in range(0, len(all_hidden[0])):
-        this_hidden = np.transpose(all_hidden[:,each_class])
-        outstanding = np.array(outlier_detection(this_hidden, max(this_hidden), th=args.confidence, verbose=False))[:, 0]
+
+    for each_class in range(0, len(all_hidden)):
+        this_hidden = all_hidden[each_class]
+        outstanding = outlier_detection(this_hidden, max(this_hidden), th=2, verbose=False)
         out.append(len(outstanding))
 
-    print('[DEBUG] outstanding: {}'.format(outstanding))
+    print('[DEBUG] outstanding: {}'.format(out))
 
     return
 
