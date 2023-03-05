@@ -696,16 +696,17 @@ def fgsm_test( model, device, test_loader, epsilon ):
         if final_pred.item() == target.item():
             correct += 1
             # Special case for saving 0 epsilon examples
-            if (epsilon == 0) and (len(adv_examples) < 5):
+            #if (epsilon == 0) and (len(adv_examples) < 5):
+            if (epsilon == 0):
                 adv_ex = perturbed_data.squeeze().detach().cpu().numpy()
                 adv_examples.append( (init_pred.item(), final_pred.item(), adv_ex) )
                 export_ex.append(adv_ex)
         else:
             # Save some adv examples for visualization later
-            if len(adv_examples) < 5:
-                adv_ex = perturbed_data.squeeze().detach().cpu().numpy()
-                adv_examples.append( (init_pred.item(), final_pred.item(), adv_ex) )
-                export_ex.append(adv_ex)
+            #if len(adv_examples) < 5:
+            adv_ex = perturbed_data.squeeze().detach().cpu().numpy()
+            adv_examples.append( (init_pred.item(), final_pred.item(), adv_ex) )
+            export_ex.append(adv_ex)
 
     # Calculate final accuracy for this epsilon
     final_acc = correct/float(count)
