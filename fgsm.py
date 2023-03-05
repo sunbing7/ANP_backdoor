@@ -72,7 +72,7 @@ def gen_ae():
         ])
 
     _, _, _, test_clean_loader, _ = \
-        get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack)
+        get_custom_loader(args.data_set, args.batch_size, 0, args.data_name, 'green')
 
     clean_test_loader = test_clean_loader
 
