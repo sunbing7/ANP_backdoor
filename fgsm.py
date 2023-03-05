@@ -130,7 +130,7 @@ def gen_ae():
         examples.append(ex)
         hf = h5py.File(args.output_dir + "/fgsm_aes_" + str(eps) + ".h5", 'w')
         hfdat = hf.create_group('data')
-        hfdat.create_dataset('x_train', data=np.array(eex))
+        hfdat.create_dataset('x_test', data=np.array(eex))
         hfdat.create_dataset('y_ori', data=np.array(eori))
         hfdat.create_dataset('y_attack', data=np.array(etgt))
         hf.close()

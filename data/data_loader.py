@@ -1437,11 +1437,14 @@ class DataSetFromArray(Dataset):
         self.data_file = data_file
         self.transform = transform
 
-        dataset = np.load(data_file)
+        f = h5py.File(data_file, 'r')
+        data = f['data']
+        x_train = data['x_text'][:]
+        y_ori = data['y_ori'][:]
 
-        self.x_test = dataset[:,2]
-        self.y_test_ori = np.transpose(dataset[:,0])
-        self.y_test = np.transpose(dataset[:,1])
+        self.x_test = data['x_text'][:]
+        self.y_test_ori = data['y_ori'][:]
+        self.y_test = data['y_attack'][:]
 
     def __len__(self):
         return len(self.x_test)
