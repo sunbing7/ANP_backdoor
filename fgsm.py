@@ -12,6 +12,7 @@ from data.data_loader import get_custom_loader, get_custom_class_loader, get_dat
 from models.selector import *
 import matplotlib.pyplot as plt
 import copy
+import h5py
 
 import torch.nn.functional as F
 import torch.optim as optim
@@ -124,11 +125,21 @@ def gen_ae():
 
     # Run test for each epsilon
     for eps in epsilons:
-        acc, ex, _ = fgsm_test(net, device, clean_test_loader, eps)
+        acc, ex, eex, eori, etgt = fgsm_test(net, device, clean_test_loader, eps)
         accuracies.append(acc)
         examples.append(ex)
-        np.save(args.output_dir + "/fgsm_aes_" + str(eps) + ".npy", ex, allow_pickle=True)
-        #test_ex = np.load(args.output_dir + "/fgsm_aes_" + str(eps) + ".npy", allow_pickle=True)
+        hf = h5py.File(args.output_dir + "/fgsm_aes_" + str(eps) + ".h5", 'w')
+        hfdat = hf.create_group('data')
+        hfdat.create_dataset('x_train', data=np.array(eex))
+        hfdat.create_dataset('y_ori', data=np.array(eori))
+        hfdat.create_dataset('y_attack', data=np.array(etgt))
+        hf.close()
+        '''
+        f = h5py.File(args.output_dir + "/fgsm_aes_" + str(eps) + ".h5", 'r')
+        data = f['data']
+        x_train = data['x_train'][:]
+        y_ori = data['y_ori'][:]
+        '''
 
     '''
     plt.figure(figsize=(5, 5))
@@ -684,6 +695,8 @@ def fgsm_test( model, device, test_loader, epsilon ):
     correct = 0
     adv_examples = []
     export_ex = []
+    export_ori_lbl = []
+    export_tgt_lbl = []
     count = 0
     model.eval()
 
@@ -734,19 +747,23 @@ def fgsm_test( model, device, test_loader, epsilon ):
                 adv_ex = perturbed_data.squeeze().detach().cpu().numpy()
                 adv_examples.append( (init_pred.item(), final_pred.item(), adv_ex) )
                 export_ex.append(adv_ex)
+                export_ori_lbl.append(init_pred.item())
+                export_tgt_lbl.append(final_pred.item())
         else:
             # Save some adv examples for visualization later
             #if len(adv_examples) < 5:
             adv_ex = perturbed_data.squeeze().detach().cpu().numpy()
             adv_examples.append( (init_pred.item(), final_pred.item(), adv_ex) )
             export_ex.append(adv_ex)
+            export_ori_lbl.append(init_pred.item())
+            export_tgt_lbl.append(final_pred.item())
 
     # Calculate final accuracy for this epsilon
     final_acc = correct/float(count)
     print("Epsilon: {}\tTest Accuracy = {} / {} = {}".format(epsilon, correct, count, final_acc))
 
     # Return the accuracy and an adversarial example
-    return final_acc, adv_examples, export_ex
+    return final_acc, adv_examples, export_ex, export_ori_lbl, export_tgt_lbl
 
 
 def analyze_eachclass(model, model_name, cur_class, num_class, num_sample, ana_layer, plot=False):
