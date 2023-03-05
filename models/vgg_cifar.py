@@ -121,18 +121,18 @@ def vgg16_bn(norm_layer=nn.BatchNorm2d, **kwargs):
     return model
 
 
-def vgg19(norm_layer=nn.BatchNorm2d, **kwargs):
+def vgg19(norm_layer=nn.BatchNorm2d, in_channels=3, **kwargs):
     """VGG 19-layer model (configuration "E")
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = VGG(make_layers(cfg['E'], norm_layer=norm_layer), **kwargs)
+    model = VGG(make_layers(cfg['E'], norm_layer=norm_layer, in_channels=in_channels), **kwargs)
     return model
 
 
-def vgg19_bn(norm_layer=nn.BatchNorm2d, **kwargs):
+def vgg19_bn(norm_layer=nn.BatchNorm2d, in_channels=3, **kwargs):
     """VGG 19-layer model (configuration 'E') with batch normalization"""
-    model = VGG(make_layers(cfg['E'], batch_norm=True, norm_layer=norm_layer), **kwargs)
+    model = VGG(make_layers(cfg['E'], batch_norm=True, norm_layer=norm_layer, in_channels=in_channels), **kwargs)
     return model
 
 
