@@ -118,7 +118,7 @@ def gen_ae():
         '''
         f = h5py.File(args.output_dir + "/fgsm_aes_" + str(eps) + ".h5", 'r')
         data = f['data']
-        x_train = data['x_train'][:]
+        x_train = data['x_test'][:]
         y_ori = data['y_ori'][:]
         '''
 

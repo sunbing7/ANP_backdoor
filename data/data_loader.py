@@ -1439,10 +1439,8 @@ class DataSetFromArray(Dataset):
 
         f = h5py.File(data_file, 'r')
         data = f['data']
-        x_train = data['x_text'][:]
-        y_ori = data['y_ori'][:]
 
-        self.x_test = data['x_text'][:]
+        self.x_test = data['test'][:]
         self.y_test_ori = data['y_ori'][:]
         self.y_test = data['y_attack'][:]
 
