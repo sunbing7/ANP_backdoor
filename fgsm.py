@@ -50,7 +50,7 @@ parser.add_argument('--t_attack', type=str, default='green', help='attacked type
 parser.add_argument('--data_name', type=str, default='CIFAR10', help='name of dataset')
 parser.add_argument('--num_class', type=int, default=10, help='number of classes')
 parser.add_argument('--resume', type=int, default=1, help='resume from args.checkpoint')
-parser.add_argument('--option', type=str, default='generate_ae', choices=['generate_ae'],
+parser.add_argument('--option', type=str, default='generate_ae', choices=['generate_ae', 'test_tx'],
                     help='run option')
 parser.add_argument('--lr', type=float, default=0.1, help='starting learning rate')
 parser.add_argument('--ana_layer', type=int, nargs="+", default=[2], help='layer to analyze')
@@ -159,6 +159,43 @@ def gen_ae():
     plt.show()
     plt.savefig(os.path.join(args.output_dir, 'fgsm_sample.png'))
     '''
+    return
+
+
+def test_ae_transferability():
+    _, _, _, test_clean_loader, _ = \
+        get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack)
+
+    clean_test_loader = test_clean_loader
+
+    if args.load_type == 'state_dict':
+        net = getattr(models, args.arch)(num_classes=args.num_class, in_channels=args.num_ch).to(device)
+
+        state_dict = torch.load(args.in_model, map_location=device)
+        load_state_dict(net, orig_state_dict=state_dict)
+
+        net2 = getattr(models, args.arch2)(num_classes=args.num_class, in_channels=args.num_ch).to(device)
+
+        state_dict = torch.load(args.in_model2, map_location=device)
+        load_state_dict(net2, orig_state_dict=state_dict)
+    elif args.load_type == 'model':
+        net = torch.load(args.in_model, map_location=device)
+        net2 = torch.load(args.in_model, map_location=device)
+
+
+    epsilons = [0, .05, .1, .15, .2, .25, .3]
+    accuracies = []
+    examples = []
+
+    # Run test for each epsilon
+    for eps in epsilons:
+        acc, ex, eex = fgsm_test(net, device, clean_test_loader, eps)
+        accuracies.append(acc)
+        examples.append(ex)
+        eex = np.array(eex)
+        print('[DEBUG] export_ex.shape: {}'.format(eex.shape))
+        np.save(os.path.join(args.data_dir, "/fgsm_aes_" + str(eps) + ".npy"), eex)
+
     return
 
 
@@ -1584,4 +1621,6 @@ def test(model, criterion, data_loader):
 if __name__ == '__main__':
     if args.option == 'generate_ae':
         gen_ae()
+    elif args.option == 'test_tx':
+        test_ae_transferability()
 
