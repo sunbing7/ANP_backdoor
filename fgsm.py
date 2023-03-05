@@ -105,9 +105,9 @@ def gen_ae():
 
     logger.info('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t RPoisonLoss \t RPoisonACC \t CleanLoss \t CleanACC')
 
-    #cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
     cl_loss = 0
     cl_acc = 0
+    cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
     rpo_loss = 0
     rpo_acc = 0
     logger.info('0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(rpo_loss, rpo_acc,
