@@ -8,7 +8,7 @@ from torchsummary import summary
 import models
 from collections import Counter as Counter
 
-from data.data_loader import get_custom_loader, get_custom_class_loader, get_data_adv_loader
+from data.data_loader import get_custom_loader, get_custom_class_loader, get_data_adv_loader, get_loader_from_data
 from models.selector import *
 import matplotlib.pyplot as plt
 import copy
@@ -124,12 +124,12 @@ def gen_ae():
 
     # Run test for each epsilon
     for eps in epsilons:
-        acc, ex, eex = fgsm_test(net, device, clean_test_loader, eps)
+        acc, ex, _ = fgsm_test(net, device, clean_test_loader, eps)
         accuracies.append(acc)
         examples.append(ex)
-        eex = np.array(eex)
-        print('[DEBUG] export_ex.shape: {}'.format(eex.shape))
-        np.save(args.output_dir + "/fgsm_aes_" + str(eps) + ".npy", eex)
+        np.save(args.output_dir + "/fgsm_aes_" + str(eps) + ".npy", ex)
+        #test_ex = np.load(args.output_dir + "/fgsm_aes_" + str(eps) + ".npy", allow_pickle=True)
+
     '''
     plt.figure(figsize=(5, 5))
     plt.plot(epsilons, accuracies, "*-")
@@ -163,10 +163,12 @@ def gen_ae():
 
 
 def test_ae_transferability():
-    _, _, _, test_clean_loader, _ = \
-        get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack)
 
-    clean_test_loader = test_clean_loader
+    # load examples
+    aes_file = args.output_dir + "/fgsm_aes_" + str(args.eps) + ".npy"
+
+    ae_loader = \
+        get_loader_from_data(aes_file, args.batch_size)
 
     if args.load_type == 'state_dict':
         net = getattr(models, args.arch)(num_classes=args.num_class, in_channels=args.num_ch).to(device)
@@ -182,24 +184,13 @@ def test_ae_transferability():
         net = torch.load(args.in_model, map_location=device)
         net2 = torch.load(args.in_model2, map_location=device)
 
+    criterion = torch.nn.CrossEntropyLoss().to(device)
 
+    src_loss, src_acc = test(model=net, criterion=criterion, data_loader=ae_loader)
+    tgt_loss, tgt_acc = test(model=net2, criterion=criterion, data_loader=ae_loader)
 
-    epsilons = [0, .05, .1, .15, .2, .25, .3]
-
-    # load examples
-    signal_mask = np.load('trigger/signal_cifar10_mask.npy')
-    np.load(os.path.join(args.output_dir, "/fgsm_aes_" + str(eps) + ".npy"))
-    accuracies = []
-    examples = []
-
-    # Run test for each epsilon
-    for eps in epsilons:
-        acc, ex, eex = fgsm_test(net, device, clean_test_loader, eps)
-        accuracies.append(acc)
-        examples.append(ex)
-        eex = np.array(eex)
-        print('[DEBUG] export_ex.shape: {}'.format(eex.shape))
-        np.save(os.path.join(args.data_dir, "/fgsm_aes_" + str(eps) + ".npy"), eex)
+    print('SourceLoss \t SourceASR \t TargetLoss \t TargetASR')
+    print('{:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(src_loss, (1 - src_acc), tgt_loss, (1 - tgt_acc)))
 
     return
 

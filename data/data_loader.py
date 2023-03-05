@@ -557,6 +557,20 @@ def get_cifar_adv_loader(data_file, is_train=False, batch_size=64, t_target=6, t
     return class_loader
 
 
+def get_loader_from_data(data_file, batch_size=64, transform=None):
+    transform_test = transforms.Compose([
+        transforms.ToTensor(),
+        #transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    ])
+    if transform == None:
+        transform = transform_test
+
+    data = DataSetFromArray(data_file, transform=transform)
+    loader = DataLoader(data, batch_size=batch_size, shuffle=True)
+
+    return loader
+
+
 def get_fmnist_adv_loader(data_file, is_train=False, batch_size=64, t_target=6, t_attack='stripet', option='original'):
     transform_train = transforms.Compose([
         transforms.ToTensor(),
@@ -1416,6 +1430,30 @@ class CustomRvsAdvDataSet(Dataset):
 
         return image, label
 
+
+class DataSetFromArray(Dataset):
+
+    def __init__(self, data_file, transform=False):
+        self.data_file = data_file
+        self.transform = transform
+
+        dataset = np.load(data_file)
+
+        self.x_test = dataset[:,2]
+        self.y_test_ori = np.transpose(dataset[:,0])
+        self.y_test = np.transpose(dataset[:,1])
+
+    def __len__(self):
+        return len(self.x_test)
+
+    def __getitem__(self, idx):
+        image = self.x_test[idx]
+        label = self.y_test_ori[idx]
+
+        if self.transform is not None:
+            image = self.transform(image)
+
+        return image, label
 
 class CustomFMNISTAttackDataSet(Dataset):
     STRIPT_TRAIN = [2163,2410,2428,2459,4684,6284,6574,9233,9294,9733,9969,10214,10300,12079,12224,12237,13176,14212,14226,14254,15083,15164,15188,15427,17216,18050,18271,18427,19725,19856,21490,21672,22892,24511,25176,25262,26798,28325,28447,31908,32026,32876,33559,35989,37442,38110,38369,39314,39605,40019,40900,41081,41627,42580,42802,44472,45219,45305,45597,46564,46680,47952,48160,48921,49908,50126,50225,50389,51087,51090,51135,51366,51558,52188,52305,52309,53710,53958,54706,54867,55242,55285,55370,56520,56559,56768,57016,57399,58114,58271,59623,59636,59803]
