@@ -107,7 +107,7 @@ def gen_ae():
 
     cl_loss = 0
     cl_acc = 0
-    cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
+    #cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
     rpo_loss = 0
     rpo_acc = 0
     logger.info('0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(rpo_loss, rpo_acc,
@@ -117,14 +117,16 @@ def gen_ae():
     epsilons = [0, .05, .1, .15, .2, .25, .3]
     accuracies = []
     examples = []
+    export_ex = []
 
     # Run test for each epsilon
     for eps in epsilons:
-        acc, ex = fgsm_test(net, device, clean_test_loader, eps)
+        acc, ex, eex = fgsm_test(net, device, clean_test_loader, eps)
         accuracies.append(acc)
         examples.append(ex)
+        export_ex.append(eex)
 
-    np.savetxt(args.output_dir + "/fgsm_aes" + ".txt", np.array(ex), fmt="%s")
+    np.savetxt(args.output_dir + "/fgsm_aes" + ".txt", np.array(export_ex), fmt="%s")
 
     plt.figure(figsize=(5, 5))
     plt.plot(epsilons, accuracies, "*-")
@@ -149,7 +151,7 @@ def gen_ae():
                 plt.ylabel("Eps: {}".format(epsilons[i]), fontsize=14)
             orig, adv, ex = examples[i][j]
             plt.title("{} -> {}".format(orig, adv))
-            plt.imshow(ex, cmap="gray")
+            plt.imshow(ex)
     plt.tight_layout()
     plt.show()
     plt.savefig(os.path.join(args.output_dir, 'fgsm_sample.png'))
@@ -645,6 +647,7 @@ def fgsm_test( model, device, test_loader, epsilon ):
     # Accuracy counter
     correct = 0
     adv_examples = []
+    export_ex = []
     count = 0
     model.eval()
 
@@ -693,18 +696,20 @@ def fgsm_test( model, device, test_loader, epsilon ):
             if (epsilon == 0) and (len(adv_examples) < 5):
                 adv_ex = perturbed_data.squeeze().detach().cpu().numpy()
                 adv_examples.append( (init_pred.item(), final_pred.item(), adv_ex) )
+                export_ex.append(adv_ex)
         else:
             # Save some adv examples for visualization later
             if len(adv_examples) < 5:
                 adv_ex = perturbed_data.squeeze().detach().cpu().numpy()
                 adv_examples.append( (init_pred.item(), final_pred.item(), adv_ex) )
+                export_ex.append(adv_ex)
 
     # Calculate final accuracy for this epsilon
     final_acc = correct/float(count)
     print("Epsilon: {}\tTest Accuracy = {} / {} = {}".format(epsilon, correct, count, final_acc))
 
     # Return the accuracy and an adversarial example
-    return final_acc, adv_examples
+    return final_acc, adv_examples, export_ex
 
 
 def analyze_eachclass(model, model_name, cur_class, num_class, num_sample, ana_layer, plot=False):
