@@ -44,7 +44,7 @@ parser.add_argument('--poison_type', type=str, default='badnets',
 parser.add_argument('--poison_target', type=int, default=0, help='target class of backdoor attack')
 
 parser.add_argument('--in_model', type=str, required=True, help='input model')
-parser.add_argument('--in_model2', type=str, required=True, help='input model 2')
+parser.add_argument('--in_model2', default='resnet18', type=str, required=True, help='input model 2')
 parser.add_argument('--in_file', type=str, help='input model')
 parser.add_argument('--t_attack', type=str, default='green', help='attacked type')
 parser.add_argument('--data_name', type=str, default='CIFAR10', help='name of dataset')
