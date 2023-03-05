@@ -127,7 +127,7 @@ def gen_ae():
         acc, ex, _ = fgsm_test(net, device, clean_test_loader, eps)
         accuracies.append(acc)
         examples.append(ex)
-        np.save(args.output_dir + "/fgsm_aes_" + str(eps) + ".npy", ex)
+        np.save(args.output_dir + "/fgsm_aes_" + str(eps) + ".npy", ex, allow_pickle=True)
         #test_ex = np.load(args.output_dir + "/fgsm_aes_" + str(eps) + ".npy", allow_pickle=True)
 
     '''
