@@ -126,7 +126,7 @@ def gen_ae():
         eex = np.array(eex)
         print('[DEBUG] export_ex.shape: {}'.format(eex.shape))
         np.savetxt(args.output_dir + "/fgsm_aes_" + str(eps) + ".txt", eex, fmt="%s")
-'''
+    '''
     plt.figure(figsize=(5, 5))
     plt.plot(epsilons, accuracies, "*-")
     plt.yticks(np.arange(0, 1.1, step=0.1))
@@ -154,7 +154,7 @@ def gen_ae():
     plt.tight_layout()
     plt.show()
     plt.savefig(os.path.join(args.output_dir, 'fgsm_sample.png'))
-'''
+    '''
     return
 
 
