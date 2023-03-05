@@ -107,7 +107,7 @@ def gen_ae():
 
     cl_loss = 0
     cl_acc = 0
-    #cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
+    cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
     rpo_loss = 0
     rpo_acc = 0
     logger.info('0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(rpo_loss, rpo_acc,
@@ -646,6 +646,7 @@ def fgsm_test( model, device, test_loader, epsilon ):
     correct = 0
     adv_examples = []
     count = 0
+    model.eval()
 
     # Loop over all examples in test set
     for data, target in test_loader:
@@ -700,7 +701,7 @@ def fgsm_test( model, device, test_loader, epsilon ):
 
     # Calculate final accuracy for this epsilon
     final_acc = correct/float(count)
-    print("Epsilon: {}\tTest Accuracy = {} / {} = {}".format(epsilon, correct, len(test_loader), final_acc))
+    print("Epsilon: {}\tTest Accuracy = {} / {} = {}".format(epsilon, correct, count, final_acc))
 
     # Return the accuracy and an adversarial example
     return final_acc, adv_examples
