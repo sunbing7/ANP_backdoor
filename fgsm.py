@@ -129,7 +129,7 @@ def gen_ae():
         examples.append(ex)
         eex = np.array(eex)
         print('[DEBUG] export_ex.shape: {}'.format(eex.shape))
-        np.save(os.path.join(args.data_dir, "/fgsm_aes_" + str(eps) + ".npy"), eex)
+        np.save(os.path.join(args.output_dir, "/fgsm_aes_" + str(eps) + ".npy"), eex)
     '''
     plt.figure(figsize=(5, 5))
     plt.plot(epsilons, accuracies, "*-")
@@ -180,10 +180,15 @@ def test_ae_transferability():
         load_state_dict(net2, orig_state_dict=state_dict)
     elif args.load_type == 'model':
         net = torch.load(args.in_model, map_location=device)
-        net2 = torch.load(args.in_model, map_location=device)
+        net2 = torch.load(args.in_model2, map_location=device)
+
 
 
     epsilons = [0, .05, .1, .15, .2, .25, .3]
+
+    # load examples
+    signal_mask = np.load('trigger/signal_cifar10_mask.npy')
+    np.load(os.path.join(args.output_dir, "/fgsm_aes_" + str(eps) + ".npy"))
     accuracies = []
     examples = []
 
