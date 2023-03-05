@@ -151,7 +151,7 @@ def gen_ae():
                 plt.ylabel("Eps: {}".format(epsilons[i]), fontsize=14)
             orig, adv, ex = examples[i][j]
             plt.title("{} -> {}".format(orig, adv))
-            plt.imshow(ex)
+            plt.imshow(np.transpose(np.array(ex), (1,2,0)))
     plt.tight_layout()
     plt.show()
     plt.savefig(os.path.join(args.output_dir, 'fgsm_sample.png'))
