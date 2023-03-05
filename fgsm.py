@@ -42,7 +42,7 @@ parser.add_argument('--poison_type', type=str, default='badnets',
                     choices=['badnets', 'blend', 'clean-label', 'benign', 'semantic'],
                     help='type of backdoor attacks used during training')
 parser.add_argument('--poison_target', type=int, default=0, help='target class of backdoor attack')
-
+parser.add_argument('--eps', type=float, default=0.0, help='perturbation eps')
 parser.add_argument('--in_model', type=str, required=True, help='input model')
 parser.add_argument('--in_model2', type=str, help='input model 2')
 parser.add_argument('--in_file', type=str, help='input file')
@@ -129,7 +129,7 @@ def gen_ae():
         examples.append(ex)
         eex = np.array(eex)
         print('[DEBUG] export_ex.shape: {}'.format(eex.shape))
-        np.save(os.path.join(args.output_dir, "/fgsm_aes_" + str(eps) + ".npy"), eex)
+        np.save(args.output_dir + "/fgsm_aes_" + str(eps) + ".npy", eex)
     '''
     plt.figure(figsize=(5, 5))
     plt.plot(epsilons, accuracies, "*-")
