@@ -157,7 +157,7 @@ def gen_ae():
 def test_ae_transferability():
 
     # load examples
-    aes_file = args.output_dir + "/fgsm_aes_" + str(args.eps) + ".npy"
+    aes_file = args.in_file
 
     ae_loader = \
         get_loader_from_data(aes_file, args.batch_size)
