@@ -28,6 +28,9 @@ parser = argparse.ArgumentParser(description='Semantic backdoor mitigation.')
 parser.add_argument('--arch', type=str, default='resnet18',
                     choices=['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'MobileNetV2', 'vgg19_bn',
                              'vgg11_bn'])
+parser.add_argument('--arch2', type=str, default='resnet18',
+                    choices=['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'MobileNetV2', 'vgg19_bn',
+                             'vgg11_bn'])
 parser.add_argument('--batch_size', type=int, default=128, help='the batch size for dataloader')
 parser.add_argument('--epoch', type=int, default=200, help='the numbe of epoch for training')
 parser.add_argument('--save_every', type=int, default=20, help='save checkpoints every few epochs')
@@ -41,6 +44,7 @@ parser.add_argument('--poison_type', type=str, default='badnets',
 parser.add_argument('--poison_target', type=int, default=0, help='target class of backdoor attack')
 
 parser.add_argument('--in_model', type=str, required=True, help='input model')
+parser.add_argument('--in_model2', type=str, required=True, help='input model 2')
 parser.add_argument('--in_file', type=str, help='input model')
 parser.add_argument('--t_attack', type=str, default='green', help='attacked type')
 parser.add_argument('--data_name', type=str, default='CIFAR10', help='name of dataset')
@@ -125,7 +129,7 @@ def gen_ae():
         examples.append(ex)
         eex = np.array(eex)
         print('[DEBUG] export_ex.shape: {}'.format(eex.shape))
-        np.savetxt(args.output_dir + "/fgsm_aes_" + str(eps) + ".txt", eex, fmt="%s")
+        np.save(os.path.join(args.data_dir, "/fgsm_aes_" + str(eps) + ".npy"), eex)
     '''
     plt.figure(figsize=(5, 5))
     plt.plot(epsilons, accuracies, "*-")
