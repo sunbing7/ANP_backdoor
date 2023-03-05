@@ -117,17 +117,16 @@ def gen_ae():
     epsilons = [0, .05, .1, .15, .2, .25, .3]
     accuracies = []
     examples = []
-    export_ex = []
 
     # Run test for each epsilon
     for eps in epsilons:
         acc, ex, eex = fgsm_test(net, device, clean_test_loader, eps)
         accuracies.append(acc)
         examples.append(ex)
-        export_ex.append(eex)
-
-    np.savetxt(args.output_dir + "/fgsm_aes" + ".txt", np.array(export_ex), fmt="%s")
-
+        eex = np.array(eex)
+        print('[DEBUG] export_ex.shape: {}'.format(eex.shape))
+        np.savetxt(args.output_dir + "/fgsm_aes_" + str(eps) + ".txt", eex, fmt="%s")
+'''
     plt.figure(figsize=(5, 5))
     plt.plot(epsilons, accuracies, "*-")
     plt.yticks(np.arange(0, 1.1, step=0.1))
@@ -155,7 +154,7 @@ def gen_ae():
     plt.tight_layout()
     plt.show()
     plt.savefig(os.path.join(args.output_dir, 'fgsm_sample.png'))
-
+'''
     return
 
 
