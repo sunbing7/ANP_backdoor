@@ -1682,12 +1682,12 @@ def split_ae(model, model2, data_loader):
             ae = np.delete(images.cpu().detach().numpy(), nae_idx, axis=0)
             ae_l = np.delete(labels.cpu().detach().numpy(), nae_idx, axis=0)
             nae = images.cpu().detach().numpy()[nae_idx]
-            nae = labels.cpu().detach().numpy()[nae_idx]
+            nae_l = labels.cpu().detach().numpy()[nae_idx]
 
             aes.extend(ae)
             ae_ls.extend(ae_l)
-            naes.extend(ae)
-            nae_ls.extend(ae_l)
+            naes.extend(nae)
+            nae_ls.extend(nae_l)
             total = total + len(images)
     print('Total len: {}'.format(total))
     print('Number of transferable AES: {}'.format(len(aes)))

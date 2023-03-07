@@ -566,7 +566,7 @@ def get_loader_from_data(data_file, batch_size=64, transform=None):
         transform = transform_test
 
     data = DataSetFromArray(data_file, transform=transform)
-    loader = DataLoader(data, batch_size=batch_size, shuffle=True)
+    loader = DataLoader(data, batch_size=batch_size, shuffle=False)
 
     return loader
 
