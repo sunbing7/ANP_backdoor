@@ -1442,7 +1442,7 @@ class DataSetFromArray(Dataset):
 
         self.x_test = np.transpose(data['x_test'][:], (0, 2, 3, 1))
         self.y_test_ori = data['y_ori'][:]
-        self.y_test = data['y_attack'][:]
+        #self.y_test = data['y_attack'][:]
 
     def __len__(self):
         return len(self.x_test)

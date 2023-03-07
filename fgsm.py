@@ -106,7 +106,7 @@ def gen_ae():
 
     # Run test for each epsilon
     for eps in epsilons:
-        acc, ex, eex, eori, etgt = fgsm_test(net, device, clean_test_loader, eps)
+        acc, ex, eex, eori, etgt, clean_ex = fgsm_test(net, device, clean_test_loader, eps)
         accuracies.append(acc)
         examples.append(ex)
         hf = h5py.File(args.output_dir + "/fgsm_aes_" + str(eps) + ".h5", 'w')
@@ -114,6 +114,12 @@ def gen_ae():
         hfdat.create_dataset('x_test', data=np.array(eex))
         hfdat.create_dataset('y_ori', data=np.array(eori))
         hfdat.create_dataset('y_attack', data=np.array(etgt))
+        hf.close()
+
+        hf = h5py.File(args.output_dir + "/fgsm_clean_ex_" + str(eps) + ".h5", 'w')
+        hfdat = hf.create_group('data')
+        hfdat.create_dataset('x_test', data=np.array(clean_ex))
+        hfdat.create_dataset('y_ori', data=np.array(eori))
         hf.close()
         '''
         f = h5py.File(args.output_dir + "/fgsm_aes_" + str(eps) + ".h5", 'r')
@@ -177,6 +183,19 @@ def test_ae_transferability():
         net2 = torch.load(args.in_model2, map_location=device)
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
+
+    aes, ae_ls, naes, nae_ls = split_ae(net, net2, ae_loader)
+    hf = h5py.File(args.output_dir + "/fgsm_tf_aes.h5", 'w')
+    hfdat = hf.create_group('data')
+    hfdat.create_dataset('x_test', data=np.array(aes))
+    hfdat.create_dataset('y_ori', data=np.array(ae_ls))
+    hf.close()
+
+    hf = h5py.File(args.output_dir + "/fgsm_tf_naes.h5", 'w')
+    hfdat = hf.create_group('data')
+    hfdat.create_dataset('x_test', data=np.array(naes))
+    hfdat.create_dataset('y_ori', data=np.array(nae_ls))
+    hf.close()
 
     src_loss, src_acc = test(model=net, criterion=criterion, data_loader=ae_loader)
     tgt_loss, tgt_acc = test(model=net2, criterion=criterion, data_loader=ae_loader)
@@ -678,6 +697,7 @@ def fgsm_test( model, device, test_loader, epsilon ):
     export_ex = []
     export_ori_lbl = []
     export_tgt_lbl = []
+    export_clean_ex = []
     count = 0
     model.eval()
 
@@ -730,6 +750,7 @@ def fgsm_test( model, device, test_loader, epsilon ):
                 export_ex.append(adv_ex)
                 export_ori_lbl.append(init_pred.item())
                 export_tgt_lbl.append(final_pred.item())
+                export_clean_ex.append(data)
         else:
             # Save some adv examples for visualization later
             #if len(adv_examples) < 5:
@@ -738,13 +759,14 @@ def fgsm_test( model, device, test_loader, epsilon ):
             export_ex.append(adv_ex)
             export_ori_lbl.append(init_pred.item())
             export_tgt_lbl.append(final_pred.item())
+            export_clean_ex.append(data)
 
     # Calculate final accuracy for this epsilon
     final_acc = correct/float(count)
     print("Epsilon: {}\tTest Accuracy = {} / {} = {}".format(epsilon, correct, count, final_acc))
 
     # Return the accuracy and an adversarial example
-    return final_acc, adv_examples, export_ex, export_ori_lbl, export_tgt_lbl
+    return final_acc, adv_examples, export_ex, export_ori_lbl, export_tgt_lbl, export_clean_ex
 
 
 def analyze_eachclass(model, model_name, cur_class, num_class, num_sample, ana_layer, plot=False):
@@ -1610,6 +1632,66 @@ def test(model, criterion, data_loader):
     loss = total_loss / len(data_loader)
     acc = float(total_correct) / len(data_loader.dataset)
     return loss, acc
+
+
+def find_tf_ae(model, model2, data_loader):
+    model.eval()
+    model2.eval()
+    total = 0
+    aes = []
+    ae_ls = []
+    with torch.no_grad():
+        for i, (images, labels) in enumerate(data_loader):
+            labels = labels.long()
+            images, labels = images.to(device), labels.to(device)
+            #output = model(images)
+            output2 = model2(images)
+            #pred = output.data.max(1)[1]
+            pred2 = output2.data.max(1)[1]
+            nae_idx = (pred2 == labels.data.view_as(pred2))
+            nae_idx = list(nae_idx.cpu().detach().numpy().nonzero()[0])
+            ae = np.delete(images.cpu().detach().numpy(), nae_idx, axis=0)
+            ae_l = np.delete(labels.cpu().detach().numpy(), nae_idx, axis=0)
+
+            aes.extend(ae)
+            ae_ls.extend(ae_l)
+            total = total + len(images)
+    print('Total len: {}'.format(total))
+    print('Number of transferable AES: {}'.format(len(aes)))
+    return aes, ae_ls
+
+
+def split_ae(model, model2, data_loader):
+    model.eval()
+    model2.eval()
+    total = 0
+    aes = []
+    ae_ls = []
+    naes = []
+    nae_ls = []
+    with torch.no_grad():
+        for i, (images, labels) in enumerate(data_loader):
+            labels = labels.long()
+            images, labels = images.to(device), labels.to(device)
+            #output = model(images)
+            output2 = model2(images)
+            #pred = output.data.max(1)[1]
+            pred2 = output2.data.max(1)[1]
+            nae_idx = (pred2 == labels.data.view_as(pred2))
+            nae_idx = list(nae_idx.cpu().detach().numpy().nonzero()[0])
+            ae = np.delete(images.cpu().detach().numpy(), nae_idx, axis=0)
+            ae_l = np.delete(labels.cpu().detach().numpy(), nae_idx, axis=0)
+            nae = images.cpu().detach().numpy()[nae_idx]
+            nae = labels.cpu().detach().numpy()[nae_idx]
+
+            aes.extend(ae)
+            ae_ls.extend(ae_l)
+            naes.extend(ae)
+            nae_ls.extend(ae_l)
+            total = total + len(images)
+    print('Total len: {}'.format(total))
+    print('Number of transferable AES: {}'.format(len(aes)))
+    return aes, ae_ls, naes, nae_ls
 
 
 if __name__ == '__main__':

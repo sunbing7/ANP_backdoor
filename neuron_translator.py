@@ -8,7 +8,7 @@ from torchsummary import summary
 import models
 from collections import Counter as Counter
 
-from data.data_loader import get_custom_loader, get_custom_class_loader, get_data_adv_loader
+from data.data_loader import get_custom_loader, get_custom_class_loader, get_data_adv_loader, get_loader_from_data
 from models.selector import *
 import matplotlib.pyplot as plt
 import copy
@@ -45,7 +45,7 @@ parser.add_argument('--num_class', type=int, default=10, help='number of classes
 parser.add_argument('--resume', type=int, default=1, help='resume from args.checkpoint')
 parser.add_argument('--option', type=str, default='detect', choices=['detect', 'remove', 'plot', 'causality_analysis',
                                                                      'gen_trigger', 'test', 'pre_analysis',
-                                                                     'analyze_neuron', 'analyze_out'],
+                                                                     'analyze_neuron', 'analyze_out', 'analyze_ae_act'],
                     help='run option')
 parser.add_argument('--lr', type=float, default=0.1, help='starting learning rate')
 parser.add_argument('--ana_layer', type=int, nargs="+", default=[2], help='layer to analyze')
@@ -202,6 +202,49 @@ def analyze_neuron():
     print('[DEBUG] all_hidden shape: {}'.format(np.transpose(np.array(all_hidden)).shape))
 
     return
+
+
+def analyze_sample_act():
+    # load examples
+    aes_file = args.in_file
+
+    ae_loader = \
+        get_loader_from_data(aes_file, args.batch_size)
+
+    if args.load_type == 'state_dict':
+        net = getattr(models, args.arch)(num_classes=args.num_class, in_channels=args.num_ch).to(device)
+
+        state_dict = torch.load(args.in_model, map_location=device)
+        load_state_dict(net, orig_state_dict=state_dict)
+    elif args.load_type == 'model':
+        net = torch.load(args.in_model, map_location=device)
+
+    for cur_layer in args.ana_layer:
+        # print('current layer: {}'.format(cur_layer))
+        model1, model2 = split_model(net, args.arch, split_layer=cur_layer)
+        model1.eval()
+        model2.eval()
+
+        dense_output_all = []
+        total_num_samples = 0
+        for image, gt in ae_loader:
+            image, gt = image.to(device), gt.to(device)
+
+            # compute output
+            with torch.no_grad():
+                dense_output = model1(image)
+                # dense_hidden_ = torch.clone(torch.reshape(dense_output, (dense_output.shape[0], -1)))
+                dense_output = dense_output.cpu().detach().numpy()
+                dense_output_all.extend(dense_output)
+
+        # insert neuron index
+        idx = np.arange(0, len(dense_output_all), 1, dtype=int)
+        dense_output_all = np.c_[idx, dense_output_all]
+
+        np.savetxt(args.output_dir + "/ae_act.txt",
+                   dense_output_all, fmt="%s")
+
+    return np.array(dense_output_all)
 
 
 def analyze_out():
@@ -1483,4 +1526,5 @@ if __name__ == '__main__':
         analyze_neuron()
     elif args.option == 'analyze_out':
         analyze_out()
-
+    elif args.option == 'analyze_ae_act':
+        analyze_sample_act()
