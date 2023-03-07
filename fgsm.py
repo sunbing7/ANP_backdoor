@@ -750,7 +750,7 @@ def fgsm_test( model, device, test_loader, epsilon ):
                 export_ex.append(adv_ex)
                 export_ori_lbl.append(init_pred.item())
                 export_tgt_lbl.append(final_pred.item())
-                export_clean_ex.append(data)
+                export_clean_ex.append(data.squeeze().detach().cpu().numpy())
         else:
             # Save some adv examples for visualization later
             #if len(adv_examples) < 5:
@@ -759,7 +759,7 @@ def fgsm_test( model, device, test_loader, epsilon ):
             export_ex.append(adv_ex)
             export_ori_lbl.append(init_pred.item())
             export_tgt_lbl.append(final_pred.item())
-            export_clean_ex.append(data)
+            export_clean_ex.append(data.squeeze().detach().cpu().numpy())
 
     # Calculate final accuracy for this epsilon
     final_acc = correct/float(count)
