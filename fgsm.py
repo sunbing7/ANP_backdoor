@@ -7,6 +7,7 @@ import torch
 from torchsummary import summary
 import models
 from collections import Counter as Counter
+import torchvision
 
 from data.data_loader import get_custom_loader, get_custom_class_loader, get_data_adv_loader, get_loader_from_data
 from models.selector import *
@@ -19,7 +20,9 @@ import torch.optim as optim
 
 # from numpy import dot
 # from numpy.linalg import norm
-
+'''
+from torchvision.models import resnet18, ResNet18_Weights
+'''
 from models.split_model import split_model, reconstruct_model, recover_model, get_neuron_count
 
 torch.manual_seed(123)
@@ -38,7 +41,7 @@ parser.add_argument('--data_set', type=str, default='../data', help='path to the
 parser.add_argument('--data_dir', type=str, default='../data', help='dir to the dataset')
 parser.add_argument('--output_dir', type=str, default='logs/models/')
 parser.add_argument('--eps', type=float, default=0.0, help='perturbation eps')
-parser.add_argument('--in_model', type=str, required=True, help='input model')
+parser.add_argument('--in_model', type=str, help='input model')
 parser.add_argument('--in_model2', type=str, help='input model 2')
 parser.add_argument('--in_file', type=str, help='input file')
 parser.add_argument('--data_name', type=str, default='CIFAR10', help='name of dataset')
@@ -58,6 +61,126 @@ for key, value in state.items():
 os.makedirs(args.output_dir, exist_ok=True)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(device)
+
+# https://pytorch.org/vision/stable/models.html
+# https://glassboxmedicine.com/2020/12/08/using-predefined-and-pretrained-cnns-in-pytorch-tutorial-with-code/
+def gen_ae_imagenet():
+    '''
+     resnet18 = models.resnet18(pretrained=True)
+     alexnet = models.alexnet(pretrained=True)
+     squeezenet = models.squeezenet1_0(pretrained=True)
+     vgg16 = models.vgg16(pretrained=True)
+     densenet = models.densenet161(pretrained=True)
+     inception = models.inception_v3(pretrained=True)
+     googlenet = models.googlenet(pretrained=True)
+     shufflenet = models.shufflenet_v2_x1_0(pretrained=True)
+     mobilenet = models.mobilenet_v2(pretrained=True)
+    '''
+    #resnet152 = torchvision.models.resnet152(pretrained=True)
+
+    if args.arch == 'resnet18':
+        net = torchvision.models.resnet18(pretrained=True)
+        #resnet = resnet18(weights=ResNet18_Weights.DEFAULT, progress=False)
+    elif args.arch == 'resnet152':
+        net = torchvision.models.resnet152(pretrained=True)
+    elif args.arch == 'vgg19':
+        net = torchvision.models.vgg19(pretrained=True)
+
+    if args.data_name != 'IMAGENET':
+        print('wrong data set!')
+        return
+
+    #data loader
+    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                     std=[0.229, 0.224, 0.225])
+    train_dataset = torchvision.datasets.ImageFolder(
+        args.data_dir + '/images',
+        transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            normalize,
+        ]))
+    train_loader = torch.utils.data.DataLoader(
+        train_dataset, batch_size=args.batch_size, shuffle=False)
+
+    clean_test_loader = train_loader
+
+
+    criterion = torch.nn.CrossEntropyLoss().to(device)
+
+    print('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t RPoisonLoss \t RPoisonACC \t CleanLoss \t CleanACC')
+
+    cl_loss = 0
+    cl_acc = 0
+    cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
+    rpo_loss = 0
+    rpo_acc = 0
+    print('0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(rpo_loss, rpo_acc,
+                                                                                                       rpo_loss,
+                                                                                                       rpo_acc, cl_loss,
+                                                                                                       cl_acc))
+
+    #epsilons = [0, .05, .1, .15, .2, .25, .3]
+    epsilons = [0, .05, .1, .15]
+    accuracies = []
+    examples = []
+
+    # Run test for each epsilon
+    for eps in epsilons:
+        acc, ex, eex, eori, etgt, clean_ex = fgsm_test(net, device, clean_test_loader, eps)
+        accuracies.append(acc)
+        examples.append(ex)
+        hf = h5py.File(args.output_dir + "/fgsm_imagenet_aes_" + str(eps) + ".h5", 'w')
+        hfdat = hf.create_group('data')
+        hfdat.create_dataset('x_test', data=np.array(eex))
+        hfdat.create_dataset('y_ori', data=np.array(eori))
+        hfdat.create_dataset('y_attack', data=np.array(etgt))
+        hf.close()
+
+        hf = h5py.File(args.output_dir + "/fgsm_imagenet_clean_ex_" + str(eps) + ".h5", 'w')
+        hfdat = hf.create_group('data')
+        hfdat.create_dataset('x_test', data=np.array(clean_ex))
+        hfdat.create_dataset('y_ori', data=np.array(eori))
+        hf.close()
+        '''
+        f = h5py.File(args.output_dir + "/fgsm_aes_" + str(eps) + ".h5", 'r')
+        data = f['data']
+        x_train = data['x_test'][:]
+        y_ori = data['y_ori'][:]
+        '''
+
+    '''
+    plt.figure(figsize=(5, 5))
+    plt.plot(epsilons, accuracies, "*-")
+    plt.yticks(np.arange(0, 1.1, step=0.1))
+    plt.xticks(np.arange(0, .35, step=0.05))
+    plt.title("Accuracy vs Epsilon")
+    plt.xlabel("Epsilon")
+    plt.ylabel("Accuracy")
+    plt.show()
+    plt.savefig(os.path.join(args.output_dir, 'fgsm.png'))
+
+    # Plot several examples of adversarial samples at each epsilon
+    cnt = 0
+    plt.figure(figsize=(8, 10))
+    for i in range(len(epsilons)):
+        for j in range(len(examples[i])):
+            cnt += 1
+            plt.subplot(len(epsilons), len(examples[0]), cnt)
+            plt.xticks([], [])
+            plt.yticks([], [])
+            if j == 0:
+                plt.ylabel("Eps: {}".format(epsilons[i]), fontsize=14)
+            orig, adv, ex = examples[i][j]
+            plt.title("{} -> {}".format(orig, adv))
+            plt.imshow(np.transpose(np.array(ex), (1,2,0)))
+    plt.tight_layout()
+    plt.show()
+    plt.savefig(os.path.join(args.output_dir, 'fgsm_sample.png'))
+    '''
+    return
+
 
 
 def gen_ae():
@@ -1629,6 +1752,7 @@ def test(model, criterion, data_loader):
             total_loss += criterion(output, labels).item()
             pred = output.data.max(1)[1]
             total_correct += pred.eq(labels.data.view_as(pred)).sum()
+
     loss = total_loss / len(data_loader)
     acc = float(total_correct) / len(data_loader.dataset)
     return loss, acc
@@ -1696,7 +1820,11 @@ def split_ae(model, model2, data_loader):
 
 if __name__ == '__main__':
     if args.option == 'generate_ae':
-        gen_ae()
+        if args.data_name == 'IMAGENET':
+            gen_ae_imagenet()
+        else:
+            gen_ae()
     elif args.option == 'test_tx':
         test_ae_transferability()
+
 

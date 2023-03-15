@@ -45,7 +45,8 @@ parser.add_argument('--num_class', type=int, default=10, help='number of classes
 parser.add_argument('--resume', type=int, default=1, help='resume from args.checkpoint')
 parser.add_argument('--option', type=str, default='detect', choices=['detect', 'remove', 'plot', 'causality_analysis',
                                                                      'gen_trigger', 'test', 'pre_analysis',
-                                                                     'analyze_neuron', 'analyze_out', 'analyze_ae_act'],
+                                                                     'analyze_neuron', 'analyze_out', 'analyze_ae_act',
+                                                                     'show'],
                     help='run option')
 parser.add_argument('--lr', type=float, default=0.1, help='starting learning rate')
 parser.add_argument('--ana_layer', type=int, nargs="+", default=[2], help='layer to analyze')
@@ -238,13 +239,31 @@ def analyze_sample_act():
                 dense_output_all.extend(dense_output)
 
         # insert neuron index
-        idx = np.arange(0, len(dense_output_all), 1, dtype=int)
-        dense_output_all = np.c_[idx, dense_output_all]
+        #idx = np.arange(0, len(dense_output_all), 1, dtype=int)
+        #dense_output_all = np.c_[idx, dense_output_all]
 
-        np.savetxt(args.output_dir + "/ae_act.txt",
-                   dense_output_all, fmt="%s")
+        #np.savetxt(args.output_dir + "/ae_act.txt",
+        #           dense_output_all, fmt="%s")
+
+        np.save(os.path.join(args.output_dir, 'ae_act.npy'), dense_output_all)
 
     return np.array(dense_output_all)
+
+
+def show_activation():
+    #np.save(os.path.join(args.output_dir, 'ae_act.npy'), dense_output_all)
+    activation_all = np.load(args.in_file)
+    activation_all = activation_all.reshape((len(activation_all), 128, 256))
+    for i in range(0, 10):
+        idx = np.random.randint(0, len(activation_all), 1)
+        this = activation_all[idx].transpose(1, 2, 0).reshape(128,256) * 512
+        #plot it
+        plt.imshow(this, interpolation='nearest')
+        #plt.show()
+        plt.savefig(
+            os.path.join(args.output_dir, 'ae_' + str(idx) + '.png'))
+
+    return
 
 
 def analyze_out():
@@ -1528,3 +1547,5 @@ if __name__ == '__main__':
         analyze_out()
     elif args.option == 'analyze_ae_act':
         analyze_sample_act()
+    elif args.option == 'show':
+        show_activation()

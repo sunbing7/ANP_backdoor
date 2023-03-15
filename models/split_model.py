@@ -30,6 +30,15 @@ def split_model(ori_model, model_name, split_layer=6):
 
             model_1st = nn.Sequential(*[*module1, Relu(), *module2, Avgpool2d(), Flatten()])
             model_2nd = nn.Sequential(*module3)
+        elif split_layer == 3:
+            modules = list(ori_model.children())
+            module1 = modules[:2]
+            module2 = modules[2:4]
+            module3 = modules[4:6]
+            module4 = [modules[6]]
+
+            model_1st = nn.Sequential(*[*module1, Relu(), *module2])
+            model_2nd = nn.Sequential(*[*module3, Avgpool2d(), Flatten(), *module4])
 
 
     elif model_name == 'MobileNetV2':
