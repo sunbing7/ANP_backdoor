@@ -86,6 +86,8 @@ def gen_ae_imagenet():
     elif args.arch == 'vgg19':
         net = torchvision.models.vgg19(pretrained=True)
 
+    net.to(device)
+
     if args.data_name != 'IMAGENET':
         print('wrong data set!')
         return
