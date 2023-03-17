@@ -51,6 +51,7 @@ parser.add_argument('--option', type=str, default='generate_ae', choices=['gener
 parser.add_argument('--num_sample', type=int, default=192, help='number of samples')
 parser.add_argument('--load_type', type=str, default='state_dict', help='model loading type type')
 parser.add_argument('--num_ch', type=int, default=3, help='number of channels')
+parser.add_argument('--poison_target', type=int, default=0, help='target class of backdoor attack')
 
 args = parser.parse_args()
 args_dict = vars(args)
@@ -183,6 +184,126 @@ def gen_ae_imagenet():
     '''
     return
 
+
+
+def gen_ae_imagenet_targeted():
+    '''
+     resnet18 = models.resnet18(pretrained=True)
+     alexnet = models.alexnet(pretrained=True)
+     squeezenet = models.squeezenet1_0(pretrained=True)
+     vgg16 = models.vgg16(pretrained=True)
+     densenet = models.densenet161(pretrained=True)
+     inception = models.inception_v3(pretrained=True)
+     googlenet = models.googlenet(pretrained=True)
+     shufflenet = models.shufflenet_v2_x1_0(pretrained=True)
+     mobilenet = models.mobilenet_v2(pretrained=True)
+    '''
+    #resnet152 = torchvision.models.resnet152(pretrained=True)
+
+    if args.arch == 'resnet18':
+        net = torchvision.models.resnet18(pretrained=True)
+        #resnet = resnet18(weights=ResNet18_Weights.DEFAULT, progress=False)
+    elif args.arch == 'resnet50':
+        net = torchvision.models.resnet50(pretrained=True)
+    elif args.arch == 'vgg19':
+        net = torchvision.models.vgg19(pretrained=True)
+
+    net.to(device)
+
+    if args.data_name != 'IMAGENET':
+        print('wrong data set!')
+        return
+
+    #data loader
+    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                     std=[0.229, 0.224, 0.225])
+    train_dataset = torchvision.datasets.ImageFolder(
+        args.data_dir + '/images',
+        transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            normalize,
+        ]))
+    train_loader = torch.utils.data.DataLoader(
+        train_dataset, batch_size=args.batch_size, shuffle=False)
+
+    clean_test_loader = train_loader
+
+
+    criterion = torch.nn.CrossEntropyLoss().to(device)
+
+    print('Epoch \t lr \t Time \t PoisonLoss \t PoisonACC \t RPoisonLoss \t RPoisonACC \t CleanLoss \t CleanACC')
+
+    cl_loss = 0
+    cl_acc = 0
+    cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
+    rpo_loss = 0
+    rpo_acc = 0
+    print('0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(rpo_loss, rpo_acc,
+                                                                                                       rpo_loss,
+                                                                                                       rpo_acc, cl_loss,
+                                                                                                       cl_acc))
+
+    #epsilons = [0, .05, .1, .15, .2, .25, .3]
+    epsilons = [0, .05, .1, .15]
+    accuracies = []
+    examples = []
+
+    # Run test for each epsilon
+    for eps in epsilons:
+        acc, ex, eex, eori, etgt, clean_ex = fgsm_targeted(net, device, clean_test_loader, eps, args.poison_target)
+        accuracies.append(acc)
+        examples.append(ex)
+        hf = h5py.File(args.output_dir + "/fgsm_targeted_aes_" + str(eps) + ".h5", 'w')
+        hfdat = hf.create_group('data')
+        hfdat.create_dataset('x_test', data=np.array(eex))
+        hfdat.create_dataset('y_ori', data=np.array(eori))
+        hfdat.create_dataset('y_attack', data=np.array(etgt))
+        hf.close()
+
+        hf = h5py.File(args.output_dir + "/fgsm_targeted_clean_ex_" + str(eps) + ".h5", 'w')
+        hfdat = hf.create_group('data')
+        hfdat.create_dataset('x_test', data=np.array(clean_ex))
+        hfdat.create_dataset('y_ori', data=np.array(eori))
+        hf.close()
+        '''
+        f = h5py.File(args.output_dir + "/fgsm_aes_" + str(eps) + ".h5", 'r')
+        data = f['data']
+        x_train = data['x_test'][:]
+        y_ori = data['y_ori'][:]
+        '''
+
+    '''
+    plt.figure(figsize=(5, 5))
+    plt.plot(epsilons, accuracies, "*-")
+    plt.yticks(np.arange(0, 1.1, step=0.1))
+    plt.xticks(np.arange(0, .35, step=0.05))
+    plt.title("Accuracy vs Epsilon")
+    plt.xlabel("Epsilon")
+    plt.ylabel("Accuracy")
+    plt.show()
+    plt.savefig(os.path.join(args.output_dir, 'fgsm.png'))
+
+    # Plot several examples of adversarial samples at each epsilon
+    cnt = 0
+    plt.figure(figsize=(8, 10))
+    for i in range(len(epsilons)):
+        for j in range(len(examples[i])):
+            cnt += 1
+            plt.subplot(len(epsilons), len(examples[0]), cnt)
+            plt.xticks([], [])
+            plt.yticks([], [])
+            if j == 0:
+                plt.ylabel("Eps: {}".format(epsilons[i]), fontsize=14)
+            orig, adv, ex = examples[i][j]
+            plt.title("{} -> {}".format(orig, adv))
+            plt.imshow(np.transpose(np.array(ex), (1,2,0)))
+    plt.tight_layout()
+    plt.show()
+    plt.savefig(os.path.join(args.output_dir, 'fgsm_sample.png'))
+    '''
+    return
 
 
 def gen_ae():
@@ -865,6 +986,86 @@ def fgsm_test( model, device, test_loader, epsilon ):
 
         # Calculate the loss
         loss = F.nll_loss(output, target)
+
+        # Zero all existing gradients
+        model.zero_grad()
+
+        # Calculate gradients of model in backward pass
+        loss.backward()
+
+        # Collect datagrad
+        data_grad = data.grad.data
+
+        # Call FGSM Attack
+        perturbed_data = fgsm_attack(data, epsilon, data_grad)
+
+        # Re-classify the perturbed image
+        output = model(perturbed_data)
+
+        # Check for success
+        final_pred = output.max(1, keepdim=True)[1] # get the index of the max log-probability
+        if final_pred.item() == target.item():
+            correct += 1
+            # Special case for saving 0 epsilon examples
+            #if (epsilon == 0) and (len(adv_examples) < 5):
+            if (epsilon == 0):
+                adv_ex = perturbed_data.squeeze().detach().cpu().numpy()
+                adv_examples.append( (init_pred.item(), final_pred.item(), adv_ex) )
+                export_ex.append(adv_ex)
+                export_ori_lbl.append(init_pred.item())
+                export_tgt_lbl.append(final_pred.item())
+                export_clean_ex.append(data.squeeze().detach().cpu().numpy())
+        else:
+            # Save some adv examples for visualization later
+            #if len(adv_examples) < 5:
+            adv_ex = perturbed_data.squeeze().detach().cpu().numpy()
+            adv_examples.append( (init_pred.item(), final_pred.item(), adv_ex) )
+            export_ex.append(adv_ex)
+            export_ori_lbl.append(init_pred.item())
+            export_tgt_lbl.append(final_pred.item())
+            export_clean_ex.append(data.squeeze().detach().cpu().numpy())
+
+    # Calculate final accuracy for this epsilon
+    final_acc = correct/float(count)
+    print("Epsilon: {}\tTest Accuracy = {} / {} = {}".format(epsilon, correct, count, final_acc))
+
+    # Return the accuracy and an adversarial example
+    return final_acc, adv_examples, export_ex, export_ori_lbl, export_tgt_lbl, export_clean_ex
+
+
+def fgsm_targeted( model, device, test_loader, epsilon, target_class):
+
+    # Accuracy counter
+    correct = 0
+    adv_examples = []
+    export_ex = []
+    export_ori_lbl = []
+    export_tgt_lbl = []
+    export_clean_ex = []
+    count = 0
+    model.eval()
+
+    # Loop over all examples in test set
+    for data, target in test_loader:
+        if count >= args.num_sample:
+            break
+        count = count + 1
+        # Send the data and label to the device
+        data, target = data.to(device), target.to(device)
+
+        # Set requires_grad attribute of tensor. Important for Attack
+        data.requires_grad = True
+
+        # Forward pass the data through the model
+        output = model(data)
+        init_pred = output.max(1, keepdim=True)[1] # get the index of the max log-probability
+
+        # If the initial prediction is wrong, dont bother attacking, just move on
+        if init_pred.item() != target.item():
+            continue
+
+        # Calculate the loss
+        loss = F.nll_loss(output[target_class], target)
 
         # Zero all existing gradients
         model.zero_grad()
@@ -1846,5 +2047,7 @@ if __name__ == '__main__':
             gen_ae()
     elif args.option == 'test_tx':
         test_ae_transferability()
+    elif args.option == 'generate_target_ae':
+        gen_ae_imagenet_targeted()
 
 
