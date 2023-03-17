@@ -244,7 +244,7 @@ def analyze_sample_act():
             with torch.no_grad():
                 dense_output = model1(image)
                 # dense_hidden_ = torch.clone(torch.reshape(dense_output, (dense_output.shape[0], -1)))
-                dense_output = dense_output.cpu().detach().numpy()
+                dense_output = np.squeeze(dense_output.cpu().detach().numpy())
                 dense_output_all.extend(dense_output)
 
         # insert neuron index
