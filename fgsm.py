@@ -34,7 +34,7 @@ parser.add_argument('--arch', type=str, default='resnet18',
                              'vgg11_bn'])
 parser.add_argument('--arch2', type=str, default='resnet18',
                     choices=['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'MobileNetV2', 'vgg19_bn',
-                             'vgg11_bn'])
+                             'vgg11_bn', 'vgg19'])
 parser.add_argument('--batch_size', type=int, default=128, help='the batch size for dataloader')
 parser.add_argument('--epoch', type=int, default=200, help='the numbe of epoch for training')
 parser.add_argument('--data_set', type=str, default='../data', help='path to the dataset')
@@ -306,17 +306,33 @@ def test_ae_transferability():
     elif args.load_type == 'model':
         net = torch.load(args.in_model, map_location=device)
         net2 = torch.load(args.in_model2, map_location=device)
+    elif args.load_type == 'pretrained':
+        if args.arch == 'resnet18':
+            net = torchvision.models.resnet18(pretrained=True)
+            # resnet = resnet18(weights=ResNet18_Weights.DEFAULT, progress=False)
+        elif args.arch == 'resnet50':
+            net = torchvision.models.resnet50(pretrained=True)
+        elif args.arch == 'vgg19':
+            net = torchvision.models.vgg19(pretrained=True)
+
+        if args.arch2 == 'resnet18':
+            net2 = torchvision.models.resnet18(pretrained=True)
+            # resnet = resnet18(weights=ResNet18_Weights.DEFAULT, progress=False)
+        elif args.arch2 == 'resnet50':
+            net2 = torchvision.models.resnet50(pretrained=True)
+        elif args.arch2 == 'vgg19':
+            net2 = torchvision.models.vgg19(pretrained=True)
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
 
     aes, ae_ls, naes, nae_ls = split_ae(net, net2, ae_loader)
-    hf = h5py.File(args.output_dir + "/fgsm_tf_aes.h5", 'w')
+    hf = h5py.File(args.output_dir + "/fgsm_imagenet_tf_aes.h5", 'w')
     hfdat = hf.create_group('data')
     hfdat.create_dataset('x_test', data=np.array(aes))
     hfdat.create_dataset('y_ori', data=np.array(ae_ls))
     hf.close()
 
-    hf = h5py.File(args.output_dir + "/fgsm_tf_naes.h5", 'w')
+    hf = h5py.File(args.output_dir + "/fgsm_imagenet_tf_naes.h5", 'w')
     hfdat = hf.create_group('data')
     hfdat.create_dataset('x_test', data=np.array(naes))
     hfdat.create_dataset('y_ori', data=np.array(nae_ls))
