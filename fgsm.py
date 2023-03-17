@@ -314,6 +314,7 @@ def test_ae_transferability():
             net = torchvision.models.resnet50(pretrained=True)
         elif args.arch == 'vgg19':
             net = torchvision.models.vgg19(pretrained=True)
+        net.to(device)
 
         if args.arch2 == 'resnet18':
             net2 = torchvision.models.resnet18(pretrained=True)
@@ -322,6 +323,7 @@ def test_ae_transferability():
             net2 = torchvision.models.resnet50(pretrained=True)
         elif args.arch2 == 'vgg19':
             net2 = torchvision.models.vgg19(pretrained=True)
+        net2.to(device)
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
 
