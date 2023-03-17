@@ -219,6 +219,15 @@ def analyze_sample_act():
         load_state_dict(net, orig_state_dict=state_dict)
     elif args.load_type == 'model':
         net = torch.load(args.in_model, map_location=device)
+    elif args.load_type == 'pretrained':
+        if args.arch == 'resnet18':
+            net = torchvision.models.resnet18(pretrained=True)
+            # resnet = resnet18(weights=ResNet18_Weights.DEFAULT, progress=False)
+        elif args.arch == 'resnet50':
+            net = torchvision.models.resnet50(pretrained=True)
+        elif args.arch == 'vgg19':
+            net = torchvision.models.vgg19(pretrained=True)
+        net.to(device)
 
     for cur_layer in args.ana_layer:
         # print('current layer: {}'.format(cur_layer))
@@ -239,13 +248,13 @@ def analyze_sample_act():
                 dense_output_all.extend(dense_output)
 
         # insert neuron index
-        #idx = np.arange(0, len(dense_output_all), 1, dtype=int)
-        #dense_output_all = np.c_[idx, dense_output_all]
+        idx = np.arange(0, len(dense_output_all), 1, dtype=int)
+        dense_output_all = np.c_[idx, dense_output_all]
 
-        #np.savetxt(args.output_dir + "/ae_act.txt",
-        #           dense_output_all, fmt="%s")
+        np.savetxt(args.output_dir + "/ae_act_imagenet.txt",
+                   dense_output_all, fmt="%s")
 
-        np.save(os.path.join(args.output_dir, 'ae_act.npy'), dense_output_all)
+        #np.save(os.path.join(args.output_dir, 'ae_act_imagenet.npy'), dense_output_all)
 
     return np.array(dense_output_all)
 
