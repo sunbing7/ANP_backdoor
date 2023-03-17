@@ -46,7 +46,7 @@ parser.add_argument('--in_model2', type=str, help='input model 2')
 parser.add_argument('--in_file', type=str, help='input file')
 parser.add_argument('--data_name', type=str, default='CIFAR10', help='name of dataset')
 parser.add_argument('--num_class', type=int, default=10, help='number of classes')
-parser.add_argument('--option', type=str, default='generate_ae', choices=['generate_ae', 'test_tx'],
+parser.add_argument('--option', type=str, default='generate_ae', choices=['generate_ae', 'test_tx', 'generate_target_ae'],
                     help='run option')
 parser.add_argument('--num_sample', type=int, default=192, help='number of samples')
 parser.add_argument('--load_type', type=str, default='state_dict', help='model loading type type')
