@@ -77,9 +77,11 @@ class FGSMAttack(object):
                     adv_pred = adv_output.argmax(dim=1, keepdim=True)
                     if self.target:
                         # in a target attack, we take the loss w.r.t. the target label
-                        loss = L(adv_output, torch.tensor([self.target], dtype=torch.long))
+                        target = torch.tensor([self.target], dtype=torch.long).to(self.device)
+                        loss = L(adv_output, target)
                     else:
-                        loss = L(adv_output, torch.tensor([adv_pred.item()], dtype=torch.long))
+                        target = torch.tensor([adv_pred.item()], dtype=torch.long).to(self.device)
+                        loss = L(adv_output, target)
 
                 if self.target:
                     if adv_pred.item() == self.target:
