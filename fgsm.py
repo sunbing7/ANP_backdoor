@@ -2022,7 +2022,7 @@ def split_ae_targeted(model, model2, data_loader, target_lbl):
             #pred = output.data.max(1)[1]
             pred2 = output2.data.max(1)[1]
             nae_idx = (pred2.cpu().detach().numpy() != target_lbl)
-            nae_idx = list(nae_idx.cpu().detach().numpy().nonzero()[0])
+            nae_idx = list(nae_idx.nonzero()[0])
             ae = np.delete(images.cpu().detach().numpy(), nae_idx, axis=0)
             ae_l = np.delete(labels.cpu().detach().numpy(), nae_idx, axis=0)
             nae = images.cpu().detach().numpy()[nae_idx]
