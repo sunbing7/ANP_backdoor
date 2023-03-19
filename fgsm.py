@@ -1963,7 +1963,7 @@ def test_targeted(model, criterion, data_loader, target_lbl):
             total_correct += pred.eq(target_lbl).sum()
 
     loss = total_loss / len(data_loader)
-    acc = float(total_correct) / len(data_loader.dataset)
+    acc = 1.0 - float(total_correct) / len(data_loader.dataset)
     return loss, acc
 
 
