@@ -68,7 +68,9 @@ class FGSMAttack(object):
                 self.model.zero_grad()
 
                 adv_pred = init_pred
-                while adv_pred.item() != self.target:
+                itr = 0
+                while adv_pred.item() != self.target and itr <= self.max_itr:
+                    itr = itr + 1
                     # calculate gradients
                     loss.backward()
                     data_grad = data.grad
