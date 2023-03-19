@@ -56,7 +56,7 @@ class FGSMAttack(object):
                 if self.target:
                     # in a target attack, we take the loss w.r.t. the target label
                     #loss = L(output, torch.tensor([self.target], dtype=torch.long))
-                    loss = L(output, self.target.squeeze().long())
+                    loss = L(output, torch.tensor([self.target]).squeeze().long())
                 else:
                     loss = L(output, torch.tensor([init_pred.item()], dtype=torch.long))
 
