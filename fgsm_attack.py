@@ -95,19 +95,17 @@ class FGSMAttack(object):
                 if self.target:
                     if adv_pred.item() == self.target:
                         successful_attacks += 1
-                        if len(self.adv_examples[epsReal]) < 5:
-                            adv_ex = perturbed_data.squeeze().detach().cpu().numpy()
-                            self.adv_examples[epsReal].append((init_pred.item(), adv_pred.item(), adv_ex))
-                            self.adv_aes[epsReal].append(adv_ex)
-                            self.ori_label[epsReal].append(init_pred.item())
+                        adv_ex = perturbed_data.squeeze().detach().cpu().numpy()
+                        self.adv_examples[epsReal].append((init_pred.item(), adv_pred.item(), adv_ex))
+                        self.adv_aes[epsReal].append(adv_ex)
+                        self.ori_label[epsReal].append(init_pred.item())
                 else:
                     if adv_pred.item() != init_pred.item():
                         successful_attacks += 1
-                        if len(self.adv_examples[epsReal]) < 5:
-                            adv_ex = perturbed_data.squeeze().detach().cpu().numpy()
-                            self.adv_examples[epsReal].append((init_pred.item(), adv_pred.item(), adv_ex))
-                            self.adv_aes[epsReal].append(adv_ex)
-                            self.ori_label[epsReal].append(init_pred.item())
+                        adv_ex = perturbed_data.squeeze().detach().cpu().numpy()
+                        self.adv_examples[epsReal].append((init_pred.item(), adv_pred.item(), adv_ex))
+                        self.adv_aes[epsReal].append(adv_ex)
+                        self.ori_label[epsReal].append(init_pred.item())
 
             # print status line
             success_rate = successful_attacks / float(len(self.test_dataloader))
