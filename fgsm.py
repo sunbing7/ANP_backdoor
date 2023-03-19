@@ -9,6 +9,8 @@ import models
 from collections import Counter as Counter
 import torchvision
 
+from fgsm_attack import FGSMAttack
+
 from data.data_loader import get_custom_loader, get_custom_class_loader, get_data_adv_loader, get_loader_from_data
 from models.selector import *
 import matplotlib.pyplot as plt
@@ -185,7 +187,6 @@ def gen_ae_imagenet():
     return
 
 
-
 def gen_ae_imagenet_targeted():
     '''
      resnet18 = models.resnet18(pretrained=True)
@@ -209,6 +210,7 @@ def gen_ae_imagenet_targeted():
         net = torchvision.models.vgg19(pretrained=True)
 
     net.to(device)
+    net.eval()
 
     if args.data_name != 'IMAGENET':
         print('wrong data set!')
@@ -237,7 +239,7 @@ def gen_ae_imagenet_targeted():
 
     cl_loss = 0
     cl_acc = 0
-    cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
+    #cl_loss, cl_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
     rpo_loss = 0
     rpo_acc = 0
     print('0 \t None \t None \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(rpo_loss, rpo_acc,
@@ -246,63 +248,21 @@ def gen_ae_imagenet_targeted():
                                                                                                        cl_acc))
 
     #epsilons = [0, .05, .1, .15, .2, .25, .3]
-    epsilons = [0, .05, .1, .15]
-    accuracies = []
-    examples = []
+    epsilons = [.1, .15]
 
-    # Run test for each epsilon
-    for eps in epsilons:
-        acc, ex, eex, eori, etgt, clean_ex = fgsm_targeted(net, device, clean_test_loader, eps, args.poison_target)
-        accuracies.append(acc)
-        examples.append(ex)
-        hf = h5py.File(args.output_dir + "/fgsm_targeted_aes_" + str(eps) + ".h5", 'w')
-        hfdat = hf.create_group('data')
-        hfdat.create_dataset('x_test', data=np.array(eex))
-        hfdat.create_dataset('y_ori', data=np.array(eori))
-        hfdat.create_dataset('y_attack', data=np.array(etgt))
-        hf.close()
+    fgsm_attack = FGSMAttack(net, epsilons, clean_test_loader, device, args.poison_target)
+    fgsm_attack.run()
 
-        hf = h5py.File(args.output_dir + "/fgsm_targeted_clean_ex_" + str(eps) + ".h5", 'w')
-        hfdat = hf.create_group('data')
-        hfdat.create_dataset('x_test', data=np.array(clean_ex))
-        hfdat.create_dataset('y_ori', data=np.array(eori))
-        hf.close()
-        '''
-        f = h5py.File(args.output_dir + "/fgsm_aes_" + str(eps) + ".h5", 'r')
-        data = f['data']
-        x_train = data['x_test'][:]
-        y_ori = data['y_ori'][:]
-        '''
+    # save 0.1 aes
+    aes = fgsm_attack.adv_examples[0.1]
+    hf = h5py.File(args.output_dir + "/fgsm_targeted_aes_" + str(0.1) + ".h5", 'w')
+    hfdat = hf.create_group('data')
+    hfdat.create_dataset('x_test', data=np.array(aes))
+    tgt = np.full((len(aes)), args.poison_target, dtype=int)
+    hfdat.create_dataset('y_ori', data=np.array(tgt))
+    hfdat.create_dataset('y_attack', data=np.array(tgt))
+    hf.close()
 
-    '''
-    plt.figure(figsize=(5, 5))
-    plt.plot(epsilons, accuracies, "*-")
-    plt.yticks(np.arange(0, 1.1, step=0.1))
-    plt.xticks(np.arange(0, .35, step=0.05))
-    plt.title("Accuracy vs Epsilon")
-    plt.xlabel("Epsilon")
-    plt.ylabel("Accuracy")
-    plt.show()
-    plt.savefig(os.path.join(args.output_dir, 'fgsm.png'))
-
-    # Plot several examples of adversarial samples at each epsilon
-    cnt = 0
-    plt.figure(figsize=(8, 10))
-    for i in range(len(epsilons)):
-        for j in range(len(examples[i])):
-            cnt += 1
-            plt.subplot(len(epsilons), len(examples[0]), cnt)
-            plt.xticks([], [])
-            plt.yticks([], [])
-            if j == 0:
-                plt.ylabel("Eps: {}".format(epsilons[i]), fontsize=14)
-            orig, adv, ex = examples[i][j]
-            plt.title("{} -> {}".format(orig, adv))
-            plt.imshow(np.transpose(np.array(ex), (1,2,0)))
-    plt.tight_layout()
-    plt.show()
-    plt.savefig(os.path.join(args.output_dir, 'fgsm_sample.png'))
-    '''
     return
 
 
