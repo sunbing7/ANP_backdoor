@@ -34,8 +34,10 @@ class FGSMAttack(object):
             self.adv_examples[epsReal] = []  # store some adv samples for visualization
             eps = epsReal - 1e-7  # small constant to offset floating-point errors
             successful_attacks = 0
-
+            i = 0
             for data, label in self.test_dataloader:
+                print('[DEBUG] image {}'.format(i))
+                i = i + 1
                 # send dat to device
                 data, label = data.to(self.device), label.to(self.device)
 
