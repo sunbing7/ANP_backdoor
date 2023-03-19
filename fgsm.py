@@ -249,13 +249,13 @@ def gen_ae_imagenet_targeted():
                                                                                                        cl_acc))
 
     #epsilons = [0, .05, .1, .15, .2, .25, .3]
-    epsilons = [.1, .15]
+    epsilons = [.1]
 
     fgsm_attack = FGSMAttack(net, epsilons, clean_test_loader, device, args.poison_target, args.max_itr)
     fgsm_attack.run()
 
     # save 0.1 aes
-    aes = fgsm_attack.adv_examples[0.1]
+    aes = fgsm_attack.adv_aes[0.1]
     hf = h5py.File(args.output_dir + "/fgsm_targeted_aes_" + str(0.1) + ".h5", 'w')
     hfdat = hf.create_group('data')
     hfdat.create_dataset('x_test', data=np.array(aes))
@@ -406,6 +406,72 @@ def test_ae_transferability():
         elif args.arch2 == 'vgg19':
             net2 = torchvision.models.vgg19(pretrained=True)
         net2.to(device)
+
+    criterion = torch.nn.CrossEntropyLoss().to(device)
+
+    aes, ae_ls, naes, nae_ls = split_ae(net, net2, ae_loader)
+    hf = h5py.File(args.output_dir + "/fgsm_imagenet_tf_aes.h5", 'w')
+    hfdat = hf.create_group('data')
+    hfdat.create_dataset('x_test', data=np.array(aes))
+    hfdat.create_dataset('y_ori', data=np.array(ae_ls))
+    hf.close()
+
+    hf = h5py.File(args.output_dir + "/fgsm_imagenet_tf_naes.h5", 'w')
+    hfdat = hf.create_group('data')
+    hfdat.create_dataset('x_test', data=np.array(naes))
+    hfdat.create_dataset('y_ori', data=np.array(nae_ls))
+    hf.close()
+
+    src_loss, src_acc = test(model=net, criterion=criterion, data_loader=ae_loader)
+    tgt_loss, tgt_acc = test(model=net2, criterion=criterion, data_loader=ae_loader)
+
+    print('SourceLoss \t SourceASR \t TargetLoss \t TargetASR')
+    print('{:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(src_loss, (1 - src_acc), tgt_loss, (1 - tgt_acc)))
+
+    return
+
+
+def test_ae_transferability_targeted():
+
+    # load examples
+    aes_file = args.in_file
+
+    ae_loader = \
+        get_loader_from_data(aes_file, args.batch_size)
+
+    if args.load_type == 'state_dict':
+        net = getattr(models, args.arch)(num_classes=args.num_class, in_channels=args.num_ch).to(device)
+
+        state_dict = torch.load(args.in_model, map_location=device)
+        load_state_dict(net, orig_state_dict=state_dict)
+
+        net2 = getattr(models, args.arch2)(num_classes=args.num_class, in_channels=args.num_ch).to(device)
+
+        state_dict = torch.load(args.in_model2, map_location=device)
+        load_state_dict(net2, orig_state_dict=state_dict)
+    elif args.load_type == 'model':
+        net = torch.load(args.in_model, map_location=device)
+        net2 = torch.load(args.in_model2, map_location=device)
+    elif args.load_type == 'pretrained':
+        if args.arch == 'resnet18':
+            net = torchvision.models.resnet18(pretrained=True)
+            # resnet = resnet18(weights=ResNet18_Weights.DEFAULT, progress=False)
+        elif args.arch == 'resnet50':
+            net = torchvision.models.resnet50(pretrained=True)
+        elif args.arch == 'vgg19':
+            net = torchvision.models.vgg19(pretrained=True)
+        net.to(device)
+        net.eval()
+
+        if args.arch2 == 'resnet18':
+            net2 = torchvision.models.resnet18(pretrained=True)
+            # resnet = resnet18(weights=ResNet18_Weights.DEFAULT, progress=False)
+        elif args.arch2 == 'resnet50':
+            net2 = torchvision.models.resnet50(pretrained=True)
+        elif args.arch2 == 'vgg19':
+            net2 = torchvision.models.vgg19(pretrained=True)
+        net2.to(device)
+        net2.eval()
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
 
