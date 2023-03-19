@@ -17,7 +17,7 @@ class FGSMAttack(object):
         self.adv_examples = {}
         self.max_itr = max_itr
         self.adv_aes = {}
-        self.ori_label = []
+        self.ori_label = {}
 
     def perturb(self, x, eps, grad):
         x_prime = None
