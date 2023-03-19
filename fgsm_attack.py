@@ -37,7 +37,7 @@ class FGSMAttack(object):
             for data, label in self.test_dataloader:
                 # send dat to device
                 data, label = data.to(self.device), label.to(self.device)
-                self.target = self.target.to(self.device)
+
                 # FGSM attack requires gradients w.r.t. the data
                 data.requires_grad = True
 
@@ -55,7 +55,8 @@ class FGSMAttack(object):
                 loss = None
                 if self.target:
                     # in a target attack, we take the loss w.r.t. the target label
-                    loss = L(output, torch.tensor([self.target], dtype=torch.long))
+                    #loss = L(output, torch.tensor([self.target], dtype=torch.long))
+                    loss = L(output, self.target.squeeze().long())
                 else:
                     loss = L(output, torch.tensor([init_pred.item()], dtype=torch.long))
 
