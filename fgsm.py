@@ -427,8 +427,12 @@ def test_ae_transferability():
     hfdat.create_dataset('y_ori', data=np.array(nae_ls))
     hf.close()
 
-    src_loss, src_acc = test(model=net, criterion=criterion, data_loader=ae_loader)
-    tgt_loss, tgt_acc = test(model=net2, criterion=criterion, data_loader=ae_loader)
+    if args.attack_type:
+        src_loss, src_acc = test_targeted(model=net, criterion=criterion, data_loader=ae_loader, target_lbl=args.poison_target)
+        tgt_loss, tgt_acc = test_targeted(model=net2, criterion=criterion, data_loader=ae_loader, target_lbl=args.poison_target)
+    else:
+        src_loss, src_acc = test(model=net, criterion=criterion, data_loader=ae_loader)
+        tgt_loss, tgt_acc = test(model=net2, criterion=criterion, data_loader=ae_loader)
 
     print('SourceLoss \t SourceASR \t TargetLoss \t TargetASR')
     print('{:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(src_loss, (1 - src_acc), tgt_loss, (1 - tgt_acc)))
@@ -1939,6 +1943,24 @@ def test(model, criterion, data_loader):
             total_loss += criterion(output, labels).item()
             pred = output.data.max(1)[1]
             total_correct += pred.eq(labels.data.view_as(pred)).sum()
+
+    loss = total_loss / len(data_loader)
+    acc = float(total_correct) / len(data_loader.dataset)
+    return loss, acc
+
+
+def test_targeted(model, criterion, data_loader, target_lbl):
+    model.eval()
+    total_correct = 0
+    total_loss = 0.0
+    with torch.no_grad():
+        for i, (images, labels) in enumerate(data_loader):
+            labels = labels.long()
+            images, labels = images.to(device), labels.to(device)
+            output = model(images)
+            total_loss += criterion(output, labels).item()
+            pred = output.data.max(1)[1]
+            total_correct += pred.eq(target_lbl).sum()
 
     loss = total_loss / len(data_loader)
     acc = float(total_correct) / len(data_loader.dataset)
