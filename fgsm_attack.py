@@ -8,13 +8,14 @@ import matplotlib.pyplot as plt
 
 # FGSM attack
 class FGSMAttack(object):
-    def __init__(self, model, epsilons, test_dataloader, device, target=None):
+    def __init__(self, model, epsilons, test_dataloader, device, target=None, max_itr=100):
         self.model = model
         self.epsilons = epsilons
         self.test_dataloader = test_dataloader
         self.device = device
         self.target = target
         self.adv_examples = {}
+        self.max_itr = max_itr
 
     def perturb(self, x, eps, grad):
         x_prime = None

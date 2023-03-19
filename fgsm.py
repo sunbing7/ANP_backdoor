@@ -51,6 +51,7 @@ parser.add_argument('--num_class', type=int, default=10, help='number of classes
 parser.add_argument('--option', type=str, default='generate_ae', choices=['generate_ae', 'test_tx', 'generate_target_ae'],
                     help='run option')
 parser.add_argument('--num_sample', type=int, default=192, help='number of samples')
+parser.add_argument('--max_itr', type=int, default=100, help='max number of iterations')
 parser.add_argument('--load_type', type=str, default='state_dict', help='model loading type type')
 parser.add_argument('--num_ch', type=int, default=3, help='number of channels')
 parser.add_argument('--poison_target', type=int, default=0, help='target class of backdoor attack')
@@ -250,7 +251,7 @@ def gen_ae_imagenet_targeted():
     #epsilons = [0, .05, .1, .15, .2, .25, .3]
     epsilons = [.1, .15]
 
-    fgsm_attack = FGSMAttack(net, epsilons, clean_test_loader, device, args.poison_target)
+    fgsm_attack = FGSMAttack(net, epsilons, clean_test_loader, device, args.poison_target, args.max_itr)
     fgsm_attack.run()
 
     # save 0.1 aes
