@@ -55,10 +55,11 @@ class FGSMAttack(object):
                 loss = None
                 if self.target:
                     # in a target attack, we take the loss w.r.t. the target label
-                    #loss = L(output, torch.tensor([self.target], dtype=torch.long))
-                    loss = L(output, torch.tensor(self.target).squeeze().long())
+                    target = torch.tensor([self.target], dtype=torch.long).to(self.device)
+                    loss = L(output, target)
                 else:
-                    loss = L(output, torch.tensor([init_pred.item()], dtype=torch.long))
+                    target = torch.tensor([init_pred.item()], dtype=torch.long).to(self.device)
+                    loss = L(output, target)
 
                 # zero out all existing gradients
                 self.model.zero_grad()
