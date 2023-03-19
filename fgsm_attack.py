@@ -37,7 +37,7 @@ class FGSMAttack(object):
             for data, label in self.test_dataloader:
                 # send dat to device
                 data, label = data.to(self.device), label.to(self.device)
-
+                self.target = self.target.to(self.device)
                 # FGSM attack requires gradients w.r.t. the data
                 data.requires_grad = True
 
