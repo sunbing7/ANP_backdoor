@@ -55,6 +55,7 @@ parser.add_argument('--max_itr', type=int, default=100, help='max number of iter
 parser.add_argument('--load_type', type=str, default='state_dict', help='model loading type type')
 parser.add_argument('--num_ch', type=int, default=3, help='number of channels')
 parser.add_argument('--poison_target', type=int, default=0, help='target class of backdoor attack')
+parser.add_argument('--attack_type', type=int, default=0, help='set to 1 if it is a targeted attack')
 
 args = parser.parse_args()
 args_dict = vars(args)
@@ -256,11 +257,12 @@ def gen_ae_imagenet_targeted():
 
     # save 0.1 aes
     aes = fgsm_attack.adv_aes[0.1]
+    ori_label = fgsm_attack.ori_label[0.1]
     hf = h5py.File(args.output_dir + "/fgsm_targeted_aes_" + str(0.1) + ".h5", 'w')
     hfdat = hf.create_group('data')
     hfdat.create_dataset('x_test', data=np.array(aes))
     tgt = np.full((len(aes)), args.poison_target, dtype=int)
-    hfdat.create_dataset('y_ori', data=np.array(tgt))
+    hfdat.create_dataset('y_ori', data=np.array(ori_label))
     hfdat.create_dataset('y_attack', data=np.array(tgt))
     hf.close()
 
@@ -409,73 +411,10 @@ def test_ae_transferability():
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
 
-    aes, ae_ls, naes, nae_ls = split_ae(net, net2, ae_loader)
-    hf = h5py.File(args.output_dir + "/fgsm_imagenet_tf_aes.h5", 'w')
-    hfdat = hf.create_group('data')
-    hfdat.create_dataset('x_test', data=np.array(aes))
-    hfdat.create_dataset('y_ori', data=np.array(ae_ls))
-    hf.close()
-
-    hf = h5py.File(args.output_dir + "/fgsm_imagenet_tf_naes.h5", 'w')
-    hfdat = hf.create_group('data')
-    hfdat.create_dataset('x_test', data=np.array(naes))
-    hfdat.create_dataset('y_ori', data=np.array(nae_ls))
-    hf.close()
-
-    src_loss, src_acc = test(model=net, criterion=criterion, data_loader=ae_loader)
-    tgt_loss, tgt_acc = test(model=net2, criterion=criterion, data_loader=ae_loader)
-
-    print('SourceLoss \t SourceASR \t TargetLoss \t TargetASR')
-    print('{:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(src_loss, (1 - src_acc), tgt_loss, (1 - tgt_acc)))
-
-    return
-
-
-def test_ae_transferability_targeted():
-
-    # load examples
-    aes_file = args.in_file
-
-    ae_loader = \
-        get_loader_from_data(aes_file, args.batch_size)
-
-    if args.load_type == 'state_dict':
-        net = getattr(models, args.arch)(num_classes=args.num_class, in_channels=args.num_ch).to(device)
-
-        state_dict = torch.load(args.in_model, map_location=device)
-        load_state_dict(net, orig_state_dict=state_dict)
-
-        net2 = getattr(models, args.arch2)(num_classes=args.num_class, in_channels=args.num_ch).to(device)
-
-        state_dict = torch.load(args.in_model2, map_location=device)
-        load_state_dict(net2, orig_state_dict=state_dict)
-    elif args.load_type == 'model':
-        net = torch.load(args.in_model, map_location=device)
-        net2 = torch.load(args.in_model2, map_location=device)
-    elif args.load_type == 'pretrained':
-        if args.arch == 'resnet18':
-            net = torchvision.models.resnet18(pretrained=True)
-            # resnet = resnet18(weights=ResNet18_Weights.DEFAULT, progress=False)
-        elif args.arch == 'resnet50':
-            net = torchvision.models.resnet50(pretrained=True)
-        elif args.arch == 'vgg19':
-            net = torchvision.models.vgg19(pretrained=True)
-        net.to(device)
-        net.eval()
-
-        if args.arch2 == 'resnet18':
-            net2 = torchvision.models.resnet18(pretrained=True)
-            # resnet = resnet18(weights=ResNet18_Weights.DEFAULT, progress=False)
-        elif args.arch2 == 'resnet50':
-            net2 = torchvision.models.resnet50(pretrained=True)
-        elif args.arch2 == 'vgg19':
-            net2 = torchvision.models.vgg19(pretrained=True)
-        net2.to(device)
-        net2.eval()
-
-    criterion = torch.nn.CrossEntropyLoss().to(device)
-
-    aes, ae_ls, naes, nae_ls = split_ae(net, net2, ae_loader)
+    if args.attack_type:
+        aes, ae_ls, naes, nae_ls = split_ae_targeted(net, net2, ae_loader, args.poison_target)
+    else:
+        aes, ae_ls, naes, nae_ls = split_ae(net, net2, ae_loader)
     hf = h5py.File(args.output_dir + "/fgsm_imagenet_tf_aes.h5", 'w')
     hfdat = hf.create_group('data')
     hfdat.create_dataset('x_test', data=np.array(aes))
@@ -2050,6 +1989,39 @@ def split_ae(model, model2, data_loader):
             #pred = output.data.max(1)[1]
             pred2 = output2.data.max(1)[1]
             nae_idx = (pred2 == labels.data.view_as(pred2))
+            nae_idx = list(nae_idx.cpu().detach().numpy().nonzero()[0])
+            ae = np.delete(images.cpu().detach().numpy(), nae_idx, axis=0)
+            ae_l = np.delete(labels.cpu().detach().numpy(), nae_idx, axis=0)
+            nae = images.cpu().detach().numpy()[nae_idx]
+            nae_l = labels.cpu().detach().numpy()[nae_idx]
+
+            aes.extend(ae)
+            ae_ls.extend(ae_l)
+            naes.extend(nae)
+            nae_ls.extend(nae_l)
+            total = total + len(images)
+    print('Total len: {}'.format(total))
+    print('Number of transferable AES: {}'.format(len(aes)))
+    return aes, ae_ls, naes, nae_ls
+
+
+def split_ae_targeted(model, model2, data_loader, target_lbl):
+    model.eval()
+    model2.eval()
+    total = 0
+    aes = []
+    ae_ls = []
+    naes = []
+    nae_ls = []
+    with torch.no_grad():
+        for i, (images, labels) in enumerate(data_loader):
+            labels = labels.long()
+            images, labels = images.to(device), labels.to(device)
+            #output = model(images)
+            output2 = model2(images)
+            #pred = output.data.max(1)[1]
+            pred2 = output2.data.max(1)[1]
+            nae_idx = (pred2.cpu().detach().numpy() != target_lbl)
             nae_idx = list(nae_idx.cpu().detach().numpy().nonzero()[0])
             ae = np.delete(images.cpu().detach().numpy(), nae_idx, axis=0)
             ae_l = np.delete(labels.cpu().detach().numpy(), nae_idx, axis=0)

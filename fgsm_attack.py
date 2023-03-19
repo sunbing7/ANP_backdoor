@@ -17,6 +17,7 @@ class FGSMAttack(object):
         self.adv_examples = {}
         self.max_itr = max_itr
         self.adv_aes = {}
+        self.ori_label = []
 
     def perturb(self, x, eps, grad):
         x_prime = None
@@ -34,6 +35,7 @@ class FGSMAttack(object):
         for epsReal in self.epsilons:
             self.adv_examples[epsReal] = []  # store some adv samples for visualization
             self.adv_aes[epsReal] = []
+            self.ori_label[epsReal] = []
             eps = epsReal - 1e-7  # small constant to offset floating-point errors
             successful_attacks = 0
             i = 0
@@ -97,6 +99,7 @@ class FGSMAttack(object):
                             adv_ex = perturbed_data.squeeze().detach().cpu().numpy()
                             self.adv_examples[epsReal].append((init_pred.item(), adv_pred.item(), adv_ex))
                             self.adv_aes[epsReal].append(adv_ex)
+                            self.ori_label[epsReal].append(init_pred.item())
                 else:
                     if adv_pred.item() != init_pred.item():
                         successful_attacks += 1
@@ -104,6 +107,7 @@ class FGSMAttack(object):
                             adv_ex = perturbed_data.squeeze().detach().cpu().numpy()
                             self.adv_examples[epsReal].append((init_pred.item(), adv_pred.item(), adv_ex))
                             self.adv_aes[epsReal].append(adv_ex)
+                            self.ori_label[epsReal].append(init_pred.item())
 
             # print status line
             success_rate = successful_attacks / float(len(self.test_dataloader))
