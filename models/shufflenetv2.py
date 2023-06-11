@@ -19,9 +19,23 @@ def shufflenetv2(num_classes=10, pretrained=1, norm_layer=nn.BatchNorm2d, **kwar
         nn.Linear(4096, num_classes)
     )
 
+    return net
+
+
+def shufflenet_reconstruct(ori_net):
+    '''
+    modules = list(ori_net.children())
+    sub_modules = list(modules[-1])
+    module0 = [modules[0]]
+    module1 = modules[1:6]
+    module2 = [sub_modules[0]]
+    module3 = [sub_modules[1]]
+
+    net = nn.Sequential(*[*module0, *module1, Avgpool2d_n(poolsize=7), Flatten(), *module2, *module3])
+
     # replace norm_layer
     '''
-    children = list(net.children())
+    children = list(ori_net.children())
     nchildren = []
     for c in children:
         if c.__class__.__name__ == 'Sequential':
@@ -34,20 +48,7 @@ def shufflenetv2(num_classes=10, pretrained=1, norm_layer=nn.BatchNorm2d, **kwar
     # NoisyBatchNorm2d(24),
     #net = nn.Sequential(*[*children[:1], NoisyBatchNorm2d(24), *children[2:21], NoisyBatchNorm2d(1024), *children[22:]])
     net = nn.Sequential(*children)
-    '''
 
-    return net
-
-
-def shufflenet_reconstruct(ori_net):
-    modules = list(ori_net.children())
-    sub_modules = list(modules[-1])
-    module0 = [modules[0]]
-    module1 = modules[1:6]
-    module2 = [sub_modules[0]]
-    module3 = [sub_modules[1]]
-
-    net = nn.Sequential(*[*module0, *module1, Avgpool2d_n(poolsize=7), Flatten(), *module2, *module3])
     return net
 
 
