@@ -18,6 +18,7 @@ parser = argparse.ArgumentParser(description='Train poisoned networks')
 # Basic model parameters.
 parser.add_argument('--arch', type=str, default='resnet18',
                     choices=['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'MobileNetV2', 'vgg19_bn', 'vgg11_bn'])
+parser.add_argument('--in_ch', type=int, default=3, help='number of input channles')
 parser.add_argument('--checkpoint', type=str, required=True, help='The checkpoint to be pruned')
 parser.add_argument('--widen_factor', type=int, default=1, help='widen_factor for WideResNet')
 parser.add_argument('--batch_size', type=int, default=128, help='the batch size for dataloader')
@@ -64,7 +65,7 @@ def main():
 
     # Step 2: load model checkpoints and trigger info
     state_dict = torch.load(args.checkpoint, map_location=device)
-    net = getattr(models, args.arch)(num_classes=args.num_class, norm_layer=models.NoisyBatchNorm2d)
+    net = getattr(models, args.arch)(num_classes=args.num_class, norm_layer=models.NoisyBatchNorm2d, in_channels=args.in_ch)
     load_state_dict(net, orig_state_dict=state_dict)
     net = net.to(device)
 
