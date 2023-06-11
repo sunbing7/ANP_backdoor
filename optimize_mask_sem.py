@@ -75,10 +75,13 @@ def main():
     load_state_dict(net, orig_state_dict=state_dict)
     net = net.to(device)
 
-    #test
     criterion = torch.nn.CrossEntropyLoss().to(device)
+    #test
     print('Iter \t lr \t Time \t TrainLoss \t TrainACC \t PoisonLoss \t PoisonACC \t CleanLoss \t CleanACC')
     cl_test_loss, cl_test_acc = test(model=net, criterion=criterion, data_loader=clean_test_loader)
+    print('{} \t {:.3f} \t {:.1f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f} \t {:.4f}'.format(
+        (0 + 1) * args.print_every, 0.01, 0, 0, 0, 0, 0,
+        cl_test_loss, cl_test_acc))
 
     parameters = list(net.named_parameters())
     mask_params = [v for n, v in parameters if "neuron_mask" in n]
