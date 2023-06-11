@@ -46,8 +46,8 @@ def shufflenet_reconstruct(ori_net):
     children.insert(-2, torch.nn.AvgPool2d(kernel_size=7))
     children.insert(-2, torch.nn.Flatten())
     # NoisyBatchNorm2d(24),
-    #net = nn.Sequential(*[*children[:1], NoisyBatchNorm2d(24), *children[2:21], NoisyBatchNorm2d(1024), *children[22:]])
-    net = nn.Sequential(*children)
+    net = nn.Sequential(*[*children[:1], NoisyBatchNorm2d(24), *children[2:21], NoisyBatchNorm2d(1024), *children[22:]])
+    #net = nn.Sequential(*children)
 
     return net
 
