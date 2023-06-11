@@ -9,6 +9,7 @@ import torchvision.transforms as transforms
 
 from data.data_loader import get_custom_loader
 from models.selector import *
+from models.shufflenetv2 import shufflenet_reconstruct
 
 import models
 import data.poison_cifar as poison
@@ -68,6 +69,10 @@ def main():
     state_dict = torch.load(args.checkpoint, map_location=device)
     net = getattr(models, args.arch)(num_classes=args.num_class, norm_layer=models.NoisyBatchNorm2d, in_channels=args.in_ch)
     load_state_dict(net, orig_state_dict=state_dict)
+
+    if args.arch == 'shufflenetv2':
+        net = shufflenet_reconstruct(net)
+
     net = net.to(device)
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
