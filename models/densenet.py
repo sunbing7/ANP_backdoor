@@ -22,9 +22,9 @@ class Bottleneck(nn.Module):
 
 
 class Transition(nn.Module):
-    def __init__(self, in_planes, out_planes):
+    def __init__(self, in_planes, out_planes, norm_layer=nn.BatchNorm2d):
         super(Transition, self).__init__()
-        self.bn = nn.BatchNorm2d(in_planes)
+        self.bn = norm_layer(in_planes)
         self.conv = nn.Conv2d(in_planes, out_planes, kernel_size=1, bias=False)
 
     def forward(self, x):
@@ -34,7 +34,7 @@ class Transition(nn.Module):
 
 
 class DenseNet(nn.Module):
-    def __init__(self, block, nblocks, growth_rate=12, reduction=0.5, num_classes=10):
+    def __init__(self, block, nblocks, growth_rate=12, reduction=0.5, num_classes=10, norm_layer=nn.BatchNorm2d):
         super(DenseNet, self).__init__()
         self.growth_rate = growth_rate
 
@@ -44,25 +44,25 @@ class DenseNet(nn.Module):
         self.dense1 = self._make_dense_layers(block, num_planes, nblocks[0])
         num_planes += nblocks[0]*growth_rate
         out_planes = int(math.floor(num_planes*reduction))
-        self.trans1 = Transition(num_planes, out_planes)
+        self.trans1 = Transition(num_planes, out_planes, norm_layer=norm_layer)
         num_planes = out_planes
 
         self.dense2 = self._make_dense_layers(block, num_planes, nblocks[1])
         num_planes += nblocks[1]*growth_rate
         out_planes = int(math.floor(num_planes*reduction))
-        self.trans2 = Transition(num_planes, out_planes)
+        self.trans2 = Transition(num_planes, out_planes, norm_layer=norm_layer)
         num_planes = out_planes
 
         self.dense3 = self._make_dense_layers(block, num_planes, nblocks[2])
         num_planes += nblocks[2]*growth_rate
         out_planes = int(math.floor(num_planes*reduction))
-        self.trans3 = Transition(num_planes, out_planes)
+        self.trans3 = Transition(num_planes, out_planes, norm_layer=norm_layer)
         num_planes = out_planes
 
         self.dense4 = self._make_dense_layers(block, num_planes, nblocks[3])
         num_planes += nblocks[3]*growth_rate
 
-        self.bn = nn.BatchNorm2d(num_planes)
+        self.bn = norm_layer(num_planes)
         self.linear = nn.Linear(num_planes, num_classes)
 
     def _make_dense_layers(self, block, in_planes, nblock):
@@ -99,11 +99,11 @@ def DenseNet161():
 def densenet_cifar():
     return DenseNet(Bottleneck, [6,12,24,16], growth_rate=12)
 
-def densenet(num_classes=10, **kwargs):
+def densenet(num_classes=10, norm_layer=nn.BatchNorm2d, **kwargs):
     '''
     densenet for mnistm
     '''
-    return DenseNet(Bottleneck, [6,12,24,16], growth_rate=12, num_classes=num_classes)
+    return DenseNet(Bottleneck, [6,12,24,16], growth_rate=12, num_classes=num_classes, norm_layer=norm_layer)
 
 def test():
     net = densenet_cifar()
