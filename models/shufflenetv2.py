@@ -36,11 +36,14 @@ def shufflenetv2(num_classes=10, pretrained=1, norm_layer=nn.BatchNorm2d, **kwar
     net = nn.Sequential(*children)
     '''
     modules = list(net.children())
-    module1 = modules[:2]
-    module2 = [modules[2]]
-    module3 = [modules[3]]
+    sub_modules = list(modules[-1])
+    module0 = [modules[0]]
+    module1 = modules[1:6]
+    module2 = [sub_modules[0]]
+    module3 = [sub_modules[1]]
 
-    net = nn.Sequential(*[*module1, Relu(), *module2, Avgpool2d_n(poolsize=7), Flatten(), *module3])
+    net = nn.Sequential(*[*module0, *module1, Avgpool2d_n(poolsize=7), Flatten(), *module2, *module3])
+
     return net
 
 
