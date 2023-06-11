@@ -56,7 +56,7 @@ def main():
         return
 
     # Step 1: create dataset - clean val set, poisoned test set, and clean test set.
-    _, _, _, test_clean_loader, test_adv_loader = \
+    _, _, test_clean_loader, test_adv_loader = \
         get_custom_loader(args.data_set, args.batch_size, args.poison_target, args.data_name, args.t_attack)
 
     poison_test_loader = test_adv_loader
