@@ -17,7 +17,8 @@ parser = argparse.ArgumentParser(description='Train poisoned networks')
 
 # Basic model parameters.
 parser.add_argument('--arch', type=str, default='resnet18',
-                    choices=['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'MobileNetV2', 'vgg19_bn', 'vgg11_bn'])
+                    choices=['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'MobileNetV2', 'vgg19_bn',
+                             'vgg11_bn', 'MobileNet', 'densenet', 'shufflenetv2'])
 parser.add_argument('--in_ch', type=int, default=3, help='number of input channles')
 parser.add_argument('--checkpoint', type=str, required=True, help='The checkpoint to be pruned')
 parser.add_argument('--widen_factor', type=int, default=1, help='widen_factor for WideResNet')
