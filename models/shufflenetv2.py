@@ -30,11 +30,8 @@ def shufflenetv2(num_classes=10, pretrained=1, norm_layer=nn.BatchNorm2d, **kwar
     children = nchildren
     children.insert(-2, torch.nn.AvgPool2d(kernel_size=7))
     children.insert(-2, torch.nn.Flatten())
-
-    for layer_i in range(0, len(children)):
-        print(children[layer_i].__class__.__name__)
-
-    net = nn.Sequential(*[*children[:1], NoisyBatchNorm2d(24), *children[2:21], NoisyBatchNorm2d(1024), *children[22:]])
+    # NoisyBatchNorm2d(24),
+    net = nn.Sequential(*[*children[:2], *children[2:21], NoisyBatchNorm2d(1024), *children[22:]])
 
     return net
 
