@@ -6,7 +6,7 @@ import torch
 from .anp_batchnorm import *
 
 def shufflenetv2(num_classes=10, pretrained=1, norm_layer=nn.BatchNorm2d, **kwargs):
-    net = models.shufflenet_v2_x1_0(pretrained=pretrained)
+    net = models.shufflenet_v2_x1_0(pretrained=False)
 
     net.aux_logits = False
 
