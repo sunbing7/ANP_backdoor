@@ -75,8 +75,8 @@ def main():
     net = getattr(models, args.arch)(num_classes=args.num_class, norm_layer=models.NoisyBatchNorm2d, in_channels=args.in_ch)
     load_state_dict(net, orig_state_dict=state_dict)
 
-    if args.arch == 'shufflenetv2':
-        net = shufflenet_reconstruct(net)
+    #if args.arch == 'shufflenetv2':
+    #    net = shufflenet_reconstruct(net)
 
     net = net.to(device)
 
