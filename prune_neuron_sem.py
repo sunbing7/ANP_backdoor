@@ -9,7 +9,6 @@ import torchvision.transforms as transforms
 
 from data.data_loader import get_custom_loader
 from models.selector import *
-from models.shufflenetv2 import shufflenet_reconstruct
 
 import models
 import data.poison_cifar as poison
