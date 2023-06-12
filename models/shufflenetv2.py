@@ -15,7 +15,7 @@ def shufflenetv2(num_classes=10, pretrained=1, norm_layer=nn.BatchNorm2d, **kwar
         for param in net.parameters():
             param.requires_grad = False
     '''
-    net = ShuffleNetV2(num_classes=num_classes)
+    net = ShuffleNetV2(num_classes=num_classes, norm_layer=norm_layer)
     net.fc = nn.Sequential(
         nn.Linear(net.fc.in_features, 4096),
         nn.Linear(4096, num_classes)
@@ -109,7 +109,7 @@ def channel_shuffle(x: Tensor, groups: int) -> Tensor:
 
 
 class InvertedResidual(nn.Module):
-    def __init__(self, inp: int, oup: int, stride: int) -> None:
+    def __init__(self, inp: int, oup: int, stride: int, norm_layer=nn.BatchNorm2d) -> None:
         super().__init__()
 
         if not (1 <= stride <= 3):
@@ -125,9 +125,9 @@ class InvertedResidual(nn.Module):
         if self.stride > 1:
             self.branch1 = nn.Sequential(
                 self.depthwise_conv(inp, inp, kernel_size=3, stride=self.stride, padding=1),
-                nn.BatchNorm2d(inp),
+                norm_layer(inp),
                 nn.Conv2d(inp, branch_features, kernel_size=1, stride=1, padding=0, bias=False),
-                nn.BatchNorm2d(branch_features),
+                norm_layer(branch_features),
                 nn.ReLU(inplace=True),
             )
         else:
@@ -142,12 +142,12 @@ class InvertedResidual(nn.Module):
                 padding=0,
                 bias=False,
             ),
-            nn.BatchNorm2d(branch_features),
+            norm_layer(branch_features),
             nn.ReLU(inplace=True),
             self.depthwise_conv(branch_features, branch_features, kernel_size=3, stride=self.stride, padding=1),
-            nn.BatchNorm2d(branch_features),
+            norm_layer(branch_features),
             nn.Conv2d(branch_features, branch_features, kernel_size=1, stride=1, padding=0, bias=False),
-            nn.BatchNorm2d(branch_features),
+            norm_layer(branch_features),
             nn.ReLU(inplace=True),
         )
 
@@ -172,6 +172,7 @@ class InvertedResidual(nn.Module):
 class ShuffleNetV2(nn.Module):
     def __init__(
         self,
+        norm_layer=nn.BatchNorm2d,
         stages_repeats = [4, 8, 4],
         stages_out_channels = [24, 116, 232, 464, 1024],
         num_classes = 1000,
@@ -189,7 +190,7 @@ class ShuffleNetV2(nn.Module):
         output_channels = self._stage_out_channels[0]
         self.conv1 = nn.Sequential(
             nn.Conv2d(input_channels, output_channels, 3, 2, 1, bias=False),
-            nn.BatchNorm2d(output_channels),
+            norm_layer(output_channels),
             nn.ReLU(inplace=True),
         )
         input_channels = output_channels
@@ -202,16 +203,16 @@ class ShuffleNetV2(nn.Module):
         self.stage4: nn.Sequential
         stage_names = [f"stage{i}" for i in [2, 3, 4]]
         for name, repeats, output_channels in zip(stage_names, stages_repeats, self._stage_out_channels[1:]):
-            seq = [inverted_residual(input_channels, output_channels, 2)]
+            seq = [inverted_residual(input_channels, output_channels, 2, norm_layer=norm_layer)]
             for i in range(repeats - 1):
-                seq.append(inverted_residual(output_channels, output_channels, 1))
+                seq.append(inverted_residual(output_channels, output_channels, 1, norm_layer=norm_layer))
             setattr(self, name, nn.Sequential(*seq))
             input_channels = output_channels
 
         output_channels = self._stage_out_channels[-1]
         self.conv5 = nn.Sequential(
             nn.Conv2d(input_channels, output_channels, 1, 1, 0, bias=False),
-            nn.BatchNorm2d(output_channels),
+            norm_layer(output_channels),
             nn.ReLU(inplace=True),
         )
 
